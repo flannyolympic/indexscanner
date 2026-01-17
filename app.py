@@ -144,6 +144,8 @@ def add_to_watchlist():
     return redirect(url_for("watchlist"))
 
 
+# --- Initialize DB on startup ---
+init_db()  # <--- Moved this UP here!
+
 if __name__ == "__main__":
-    init_db()
     app.run(debug=True)
