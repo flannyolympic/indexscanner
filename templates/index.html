@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QQQ 0DTE Screener</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        .btn-scan { background: #28a745; width: 100%; text-align: center; font-size: 1.2em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background: #333; color: white; }
+        .bullish { color: green; font-weight: bold; }
+        .bearish { color: red; font-weight: bold; }
+        .nav { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="/" class="btn">Home</a>
+            <a href="/watchlist" class="btn" style="background:#6c757d;">My Watchlist</a>
+        </div>
+        
+        <h1>QQQ 0DTE Options Screener</h1>
+        <p>Scans QQQ top holdings for VWAP/Bollinger/RSI setups.</p>
+        
+        <a href="/scan" class="btn btn-scan">RUN LIVE SCAN</a>
+
+        {% if results %}
+            <h2>Scan Results</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Price</th>
+                        <th>RSI</th>
+                        <th>VWAP</th>
+                        <th>Signal</th>
+                        <th>0DTE Suggestion</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr>
+                        <td>{{ row.ticker }}</td>
+                        <td>${{ row.price }}</td>
+                        <td>{{ row.rsi }}</td>
+                        <td>${{ row.vwap }}</td>
+                        <td class="{{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}">{{ row.signal }}</td>
+                        <td>{{ row.suggestion }}</td>
+                        <td>
+                            <form action="/add_to_watchlist" method="POST">
+                                <input type="hidden" name="ticker" value="{{ row.ticker }}">
+                                <input type="hidden" name="signal" value="{{ row.signal }}">
+                                <input type="hidden" name="price" value="{{ row.price }}">
+                                <input type="hidden" name="strategy" value="{{ row.suggestion }}">
+                                <button type="submit" style="cursor:pointer; color:blue; background:none; border:none; text-decoration:underline;">Save</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No active signals found or scan not yet run.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
