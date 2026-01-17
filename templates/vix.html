@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VIX Fear Gauge</title>
+    <style>
+        body { font-family: sans-serif; background: #222; color: white; text-align: center; padding: 20px; }
+        .gauge-box { margin-top: 40px; border: 2px solid #555; padding: 30px; border-radius: 15px; display: inline-block; }
+        .score { font-size: 80px; font-weight: bold; margin: 10px 0; }
+        .label { font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+        .LOW { color: #00ff00; }         /* Green */
+        .ELEVATED { color: #ffff00; }    /* Yellow */
+        .FEAR { color: #ff8800; }        /* Orange */
+        .EXTREME { color: #ff0000; }     /* Red */
+        .btn { padding: 10px 20px; background: #555; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; display: inline-block;}
+    </style>
+</head>
+<body>
+    <a href="/" class="btn">Back to QQQ Scanner</a>
+    
+    <div class="gauge-box">
+        <h2>Current VIX Level</h2>
+        <div class="score {{ sentiment }}">{{ price }}</div>
+        <div class="label {{ sentiment }}">{{ sentiment }}</div>
+        <p>Market Status: {{ message }}</p>
+    </div>
+</body>
+</html>

@@ -8,7 +8,7 @@ from flask import Flask, redirect, render_template, request, url_for
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# Top 10 QQQ holdings
+# --- CONFIGURATION ---
 QQQ_TICKERS = [
     "AAPL",
     "MSFT",
@@ -23,7 +23,7 @@ QQQ_TICKERS = [
 ]
 
 
-# --- Database Setup ---
+# --- DATABASE SETUP ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -34,7 +34,23 @@ def init_db():
     conn.close()
 
 
-# --- Technical Analysis Helpers ---
+# Initialize DB immediately
+init_db()
+
+
+# --- HELPERS ---
+def get_market_data(ticker):
+    try:
+        df = yf.download(ticker, period="1d", interval="1m", progress=False)
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+        if df.empty:
+            return None
+        return df
+    except Exception:
+        return None
+
+
 def calculate_rsi(series, period=14):
     delta = series.diff(1)
     gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
@@ -43,42 +59,25 @@ def calculate_rsi(series, period=14):
     return 100 - (100 / (1 + rs))
 
 
-def get_market_data(ticker):
-    try:
-        # Download data
-        df = yf.download(ticker, period="1d", interval="1m", progress=False)
-
-        # --- THE FIX: Flatten complex headers ---
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
-        # ----------------------------------------
-
-        if df.empty:
-            return None
-        return df
-    except Exception as e:
-        print(f"Error fetching {ticker}: {e}")
-        return None
-
-
+# --- ANALYSIS LOGIC ---
 def analyze_ticker(ticker):
     df = get_market_data(ticker)
     if df is None or len(df) < 20:
         return None
 
-    # Calculate Indicators
-    df["VWAP"] = (df["Close"] * df["Volume"]).cumsum() / df["Volume"].cumsum()
     df["SMA_20"] = df["Close"].rolling(window=20).mean()
     df["Std_Dev"] = df["Close"].rolling(window=20).std()
     df["BB_Upper"] = df["SMA_20"] + (df["Std_Dev"] * 2)
     df["BB_Lower"] = df["SMA_20"] - (df["Std_Dev"] * 2)
     df["RSI"] = calculate_rsi(df["Close"])
 
+    # VWAP Calculation
+    df["VWAP"] = (df["Close"] * df["Volume"]).cumsum() / df["Volume"].cumsum()
+
     latest = df.iloc[-1]
     price = latest["Close"]
     rsi = latest["RSI"]
 
-    # Logic
     signal = "NEUTRAL"
     suggestion = "No Trade"
 
@@ -102,6 +101,7 @@ def analyze_ticker(ticker):
     }
 
 
+# --- ROUTES ---
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -112,6 +112,34 @@ def scan():
     results = [analyze_ticker(t) for t in QQQ_TICKERS]
     results = [r for r in results if r and r["signal"] != "NEUTRAL"]
     return render_template("index.html", results=results)
+
+
+@app.route("/vix")
+def vix():
+    # Fetch VIX Data
+    df = get_market_data("^VIX")
+    if df is None:
+        return "Error fetching VIX data"
+
+    price = df.iloc[-1]["Close"]
+
+    # Determine Sentiment
+    if price < 15:
+        sentiment = "LOW"
+        message = "Market is complacent. Grind up likely."
+    elif 15 <= price < 20:
+        sentiment = "ELEVATED"
+        message = "Normal volatility. Watch for chops."
+    elif 20 <= price < 30:
+        sentiment = "FEAR"
+        message = "High Fear. Puts are expensive. Careful."
+    else:
+        sentiment = "EXTREME"
+        message = "Panic selling. Potential capitulation bottom."
+
+    return render_template(
+        "vix.html", price=round(price, 2), sentiment=sentiment, message=message
+    )
 
 
 @app.route("/watchlist")
@@ -143,9 +171,6 @@ def add_to_watchlist():
     conn.close()
     return redirect(url_for("watchlist"))
 
-
-# --- Initialize DB on startup ---
-init_db()  # <--- Moved this UP here!
 
 if __name__ == "__main__":
     app.run(debug=True)
