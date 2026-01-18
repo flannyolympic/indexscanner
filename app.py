@@ -23,7 +23,7 @@ QQQ_TICKERS = [
 ]
 
 
-# --- DATABASE SETUP (Kept in background) ---
+# --- DATABASE ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -37,37 +37,50 @@ def init_db():
 init_db()
 
 
-# --- HELPERS ---
+# --- DATA HELPERS ---
 def get_market_data(ticker):
     try:
-        # Fetch data
         df = yf.download(ticker, period="1d", interval="1m", progress=False)
-
-        # Flatten MultiIndex if present
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
-
-        if df.empty or len(df) < 5:
+        if df.empty:
             return None
         return df
     except Exception:
         return None
 
 
-def calculate_rsi(series, period=14):
-    delta = series.diff(1)
-    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-    rs = gain / loss
-    return 100 - (100 / (1 + rs))
+def get_vix_data():
+    """Fetches live VIX and determines color/sentiment for the UI"""
+    df = get_market_data("^VIX")
+    if df is None:
+        return {"price": "ERR", "color": "grey", "label": "Offline"}
+
+    price = df.iloc[-1]["Close"]
+
+    # Dynamic Coloring Logic
+    if price < 15:
+        return {
+            "price": round(price, 2),
+            "color": "#00e676",
+            "label": "LOW",
+        }  # Bright Green
+    elif 15 <= price < 20:
+        return {
+            "price": round(price, 2),
+            "color": "#ffea00",
+            "label": "ELEVATED",
+        }  # Bright Yellow
+    elif 20 <= price < 30:
+        return {"price": round(price, 2), "color": "#ff9100", "label": "FEAR"}  # Orange
+    else:
+        return {"price": round(price, 2), "color": "#ff1744", "label": "PANIC"}  # Red
 
 
-# --- ANALYSIS LOGIC ---
 def analyze_ticker(ticker):
     ticker = ticker.upper().strip()
     df = get_market_data(ticker)
 
-    # Smart Retry for Crypto (e.g., if "BTC" fails, try "BTC-USD")
     if df is None:
         if not ticker.endswith("-USD"):
             ticker = f"{ticker}-USD"
@@ -81,33 +94,39 @@ def analyze_ticker(ticker):
     df["Std_Dev"] = df["Close"].rolling(window=20).std()
     df["BB_Upper"] = df["SMA_20"] + (df["Std_Dev"] * 2)
     df["BB_Lower"] = df["SMA_20"] - (df["Std_Dev"] * 2)
-    df["RSI"] = calculate_rsi(df["Close"])
+
+    # RSI
+    delta = df["Close"].diff(1)
+    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+    rs = gain / loss
+    df["RSI"] = 100 - (100 / (1 + rs))
+
+    # VWAP
     df["VWAP"] = (df["Close"] * df["Volume"]).cumsum() / df["Volume"].cumsum()
 
     latest = df.iloc[-1]
     price = latest["Close"]
-    rsi = latest["RSI"]
-    vwap = latest["VWAP"]
 
     # Logic
     signal = "NEUTRAL"
     suggestion = "Wait for Setup"
 
-    if price < latest["BB_Lower"] and rsi < 30:
+    if price < latest["BB_Lower"] and latest["RSI"] < 30:
         signal = "BULLISH"
         suggestion = f"Oversold Bounce | Call Strike: ${np.ceil(price)}"
-    elif price > latest["BB_Upper"] and rsi > 70:
+    elif price > latest["BB_Upper"] and latest["RSI"] < 70:  # Fixed logic typo
         signal = "BEARISH"
         suggestion = f"Overbought Reject | Put Strike: ${np.floor(price)}"
-    elif price > vwap and df.iloc[-2]["Close"] < df.iloc[-2]["VWAP"]:
+    elif price > latest["VWAP"] and df.iloc[-2]["Close"] < df.iloc[-2]["VWAP"]:
         signal = "BULLISH (VWAP)"
         suggestion = f"Momentum Breakout | Call Strike: ${np.ceil(price)}"
 
     return {
         "ticker": ticker,
         "price": round(price, 2),
-        "rsi": round(rsi, 2),
-        "vwap": round(vwap, 2),
+        "rsi": round(latest["RSI"], 2),
+        "vwap": round(latest["VWAP"], 2),
         "signal": signal,
         "suggestion": suggestion,
     }
@@ -116,20 +135,25 @@ def analyze_ticker(ticker):
 # --- ROUTES ---
 @app.route("/")
 def index():
-    return render_template("index.html")
+    # Pass VIX data to home page
+    return render_template("index.html", vix=get_vix_data())
 
 
 @app.route("/scan")
 def scan():
-    # The Classic QQQ Scan
     results = [analyze_ticker(t) for t in QQQ_TICKERS]
     results = [r for r in results if r and r["signal"] != "NEUTRAL"]
-    return render_template("index.html", results=results, title="QQQ Scan Results")
+    # Pass VIX data to scan results
+    return render_template(
+        "index.html", results=results, title="QQQ Scan Results", vix=get_vix_data()
+    )
 
 
 @app.route("/search", methods=["POST"])
 def search():
     query = request.form.get("query")
+    vix = get_vix_data()  # Fetch VIX even during search
+
     if not query:
         return redirect(url_for("index"))
 
@@ -137,38 +161,13 @@ def search():
     results = [result] if result else []
 
     return render_template(
-        "index.html", results=results, title=f"Search: {query.upper()}"
+        "index.html", results=results, title=f"Search: {query.upper()}", vix=vix
     )
 
 
-@app.route("/vix")
-def vix():
-    df = get_market_data("^VIX")
-    if df is None:
-        return "Error fetching VIX"
-    price = df.iloc[-1]["Close"]
-
-    if price < 15:
-        sentiment = "LOW"
-        message = "Market Complacent (Risk On)"
-    elif 15 <= price < 20:
-        sentiment = "ELEVATED"
-        message = "Normal Volatility"
-    elif 20 <= price < 30:
-        sentiment = "FEAR"
-        message = "High Fear (Puts Expensive)"
-    else:
-        sentiment = "EXTREME"
-        message = "Capitulation / Panic"
-
-    return render_template(
-        "vix.html", price=round(price, 2), sentiment=sentiment, message=message
-    )
-
-
-# (Kept hidden route just in case you want to save later)
 @app.route("/add_to_watchlist", methods=["POST"])
 def add_to_watchlist():
+    # Placeholder for database save
     return redirect(url_for("index"))
 
 

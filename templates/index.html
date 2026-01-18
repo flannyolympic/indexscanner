@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Market Scanner</title>
+        <title>MktScan</title>
         <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
             rel="stylesheet"
@@ -15,9 +15,9 @@
                 --input-bg: #303134;
                 --text-main: #e8eaed;
                 --text-muted: #9aa0a6;
-                --accent-green: #8ab4f8; /* Google Blueish */
-                --accent-red: #f28b82;
+                --accent-blue: #8ab4f8;
                 --signal-green: #81c995;
+                --signal-red: #f28b82;
             }
 
             body {
@@ -28,24 +28,31 @@
                 padding: 15px;
             }
 
-            /* --- GOOGLE STYLE HEADER --- */
+            /* --- HEADER & VIX WIDGET --- */
             .header-container {
                 display: flex;
                 align-items: center;
-                gap: 15px;
+                justify-content: space-between;
+                gap: 10px;
                 margin-bottom: 20px;
             }
 
             .brand {
                 font-weight: 800;
-                font-size: 1.2rem;
+                font-size: 1.1rem;
                 color: white;
                 text-decoration: none;
+                display: none; /* Hidden on small mobile to save space */
+            }
+            @media (min-width: 400px) {
+                .brand {
+                    display: block;
+                }
             }
 
-            /* The Search Bar */
             .search-form {
                 flex-grow: 1;
+                max-width: 600px;
             }
 
             .search-input {
@@ -55,26 +62,40 @@
                 color: var(--text-main);
                 padding: 10px 15px;
                 font-size: 1rem;
-                border-radius: 24px; /* The Google "Pill" Shape */
+                border-radius: 24px;
                 outline: none;
-                transition: background 0.2s;
-                box-sizing: border-box; /* Fixes padding issues */
+                box-sizing: border-box;
             }
-
             .search-input:focus {
                 background-color: #3c4043;
                 border: 1px solid #5f6368;
             }
 
-            .vix-link {
-                font-size: 0.9rem;
-                font-weight: 600;
-                color: var(--accent-red);
-                text-decoration: none;
-                white-space: nowrap;
+            /* THE DYNAMIC VIX BOX */
+            .vix-widget {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: var(--input-bg);
+                padding: 5px 12px;
+                border-radius: 12px;
+                min-width: 60px;
+                border: 1px solid #444;
             }
 
-            /* --- MACRO WIDGET --- */
+            .vix-label {
+                font-size: 0.65rem;
+                font-weight: 700;
+                color: var(--text-muted);
+                letter-spacing: 1px;
+            }
+            .vix-price {
+                font-size: 1.1rem;
+                font-weight: 800;
+            }
+
+            /* --- MACRO FEED --- */
             .macro-container {
                 margin-bottom: 25px;
                 border-radius: 12px;
@@ -87,23 +108,25 @@
             .btn-scan {
                 display: block;
                 width: 100%;
-                padding: 12px;
-                background: #8ab4f8; /* Google Blue */
+                padding: 14px;
+                background: var(--accent-blue);
                 color: #202124;
                 text-align: center;
                 text-decoration: none;
                 font-weight: 700;
-                border-radius: 8px;
+                border-radius: 12px;
                 margin-bottom: 25px;
+                box-shadow: 0 4px 12px rgba(138, 180, 248, 0.2);
             }
 
             /* --- RESULTS --- */
             .section-title {
                 color: var(--text-muted);
-                font-size: 0.9rem;
+                font-size: 0.8rem;
                 text-transform: uppercase;
                 margin-bottom: 10px;
                 letter-spacing: 1px;
+                font-weight: 700;
             }
 
             .results-grid {
@@ -139,41 +162,42 @@
                 display: inline-block;
                 padding: 4px 10px;
                 border-radius: 4px;
-                font-size: 0.8rem;
-                font-weight: 700;
+                font-size: 0.75rem;
+                font-weight: 800;
                 text-transform: uppercase;
             }
             .bullish {
                 color: var(--signal-green);
                 border: 1px solid var(--signal-green);
+                background: rgba(129, 201, 149, 0.1);
             }
             .bearish {
-                color: var(--accent-red);
-                border: 1px solid var(--accent-red);
+                color: var(--signal-red);
+                border: 1px solid var(--signal-red);
+                background: rgba(242, 139, 130, 0.1);
             }
 
             .strategy-box {
                 margin-top: 15px;
-                padding: 10px;
+                padding: 12px;
                 background: #2a2a2a;
-                border-radius: 6px;
+                border-radius: 8px;
                 font-size: 0.9rem;
                 color: #bdc1c6;
-                border-left: 3px solid var(--accent-green);
+                border-left: 3px solid var(--accent-blue);
             }
 
             .no-results {
                 text-align: center;
                 color: var(--text-muted);
-                padding: 20px;
-                font-style: italic;
+                padding: 40px;
             }
         </style>
     </head>
     <body>
         <div class="header-container">
             <a href="/" class="brand"
-                >Mkt<span style="color: var(--accent-green)">Scan</span></a
+                >Mkt<span style="color: var(--accent-blue)">Scan</span></a
             >
 
             <form class="search-form" action="/search" method="POST">
@@ -181,12 +205,17 @@
                     type="text"
                     name="query"
                     class="search-input"
-                    placeholder="Search (e.g. BTC, TSLA)"
+                    placeholder="Search..."
                     autocomplete="off"
                 />
             </form>
 
-            <a href="/vix" class="vix-link">VIX Gauge</a>
+            <div class="vix-widget" style="border-color: {{ vix.color }};">
+                <span class="vix-label">VIX</span>
+                <span class="vix-price" style="color: {{ vix.color }};"
+                    >{{ vix.price }}</span
+                >
+            </div>
         </div>
 
         <div class="macro-container">
@@ -210,7 +239,7 @@
             </div>
         </div>
 
-        <a href="/scan" class="btn-scan">Scan QQQ Top 10</a>
+        <a href="/scan" class="btn-scan">SCAN QQQ MARKETS</a>
 
         {% if title %}
         <div class="section-title">{{ title }}</div>
@@ -232,22 +261,26 @@
                 </div>
 
                 <div class="strategy-box">{{ row.suggestion }}</div>
+
                 <div
                     style="
-                        margin-top: 10px;
+                        margin-top: 12px;
+                        display: flex;
+                        gap: 15px;
                         font-size: 0.8rem;
                         color: var(--text-muted);
                     "
                 >
-                    RSI: {{ row.rsi }} | VWAP: {{ row.vwap }}
+                    <span>RSI: <b>{{ row.rsi }}</b></span>
+                    <span>VWAP: <b>${{ row.vwap }}</b></span>
                 </div>
             </div>
             {% endfor %}
         </div>
         {% elif request.path == '/search' %}
         <div class="no-results">
-            No data found. If searching Crypto, try adding "-USD" (e.g.,
-            SOL-USD).
+            No signals found or invalid ticker.<br />
+            <small>Try adding "-USD" for crypto (e.g. BTC-USD)</small>
         </div>
         {% endif %}
     </body>
