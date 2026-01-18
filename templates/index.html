@@ -17,6 +17,7 @@
                 --text-muted: #9aa0a6;
                 --accent-green: #81c995;
                 --accent-red: #f28b82;
+                --gold: #ffd700;
                 --btn-bg: #303134;
                 --btn-hover: #3c4043;
                 --setup-bg: #2a2b2e;
@@ -112,17 +113,18 @@
                 background-color: var(--btn-bg);
                 border: 1px solid #303134;
                 color: #e8eaed;
-                padding: 10px 20px;
+                padding: 12px 24px;
                 border-radius: 4px;
                 font-size: 0.9rem;
-                font-weight: 500;
+                font-weight: 600;
                 text-decoration: none;
                 transition: all 0.2s;
+                border: 1px solid #5f6368;
             }
             .btn-lucky:hover {
                 background-color: var(--btn-hover);
-                border: 1px solid #5f6368;
                 color: white;
+                border-color: var(--gold);
             }
 
             /* BATTLE ARENA */
@@ -154,7 +156,89 @@
                 transform: scale(1.15);
             }
 
-            /* CARDS */
+            /* --- THE CHOSEN ONE (ORACLE CARD) --- */
+            .oracle-container {
+                margin-bottom: 30px;
+                animation: fadeIn 0.8s ease-in;
+            }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .oracle-card {
+                background: linear-gradient(135deg, #2b2b2b 0%, #1a1a1a 100%);
+                border: 1px solid var(--gold);
+                border-radius: 16px;
+                padding: 20px;
+                position: relative;
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+            }
+            .oracle-badge {
+                position: absolute;
+                top: -12px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--gold);
+                color: black;
+                font-weight: 800;
+                font-size: 0.75rem;
+                padding: 4px 12px;
+                border-radius: 12px;
+                letter-spacing: 1px;
+                box-shadow: 0 0 10px var(--gold);
+            }
+
+            .oracle-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                margin-bottom: 15px;
+            }
+            .oracle-ticker {
+                font-size: 2rem;
+                font-weight: 900;
+                color: white;
+            }
+            .oracle-pop {
+                text-align: right;
+            }
+            .pop-label {
+                font-size: 0.7rem;
+                color: var(--text-muted);
+                text-transform: uppercase;
+            }
+            .pop-value {
+                font-size: 1.5rem;
+                font-weight: 800;
+                color: var(--gold);
+            }
+
+            .social-box {
+                background: rgba(255, 255, 255, 0.05);
+                padding: 10px;
+                border-radius: 8px;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 0.9rem;
+            }
+            .social-icon {
+                font-size: 1.2rem;
+            }
+            .social-text {
+                color: #e8eaed;
+                font-style: italic;
+            }
+
+            /* RESULTS GRID */
             .results-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -201,14 +285,12 @@
                 background: rgba(242, 139, 130, 0.1);
             }
 
-            /* NEW: AI TRADE SETUP BOX */
             .ai-setup {
                 margin-top: 20px;
                 background: var(--setup-bg);
                 border-radius: 8px;
                 border: 1px solid #444;
                 padding: 15px;
-                position: relative;
             }
             .ai-title {
                 font-size: 0.7rem;
@@ -224,14 +306,12 @@
                 content: "⚡";
                 color: #ffd700;
             }
-
             .strategy-name {
                 font-size: 0.9rem;
                 font-weight: 700;
                 color: white;
                 margin-bottom: 8px;
             }
-
             .leg {
                 display: flex;
                 justify-content: space-between;
@@ -313,9 +393,68 @@
                 />
             </svg>
         </div>
+        {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
+        <div class="oracle-container">
+            <div class="oracle-card">
+                <div class="oracle-badge">ORACLE PICK OF THE DAY</div>
+
+                <div class="oracle-header">
+                    <div>
+                        <div
+                            style="
+                                font-size: 0.8rem;
+                                color: var(--gold);
+                                margin-bottom: 5px;
+                            "
+                        >
+                            {{ chosen_one.social.score }}
+                        </div>
+                        <div class="oracle-ticker">{{ chosen_one.ticker }}</div>
+                    </div>
+                    <div class="oracle-pop">
+                        <div class="pop-label">PROBABILITY</div>
+                        <div class="pop-value">{{ chosen_one.pop }}%</div>
+                    </div>
+                </div>
+
+                <div class="social-box">
+                    <span class="social-icon"
+                        >{{ chosen_one.social.icon }}</span
+                    >
+                    <span class="social-text"
+                        >"{{ chosen_one.social.comment }}"</span
+                    >
+                </div>
+
+                <div
+                    class="ai-setup"
+                    style="
+                        border-color: var(--gold);
+                        background: rgba(255, 215, 0, 0.05);
+                    "
+                >
+                    <div class="ai-title" style="color: var(--gold)">
+                        WINNING SETUP
+                    </div>
+                    <div class="strategy-name">{{ chosen_one.setup.type }}</div>
+                    <div class="leg">
+                        <span>Entry</span>
+                        <span>{{ chosen_one.setup.entry }}</span>
+                    </div>
+                    <div class="leg">
+                        <span>Target</span>
+                        <span>{{ chosen_one.setup.target }}</span>
+                    </div>
+                    <div class="leg">
+                        <span>Stop</span>
+                        <span>{{ chosen_one.setup.stop }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% endif %} {% if results %}
         <div class="results-grid">
-            {% for row in results %}
+            {% for row in results %} {% if row.ticker != chosen_one.ticker %}
             <div class="stock-card">
                 <div class="card-header">
                     <span class="ticker">{{ row.ticker }}</span>
@@ -337,24 +476,22 @@
                         margin-bottom: 15px;
                     "
                 >
-                    RSI: <b>{{ row.rsi }}</b> | VWAP: <b>${{ row.vwap }}</b>
+                    POP: <b style="color: white">{{ row.pop }}%</b> | VWAP:
+                    <b>${{ row.vwap }}</b>
                 </div>
 
                 <div class="ai-setup">
                     <div class="ai-title">AI ARCHITECT</div>
                     <div class="strategy-name">{{ row.setup.type }}</div>
                     <div class="leg">
-                        <span>Leg 1</span> <span>{{ row.setup.leg1 }}</span>
+                        <span>Entry</span> <span>{{ row.setup.entry }}</span>
                     </div>
                     <div class="leg">
-                        <span>Leg 2</span> <span>{{ row.setup.leg2 }}</span>
-                    </div>
-                    <div class="leg">
-                        <span>Leg 3</span> <span>{{ row.setup.leg3 }}</span>
+                        <span>Target</span> <span>{{ row.setup.target }}</span>
                     </div>
                 </div>
             </div>
-            {% endfor %}
+            {% endif %} {% endfor %}
         </div>
         {% elif request.path == '/search' %}
         <div class="no-results">
