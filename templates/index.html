@@ -40,6 +40,11 @@
                 --gold: #ffd700;
                 --setup-bg: #2a2b2e;
             }
+
+            /* SMOOTH SCROLLING & ALIVE BACKGROUND */
+            html {
+                scroll-behavior: smooth;
+            }
             body {
                 font-family: "Inter", sans-serif;
                 background-color: var(--bg-color);
@@ -47,140 +52,164 @@
                 margin: 0;
                 padding: 15px;
                 -webkit-tap-highlight-color: transparent;
+                /* Subtle breathing background animation */
+                background: linear-gradient(180deg, #202124 0%, #1a1a1a 100%);
+                min-height: 100vh;
             }
 
-            /* HEADER */
+            /* RESPONSIVE HEADER */
             .header-container {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 10px;
+                gap: 15px;
                 margin-bottom: 20px;
-                padding-top: 10px;
-            } /* Added padding for status bar */
+                padding-top: 5px;
+            }
+
+            .brand-box {
+                display: flex;
+                flex-direction: column;
+                min-width: 80px;
+            }
             .brand {
-                font-weight: 800;
-                font-size: 1.1rem;
+                font-weight: 900;
+                font-size: 1.2rem;
                 color: white;
                 text-decoration: none;
-                display: none;
                 letter-spacing: -0.5px;
             }
             .brand span {
-                text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-            }
-            @media (min-width: 400px) {
-                .brand {
-                    display: block;
-                }
+                text-shadow: 0 0 15px rgba(129, 201, 149, 0.4);
             }
 
+            /* SEARCH BAR - DESKTOP VS MOBILE */
             .search-form {
                 flex-grow: 1;
+                max-width: 600px;
             }
             .search-input {
                 width: 100%;
                 background-color: var(--input-bg);
                 border: 1px solid #5f6368;
                 color: var(--text-main);
-                padding: 10px 20px;
+                padding: 12px 20px;
                 font-size: 1rem;
-                border-radius: 24px;
+                border-radius: 50px;
                 outline: none;
-                box-sizing: border-box;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             }
             .search-input:focus {
                 background-color: #3c4043;
                 border-color: var(--accent-green);
+                box-shadow: 0 0 15px rgba(129, 201, 149, 0.2);
             }
 
+            /* VIX WIDGET */
             .vix-widget {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 background: var(--input-bg);
-                padding: 5px 12px;
+                padding: 8px 15px;
                 border-radius: 12px;
-                min-width: 55px;
+                min-width: 60px;
                 border: 1px solid #5f6368;
+                transition: transform 0.2s;
+            }
+            .vix-widget:active {
+                transform: scale(0.95);
             }
             .vix-label {
-                font-size: 0.6rem;
+                font-size: 0.65rem;
                 font-weight: 700;
                 color: var(--text-muted);
+                letter-spacing: 1px;
             }
             .vix-price {
-                font-size: 1rem;
+                font-size: 1.1rem;
                 font-weight: 800;
             }
 
+            /* MACRO FEED */
             .macro-container {
-                margin-bottom: 20px;
-                border-radius: 12px;
+                margin-bottom: 25px;
+                border-radius: 16px;
                 overflow: hidden;
                 border: 1px solid #3c4043;
                 background: var(--card-bg);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             }
 
+            /* LUCKY BUTTON - BOUNCY */
             .button-container {
                 text-align: center;
-                margin-bottom: 20px;
+                margin-bottom: 30px;
             }
             .btn-lucky {
                 display: inline-block;
                 background-color: var(--btn-bg);
                 border: 1px solid #5f6368;
                 color: #e8eaed;
-                padding: 12px 24px;
-                border-radius: 4px;
-                font-size: 0.9rem;
+                padding: 14px 28px;
+                border-radius: 50px;
+                font-size: 0.95rem;
                 font-weight: 600;
                 text-decoration: none;
-                transition: all 0.2s;
+                transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
             }
             .btn-lucky:hover {
                 background-color: #3c4043;
                 color: white;
                 border-color: var(--gold);
+                transform: translateY(-2px);
+            }
+            .btn-lucky:active {
+                transform: translateY(1px) scale(0.98);
             }
 
+            /* BATTLE ARENA ANIMATIONS */
             .battle-arena {
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 gap: 40px;
-                margin-bottom: 25px;
-                height: 60px;
+                margin-bottom: 30px;
+                height: 70px;
             }
             .battle-icon {
-                width: 50px;
-                height: 50px;
+                width: 55px;
+                height: 55px;
                 fill: #4a4a4a;
-                transition: all 0.5s ease;
+                transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
                 opacity: 0.2;
             }
+
             .bull-active .bull-icon {
                 fill: var(--accent-green);
                 opacity: 1;
-                filter: drop-shadow(0 0 10px rgba(129, 201, 149, 0.8));
-                transform: scale(1.15);
+                filter: drop-shadow(0 0 15px rgba(129, 201, 149, 0.6));
+                transform: scale(1.2);
             }
             .bear-active .bear-icon {
                 fill: var(--accent-red);
                 opacity: 1;
-                filter: drop-shadow(0 0 10px rgba(242, 139, 130, 0.8));
-                transform: scale(1.15);
+                filter: drop-shadow(0 0 15px rgba(242, 139, 130, 0.6));
+                transform: scale(1.2);
             }
 
+            /* ORACLE CARD - PREMIUM FEEL */
             .oracle-container {
-                margin-bottom: 30px;
-                animation: fadeIn 0.8s ease-in;
+                margin-bottom: 35px;
+                animation: slideUp 0.6s ease-out;
             }
-            @keyframes fadeIn {
+            @keyframes slideUp {
                 from {
                     opacity: 0;
-                    transform: translateY(-10px);
+                    transform: translateY(20px);
                 }
                 to {
                     opacity: 1;
@@ -189,37 +218,40 @@
             }
 
             .oracle-card {
-                background: linear-gradient(135deg, #2b2b2b 0%, #1a1a1a 100%);
+                background: linear-gradient(145deg, #2b2b2b 0%, #1c1c1c 100%);
                 border: 1px solid var(--gold);
-                border-radius: 16px;
-                padding: 20px;
+                border-radius: 20px;
+                padding: 25px;
                 position: relative;
-                box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+                box-shadow: 0 10px 30px rgba(255, 215, 0, 0.1);
             }
             .oracle-badge {
                 position: absolute;
-                top: -12px;
+                top: -14px;
                 left: 50%;
                 transform: translateX(-50%);
                 background: var(--gold);
                 color: black;
-                font-weight: 800;
+                font-weight: 900;
                 font-size: 0.75rem;
-                padding: 4px 12px;
-                border-radius: 12px;
-                letter-spacing: 1px;
-                box-shadow: 0 0 10px var(--gold);
+                padding: 6px 16px;
+                border-radius: 20px;
+                letter-spacing: 1.5px;
+                box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+                text-transform: uppercase;
             }
+
             .oracle-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: flex-end;
-                margin-bottom: 15px;
+                margin-bottom: 20px;
             }
             .oracle-ticker {
-                font-size: 2rem;
+                font-size: 2.2rem;
                 font-weight: 900;
                 color: white;
+                letter-spacing: -1px;
             }
             .oracle-pop {
                 text-align: right;
@@ -228,35 +260,53 @@
                 font-size: 0.7rem;
                 color: var(--text-muted);
                 text-transform: uppercase;
+                letter-spacing: 1px;
             }
             .pop-value {
-                font-size: 1.5rem;
+                font-size: 1.8rem;
                 font-weight: 800;
                 color: var(--gold);
+                text-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
             }
 
             .social-box {
-                background: rgba(255, 255, 255, 0.05);
-                padding: 10px;
-                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.03);
+                padding: 12px;
+                border-radius: 12px;
                 margin-bottom: 15px;
                 display: flex;
                 align-items: center;
-                gap: 10px;
-                font-size: 0.9rem;
+                gap: 12px;
+                font-size: 0.95rem;
+                border-left: 3px solid var(--gold);
             }
 
+            /* RESPONSIVE GRID - THE BIG DESKTOP FIX */
             .results-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                gap: 15px;
+                /* Desktop: 3 columns | Tablet: 2 columns | Mobile: 1 column */
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                gap: 20px;
             }
+
             .stock-card {
                 background: var(--card-bg);
-                border-radius: 12px;
+                border-radius: 16px;
                 padding: 20px;
                 border: 1px solid #3c4043;
+                transition:
+                    transform 0.2s,
+                    box-shadow 0.2s;
             }
+            /* Desktop Hover Effect */
+            @media (min-width: 768px) {
+                .stock-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+                    border-color: #5f6368;
+                }
+            }
+
             .card-header {
                 display: flex;
                 justify-content: space-between;
@@ -264,22 +314,25 @@
                 margin-bottom: 15px;
             }
             .ticker {
-                font-size: 1.5rem;
+                font-size: 1.6rem;
                 font-weight: 800;
                 color: var(--text-main);
+                letter-spacing: -0.5px;
             }
             .price {
                 font-family: monospace;
                 font-size: 1.1rem;
                 color: var(--text-muted);
             }
+
             .signal-badge {
                 display: inline-block;
-                padding: 4px 10px;
-                border-radius: 4px;
+                padding: 6px 12px;
+                border-radius: 8px;
                 font-size: 0.75rem;
                 font-weight: 800;
                 text-transform: uppercase;
+                letter-spacing: 0.5px;
             }
             .bullish {
                 color: var(--accent-green);
@@ -295,7 +348,7 @@
             .ai-setup {
                 margin-top: 20px;
                 background: var(--setup-bg);
-                border-radius: 8px;
+                border-radius: 12px;
                 border: 1px solid #444;
                 padding: 15px;
             }
@@ -314,33 +367,37 @@
                 color: #ffd700;
             }
             .strategy-name {
-                font-size: 0.9rem;
+                font-size: 0.95rem;
                 font-weight: 700;
                 color: white;
-                margin-bottom: 8px;
+                margin-bottom: 10px;
+                border-bottom: 1px solid #444;
+                padding-bottom: 8px;
             }
+
             .leg {
                 display: flex;
                 justify-content: space-between;
                 font-size: 0.85rem;
                 color: #ccc;
-                padding: 4px 0;
-                border-bottom: 1px solid #333;
+                padding: 6px 0;
             }
-            .leg:last-child {
-                border-bottom: none;
+            .leg span:last-child {
+                font-family: monospace;
+                color: white;
             }
 
             .no-results {
                 text-align: center;
                 color: var(--text-muted);
                 padding: 40px;
+                font-style: italic;
             }
         </style>
     </head>
     <body>
         <div class="header-container">
-            <div style="display: flex; flex-direction: column">
+            <div class="brand-box">
                 <a href="/" class="brand"
                     >The<span style="color: {{ status_color }};"
                         >Matrix</span
@@ -349,13 +406,13 @@
                 <span
                     id="live-clock"
                     style="
-                        font-size: 0.6rem;
+                        font-size: 0.65rem;
                         color: #5f6368;
                         letter-spacing: 1px;
-                        margin-top: 2px;
+                        margin-top: 4px;
                         font-weight: 600;
                     "
-                    >LOADING...</span
+                    >CONNECTING...</span
                 >
             </div>
 
@@ -435,7 +492,6 @@
         <div class="oracle-container">
             <div class="oracle-card">
                 <div class="oracle-badge">ORACLE PICK OF THE DAY</div>
-
                 <div class="oracle-header">
                     <div>
                         <div
@@ -456,7 +512,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="social-box">
                     <span class="social-icon"
                         >{{ chosen_one.social.icon }}</span
@@ -465,7 +520,6 @@
                         >"{{ chosen_one.social.comment }}"</span
                     >
                 </div>
-
                 <div
                     class="ai-setup"
                     style="
