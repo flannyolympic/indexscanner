@@ -454,7 +454,21 @@
                 </div>
             </div>
         </div>
-        {% endif %} {% if results %}
+        {% if error %}
+        <div
+            style="
+                text-align: center;
+                color: var(--accent-red);
+                margin-bottom: 20px;
+                padding: 20px;
+                border: 1px solid var(--accent-red);
+                border-radius: 12px;
+                background: rgba(242, 139, 130, 0.1);
+            "
+        >
+            <strong>SYSTEM ERROR:</strong> {{ error }}
+        </div>
+        {% endif %} {% endif %} {% if results %}
         <div class="results-grid">
             {% for row in results %} {% if row.ticker != chosen_one.ticker %}
             <div class="stock-card">
