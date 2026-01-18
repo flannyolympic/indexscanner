@@ -2,8 +2,28 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
         <title>TheMatrix</title>
+
+        <link
+            rel="icon"
+            type="image/png"
+            href="{{ url_for('static', filename='icon.png') }}"
+        />
+        <link
+            rel="apple-touch-icon"
+            href="{{ url_for('static', filename='icon.png') }}"
+        />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+            name="apple-mobile-web-app-status-bar-style"
+            content="black-translucent"
+        />
+        <meta name="theme-color" content="#202124" />
+
         <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
             rel="stylesheet"
@@ -18,17 +38,15 @@
                 --accent-green: #81c995;
                 --accent-red: #f28b82;
                 --gold: #ffd700;
-                --btn-bg: #303134;
-                --btn-hover: #3c4043;
                 --setup-bg: #2a2b2e;
             }
-
             body {
                 font-family: "Inter", sans-serif;
                 background-color: var(--bg-color);
                 color: var(--text-main);
                 margin: 0;
                 padding: 15px;
+                -webkit-tap-highlight-color: transparent;
             }
 
             /* HEADER */
@@ -38,7 +56,8 @@
                 justify-content: space-between;
                 gap: 10px;
                 margin-bottom: 20px;
-            }
+                padding-top: 10px;
+            } /* Added padding for status bar */
             .brand {
                 font-weight: 800;
                 font-size: 1.1rem;
@@ -121,12 +140,11 @@
                 transition: all 0.2s;
             }
             .btn-lucky:hover {
-                background-color: var(--btn-hover);
+                background-color: #3c4043;
                 color: white;
                 border-color: var(--gold);
             }
 
-            /* BATTLE ARENA */
             .battle-arena {
                 display: flex;
                 justify-content: center;
@@ -155,7 +173,6 @@
                 transform: scale(1.15);
             }
 
-            /* --- THE CHOSEN ONE (ORACLE CARD) --- */
             .oracle-container {
                 margin-bottom: 30px;
                 animation: fadeIn 0.8s ease-in;
@@ -193,7 +210,6 @@
                 letter-spacing: 1px;
                 box-shadow: 0 0 10px var(--gold);
             }
-
             .oracle-header {
                 display: flex;
                 justify-content: space-between;
@@ -229,15 +245,7 @@
                 gap: 10px;
                 font-size: 0.9rem;
             }
-            .social-icon {
-                font-size: 1.2rem;
-            }
-            .social-text {
-                color: #e8eaed;
-                font-style: italic;
-            }
 
-            /* RESULTS GRID */
             .results-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -284,7 +292,6 @@
                 background: rgba(242, 139, 130, 0.1);
             }
 
-            /* AI SETUP BOX */
             .ai-setup {
                 margin-top: 20px;
                 background: var(--setup-bg);
@@ -494,7 +501,6 @@
                     <span class="ticker">{{ row.ticker }}</span>
                     <span class="price">${{ row.price }}</span>
                 </div>
-
                 <div style="margin-bottom: 10px">
                     <span
                         class="signal-badge {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}"
@@ -502,7 +508,6 @@
                         {{ row.signal }}
                     </span>
                 </div>
-
                 <div
                     style="
                         font-size: 0.8rem;
@@ -513,7 +518,6 @@
                     POP: <b style="color: white">{{ row.probability }}%</b> |
                     VWAP: <b>${{ row.vwap }}</b>
                 </div>
-
                 <div class="ai-setup">
                     <div class="ai-title">AI ARCHITECT</div>
                     <div class="strategy-name">{{ row.setup.type }}</div>
