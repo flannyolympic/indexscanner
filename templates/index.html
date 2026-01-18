@@ -409,6 +409,17 @@
         {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
         <div class="oracle-container">
             <div class="oracle-card">
+                <div class="leg">
+                    <span>Action</span>
+                    <span>{{ chosen_one.setup.entry }}</span>
+                </div>
+                <div class="leg">
+                    <span>Target</span>
+                    <span>{{ chosen_one.setup.target }}</span>
+                </div>
+                <div class="leg">
+                    <span>Risk</span> <span>{{ chosen_one.setup.stop }}</span>
+                </div>
                 <div class="oracle-badge">ORACLE PICK OF THE DAY</div>
 
                 <div class="oracle-header">
@@ -485,6 +496,12 @@
         <div class="results-grid">
             {% for row in results %} {% if row.ticker != chosen_one.ticker %}
             <div class="stock-card">
+                <div class="leg">
+                    <span>Action</span> <span>{{ row.setup.entry }}</span>
+                </div>
+                <div class="leg">
+                    <span>Target</span> <span>{{ row.setup.target }}</span>
+                </div>
                 <div class="card-header">
                     <span class="ticker">{{ row.ticker }}</span>
                     <span class="price">${{ row.price }}</span>

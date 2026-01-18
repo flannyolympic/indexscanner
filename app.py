@@ -35,6 +35,8 @@ UNIVERSE = [
     "SPY",
     "QQQ",
     "IWM",
+    "SMCI",
+    "ARM",
 ]
 
 
@@ -53,7 +55,6 @@ init_db()
 
 # --- HELPERS ---
 def get_current_time():
-    """Returns formatted live NY time"""
     tz = pytz.timezone("US/Eastern")
     return datetime.now(tz).strftime("%H:%M:%S EST")
 
@@ -71,59 +72,160 @@ def get_market_status_color():
 
 def get_market_data(ticker):
     try:
-        # Fetch 5 days of data to ensure we have enough for volatility
-        df = yf.download(ticker, period="5d", interval="15m", progress=False)
+        # Fetch enough data for reliable volatility calc
+        df = yf.download(ticker, period="1mo", interval="1h", progress=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
-        if df.empty or len(df) < 5:
+        if df.empty or len(df) < 20:
             return None
         return df
     except Exception:
         return None
 
 
-def calculate_probability(price, target, std_dev, days=3):
+def calculate_probability(price, target, std_dev, rsi, trend):
     """
-    Calculates probability of touching target within 'days'.
-    Fixed logic: Uses 3-day volatility window for realistic swing trade odds.
+    Advanced POP Calculation:
+    Combines Gaussian Probability with RSI Confluence.
     """
-    # Volatility scales with square root of time
+    # 1. Base Statistical Probability (Z-Score)
+    days = 5  # Swing trade duration
     volatility = std_dev * np.sqrt(days)
-
     if volatility == 0:
         return 50.0
-
-    # Z-Score: How many standard deviations away is the target?
     z_score = abs(target - price) / volatility
+    stat_prob = 2 * norm.sf(z_score) * 100
 
-    # Survival Function (sf) gives probability of exceeding Z
-    # We multiply by 2 for "touch" probability (up or down path)
-    prob = 2 * norm.sf(z_score)
+    # 2. RSI Confluence Adjustment
+    # If we are betting LONG and RSI is LOW (Oversold), Probability INCREASES.
+    rsi_edge = 0
+    if trend == "LONG":
+        if rsi < 30:
+            rsi_edge = 25  # Massive edge
+        elif rsi < 40:
+            rsi_edge = 15
+        elif rsi > 70:
+            rsi_edge = -20  # Betting against momentum is hard
+    elif trend == "SHORT":
+        if rsi > 70:
+            rsi_edge = 25
+        elif rsi > 60:
+            rsi_edge = 15
+        elif rsi < 30:
+            rsi_edge = -20
 
-    # Scale to percentage and clamp
-    pop = prob * 100
-
-    # Realistic Caps: Even the best trade isn't 100%, worst isn't 0%
-    return round(min(max(pop, 15), 88), 1)
+    # Combine and Clamp
+    final_pop = stat_prob + rsi_edge
+    return round(min(max(final_pop, 18.5), 92.4), 1)
 
 
-def get_social_sentiment(ticker, rsi, volume_spike):
-    if rsi > 70 and volume_spike:
+def determine_strategy(price, bb_upper, bb_lower, bb_width, rsi, signal, is_crypto):
+    """
+    THE STRATEGY ENGINE:
+    Decides between Debit, Credit, or Iron Condors based on Volatility Width.
+    """
+    setup_text = {"type": "WAIT", "entry": "-", "target": "-", "stop": "-"}
+    expiry = "Next Friday"
+
+    # Check Volatility State (Squeeze vs Expansion)
+    # This is a simplified relative width check
+    high_vol = bb_width > (price * 0.05)  # If bands are >5% of price wide, Vol is high
+
+    if is_crypto:
+        risk = (bb_upper - bb_lower) / 4
+        if "BULLISH" in signal:
+            setup_text = {
+                "type": "CRYPTO SWING LONG",
+                "entry": f"${price:,.2f}",
+                "target": f"${(price + (risk * 2)):,.2f}",
+                "stop": f"${(price - risk):,.2f}",
+            }
+        elif "BEARISH" in signal:
+            setup_text = {
+                "type": "CRYPTO SWING SHORT",
+                "entry": f"${price:,.2f}",
+                "target": f"${(price - (risk * 2)):,.2f}",
+                "stop": f"${(price + risk):,.2f}",
+            }
+
+    else:  # STOCK OPTIONS LOGIC
+        if "BULLISH" in signal:
+            if high_vol:
+                # High Vol? SELL PREMIUM (Bull Put Credit Spread)
+                # Sell Put at Support, Buy lower Put for protection
+                sell_strike = np.floor(bb_lower)
+                buy_strike = sell_strike - 2.5
+                setup_text = {
+                    "type": f"BULL PUT SPREAD (Credit)",
+                    "entry": f"SELL Put ${sell_strike}",
+                    "target": "Expire Worthless",
+                    "stop": f"Below ${buy_strike}",
+                }
+            else:
+                # Low Vol? BUY PREMIUM (Bull Call Debit Spread)
+                # Buy ATM Call, Sell Resistance Call
+                buy_strike = np.ceil(price)
+                sell_strike = np.ceil(bb_upper)
+                setup_text = {
+                    "type": f"BULL CALL SPREAD (Debit)",
+                    "entry": f"BUY Call ${buy_strike}",
+                    "target": f"SELL Call ${sell_strike}",
+                    "stop": "-50% Premium",
+                }
+
+        elif "BEARISH" in signal:
+            if high_vol:
+                # High Vol? SELL PREMIUM (Bear Call Credit Spread)
+                sell_strike = np.ceil(bb_upper)
+                buy_strike = sell_strike + 2.5
+                setup_text = {
+                    "type": f"BEAR CALL SPREAD (Credit)",
+                    "entry": f"SELL Call ${sell_strike}",
+                    "target": "Expire Worthless",
+                    "stop": f"Above ${buy_strike}",
+                }
+            else:
+                # Low Vol? BUY PREMIUM (Bear Put Debit Spread)
+                buy_strike = np.floor(price)
+                sell_strike = np.floor(bb_lower)
+                setup_text = {
+                    "type": f"BEAR PUT SPREAD (Debit)",
+                    "entry": f"BUY Put ${buy_strike}",
+                    "target": f"SELL Put ${sell_strike}",
+                    "stop": "-50% Premium",
+                }
+
+        else:  # NEUTRAL SIGNAL
+            if high_vol:
+                # Neutral + High Vol = IRON CONDOR (Rangebound)
+                call_side = np.ceil(bb_upper)
+                put_side = np.floor(bb_lower)
+                setup_text = {
+                    "type": "IRON CONDOR (Income)",
+                    "entry": f"SELL Call ${call_side} / Put ${put_side}",
+                    "target": "Range Hold",
+                    "stop": "Band Breakout",
+                }
+
+    return setup_text
+
+
+def get_social_sentiment(rsi, vol_spike):
+    if rsi > 70 and vol_spike:
         return {
             "score": "MAX HYPE",
-            "comment": random.choice(["🚀 MOON MISSION", "💎🙌 HODL"]),
+            "comment": random.choice(["🚀 MOON", "Short Squeeze"]),
             "icon": "🔥",
         }
-    elif rsi < 30 and volume_spike:
+    if rsi < 30 and vol_spike:
         return {
-            "score": "FEAR SPIKE",
-            "comment": random.choice(["🩸 Blood in streets", "Capitulation?"]),
+            "score": "FEAR",
+            "comment": random.choice(["🩸 Capitulation", "Oversold"]),
             "icon": "🩸",
         }
-    elif volume_spike:
-        return {"score": "TRENDING", "comment": "Whales Entering", "icon": "👀"}
-    else:
-        return {"score": "QUIET", "comment": "Accumulation Zone", "icon": "💤"}
+    if vol_spike:
+        return {"score": "ACTIVE", "comment": "Whales Accumulating", "icon": "👀"}
+    return {"score": "QUIET", "comment": "Retail Sleeping", "icon": "💤"}
 
 
 def get_vix_data():
@@ -141,18 +243,15 @@ def get_vix_data():
         return {"price": round(price, 2), "color": "#ff1744"}
 
 
-# --- ANALYZER ---
 def analyze_ticker(ticker_input):
     ticker = ticker_input.upper().strip()
     df = get_market_data(ticker)
 
     if df is None:
         if not ticker.endswith("-USD"):
-            crypto_try = f"{ticker}-USD"
-            df_crypto = get_market_data(crypto_try)
-            if df_crypto is not None:
-                df = df_crypto
-                ticker = crypto_try
+            df = get_market_data(f"{ticker}-USD")
+            if df is not None:
+                ticker = f"{ticker}-USD"
 
     if df is None:
         return None
@@ -173,6 +272,9 @@ def analyze_ticker(ticker_input):
     latest = df.iloc[-1]
     price = latest["Close"]
     std_dev = latest["Std_Dev"]
+    bb_upper = latest["BB_Upper"]
+    bb_lower = latest["BB_Lower"]
+    bb_width = bb_upper - bb_lower
 
     avg_vol = df["Volume"].rolling(window=20).mean().iloc[-1]
     if pd.isna(avg_vol) or avg_vol == 0:
@@ -181,46 +283,36 @@ def analyze_ticker(ticker_input):
 
     # Signal Logic
     signal = "NEUTRAL"
-    suggestion = "Wait"
-    setup_type = "NONE"
+    suggestion = "Neutral"
+    trend = "FLAT"
 
-    if price < latest["BB_Lower"] and latest["RSI"] < 30:
+    if price < bb_lower or latest["RSI"] < 35:
         signal = "BULLISH"
         suggestion = "Oversold Reversion"
-        setup_type = "LONG"
-    elif price > latest["BB_Upper"] and latest["RSI"] > 70:
+        trend = "LONG"
+    elif price > bb_upper or latest["RSI"] > 65:
         signal = "BEARISH"
         suggestion = "Overbought Rejection"
-        setup_type = "SHORT"
-    elif price > latest["VWAP"] and vol_spike:
-        signal = "BULLISH (MOMENTUM)"
+        trend = "SHORT"
+    elif vol_spike and price > latest["VWAP"]:
+        signal = "BULLISH (VOL)"
         suggestion = "Volume Breakout"
-        setup_type = "LONG"
+        trend = "LONG"
 
-    # AI Setup - Target 1.5 Std Dev (Realistic Swing)
-    target_dist = std_dev * 1.5
-    target_price = price + target_dist if setup_type == "LONG" else price - target_dist
+    # --- ADVANCED AI CALCULATIONS ---
+    # 1. Determine Strategy based on Volatility Width + Crypto vs Stock
+    is_crypto = "-USD" in ticker
+    setup_text = determine_strategy(
+        price, bb_upper, bb_lower, bb_width, latest["RSI"], signal, is_crypto
+    )
 
-    # Calculate Probability (3 Day Outlook)
-    probability = calculate_probability(price, target_price, std_dev, days=3)
+    # 2. Calculate Dynamic POP based on Trend + RSI Edge
+    target_price = bb_upper if trend == "LONG" else bb_lower
+    probability = calculate_probability(
+        price, target_price, std_dev, latest["RSI"], trend
+    )
 
-    social = get_social_sentiment(ticker, latest["RSI"], vol_spike)
-
-    setup_text = {"type": "NO SETUP", "entry": "-", "target": "-", "stop": "-"}
-    if setup_type == "LONG":
-        setup_text = {
-            "type": "SWING LONG",
-            "entry": f"${price:,.2f}",
-            "target": f"${target_price:,.2f}",
-            "stop": f"${(price - std_dev):,.2f}",
-        }
-    elif setup_type == "SHORT":
-        setup_text = {
-            "type": "SWING SHORT",
-            "entry": f"${price:,.2f}",
-            "target": f"${target_price:,.2f}",
-            "stop": f"${(price + std_dev):,.2f}",
-        }
+    social = get_social_sentiment(latest["RSI"], vol_spike)
 
     return {
         "ticker": ticker,
@@ -255,6 +347,7 @@ def scan():
     raw_results = [analyze_ticker(t) for t in scan_list]
     results = [r for r in raw_results if r]
 
+    # Pick the Highest Probability Trade
     active_setups = [r for r in results if r["signal"] != "NEUTRAL"]
     if active_setups:
         chosen_one = sorted(
@@ -290,13 +383,12 @@ def search():
         return render_template(
             "index.html",
             results=[],
-            error=f"Could not find data for '{query}'",
+            error=f"Could not find '{query}'",
             vix=get_vix_data(),
             status_color=get_market_status_color(),
             timestamp=get_current_time(),
         )
 
-    results = [result]
     mood = "NEUTRAL"
     if "BULLISH" in result["signal"]:
         mood = "BULL"
@@ -305,7 +397,7 @@ def search():
 
     return render_template(
         "index.html",
-        results=results,
+        results=[result],
         chosen_one=result,
         mood=mood,
         vix=get_vix_data(),
