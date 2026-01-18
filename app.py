@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 
 import numpy as np
 import pandas as pd
@@ -53,7 +53,8 @@ def get_market_status_color():
 
 def get_market_data(ticker):
     try:
-        df = yf.download(ticker, period="1d", interval="1m", progress=False)
+        # Fetch 5 days of 15m data for better volatility calculation
+        df = yf.download(ticker, period="5d", interval="15m", progress=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
         if df.empty:
@@ -78,6 +79,88 @@ def get_vix_data():
         return {"price": round(price, 2), "color": "#ff1744"}
 
 
+# --- AI TRADE ARCHITECT ---
+def generate_trade_setup(ticker, price, signal, upper_bb, lower_bb, std_dev):
+    """
+    Constructs a specific Option or Crypto spread based on Volatility.
+    """
+    setup = {}
+    is_crypto = "-USD" in ticker or ticker in ["BTC", "ETH", "SOL", "DOGE"]
+
+    # 1. EXPIRATION LOGIC (For Options)
+    # If today is Friday, aim for next week. Otherwise 0DTE or 1DTE.
+    today = datetime.now().weekday()
+    expiry = "0DTE (Today)" if today < 4 else "Next Friday"
+
+    # 2. STRATEGY CONSTRUCTION
+    if "BULLISH" in signal:
+        if is_crypto:
+            # Crypto Long Setup
+            risk = std_dev * 1.5
+            entry = price
+            stop_loss = entry - risk
+            take_profit = entry + (risk * 2)  # 2:1 Reward Ratio
+            setup = {
+                "type": "CRYPTO LONG",
+                "leg1": f"Entry: ${entry:,.2f}",
+                "leg2": f"Stop: ${stop_loss:,.2f}",
+                "leg3": f"Target: ${take_profit:,.2f} (2:1)",
+            }
+        else:
+            # Stock Call Debit Spread
+            # Buy ATM, Sell resistance (Upper BB)
+            buy_strike = np.ceil(price)
+            sell_strike = np.ceil(upper_bb)
+            if sell_strike <= buy_strike:
+                sell_strike = buy_strike + 2.5  # Minimum width
+
+            setup = {
+                "type": f"BULL CALL SPREAD ({expiry})",
+                "leg1": f"BUY Call Strike: ${buy_strike}",
+                "leg2": f"SELL Call Strike: ${sell_strike}",
+                "leg3": "Net Debit (Low Risk)",
+            }
+
+    elif "BEARISH" in signal:
+        if is_crypto:
+            # Crypto Short Setup
+            risk = std_dev * 1.5
+            entry = price
+            stop_loss = entry + risk
+            take_profit = entry - (risk * 2)
+            setup = {
+                "type": "CRYPTO SHORT",
+                "leg1": f"Entry: ${entry:,.2f}",
+                "leg2": f"Stop: ${stop_loss:,.2f}",
+                "leg3": f"Target: ${take_profit:,.2f} (2:1)",
+            }
+        else:
+            # Stock Put Debit Spread
+            # Buy ATM, Sell Support (Lower BB)
+            buy_strike = np.floor(price)
+            sell_strike = np.floor(lower_bb)
+            if sell_strike >= buy_strike:
+                sell_strike = buy_strike - 2.5
+
+            setup = {
+                "type": f"BEAR PUT SPREAD ({expiry})",
+                "leg1": f"BUY Put Strike: ${buy_strike}",
+                "leg2": f"SELL Put Strike: ${sell_strike}",
+                "leg3": "Net Debit (Low Risk)",
+            }
+
+    else:
+        # Neutral / Chop
+        setup = {
+            "type": "WAIT / CASH",
+            "leg1": "No clear edge.",
+            "leg2": " volatility low.",
+            "leg3": "Preserve Capital.",
+        }
+
+    return setup
+
+
 def analyze_ticker(ticker):
     ticker = ticker.upper().strip()
     df = get_market_data(ticker)
@@ -90,6 +173,7 @@ def analyze_ticker(ticker):
     if df is None or len(df) < 20:
         return None
 
+    # Indicators
     df["SMA_20"] = df["Close"].rolling(window=20).mean()
     df["Std_Dev"] = df["Close"].rolling(window=20).std()
     df["BB_Upper"] = df["SMA_20"] + (df["Std_Dev"] * 2)
@@ -106,18 +190,24 @@ def analyze_ticker(ticker):
     latest = df.iloc[-1]
     price = latest["Close"]
 
+    # Logic
     signal = "NEUTRAL"
     suggestion = "Wait for Setup"
 
     if price < latest["BB_Lower"] and latest["RSI"] < 30:
         signal = "BULLISH"
-        suggestion = f"Oversold Bounce | Call Strike: ${np.ceil(price)}"
+        suggestion = "Oversold | Reversion Likely"
     elif price > latest["BB_Upper"] and latest["RSI"] > 70:
         signal = "BEARISH"
-        suggestion = f"Overbought Reject | Put Strike: ${np.floor(price)}"
+        suggestion = "Overbought | Rejection Likely"
     elif price > latest["VWAP"] and df.iloc[-2]["Close"] < df.iloc[-2]["VWAP"]:
         signal = "BULLISH (VWAP)"
-        suggestion = f"Momentum Breakout | Call Strike: ${np.ceil(price)}"
+        suggestion = "Momentum Breakout"
+
+    # --- GENERATE AI SETUP ---
+    ai_setup = generate_trade_setup(
+        ticker, price, signal, latest["BB_Upper"], latest["BB_Lower"], latest["Std_Dev"]
+    )
 
     return {
         "ticker": ticker,
@@ -126,6 +216,7 @@ def analyze_ticker(ticker):
         "vwap": round(latest["VWAP"], 2),
         "signal": signal,
         "suggestion": suggestion,
+        "setup": ai_setup,  # Pass the new setup to the UI
     }
 
 
@@ -168,7 +259,6 @@ def search():
     result = analyze_ticker(query)
     results = [result] if result else []
 
-    # --- MOOD FOR SEARCH ---
     mood = "NEUTRAL"
     if result:
         if "BULLISH" in result["signal"]:
