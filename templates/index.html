@@ -413,7 +413,9 @@
                     </div>
                     <div class="oracle-pop">
                         <div class="pop-label">PROBABILITY</div>
-                        <div class="pop-value">{{ chosen_one.pop }}%</div>
+                        <div class="pop-value">
+                            {{ chosen_one.probability }}%
+                        </div>
                     </div>
                 </div>
 
@@ -476,7 +478,8 @@
                         margin-bottom: 15px;
                     "
                 >
-                    POP: <b style="color: white">{{ row.pop }}%</b> | VWAP:
+                    POP: <b style="color: white">{{ row.probability }}%</b> |
+                    VWAP:
                     <b>${{ row.vwap }}</b>
                 </div>
 

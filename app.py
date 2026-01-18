@@ -300,14 +300,18 @@ def search():
         elif "BEARISH" in result["signal"]:
             mood = "BEAR"
 
-    return render_template(
-        "index.html",
-        results=results,
-        chosen_one=result,
-        mood=mood,
-        vix=get_vix_data(),
-        status_color=get_market_status_color(),
-    )
+    return {
+        "ticker": ticker,
+        "price": round(price, 2),
+        "rsi": round(latest["RSI"], 2),
+        "vwap": round(latest["VWAP"], 2),
+        "signal": signal,
+        "suggestion": suggestion,
+        "probability": pop,  # <--- CHANGED NAME HERE (Was "pop": pop)
+        "social": social,
+        "setup": setup_text,
+        "vol_spike": vol_spike,
+    }
 
 
 @app.route("/add_to_watchlist", methods=["POST"])
