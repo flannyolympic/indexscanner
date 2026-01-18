@@ -111,7 +111,7 @@
             .btn-lucky {
                 display: inline-block;
                 background-color: var(--btn-bg);
-                border: 1px solid #303134;
+                border: 1px solid #5f6368;
                 color: #e8eaed;
                 padding: 12px 24px;
                 border-radius: 4px;
@@ -119,7 +119,6 @@
                 font-weight: 600;
                 text-decoration: none;
                 transition: all 0.2s;
-                border: 1px solid #5f6368;
             }
             .btn-lucky:hover {
                 background-color: var(--btn-hover);
@@ -285,6 +284,7 @@
                 background: rgba(242, 139, 130, 0.1);
             }
 
+            /* AI SETUP BOX */
             .ai-setup {
                 margin-top: 20px;
                 background: var(--setup-bg);
@@ -340,15 +340,18 @@
                     ></a
                 >
                 <span
+                    id="live-clock"
                     style="
                         font-size: 0.6rem;
                         color: #5f6368;
                         letter-spacing: 1px;
                         margin-top: 2px;
+                        font-weight: 600;
                     "
-                    >LIVE: {{ timestamp }}</span
+                    >LOADING...</span
                 >
             </div>
+
             <form class="search-form" action="/search" method="POST">
                 <input
                     type="text"
@@ -358,6 +361,7 @@
                     autocomplete="off"
                 />
             </form>
+
             <div class="vix-widget" style="border-color: {{ vix.color }};">
                 <span class="vix-label">VIX</span>
                 <span class="vix-price" style="color: {{ vix.color }};"
@@ -383,7 +387,21 @@
             <a href="/scan" class="btn-lucky">I'm Feeling Lucky</a>
         </div>
 
-        {% if results %}
+        {% if error %}
+        <div
+            style="
+                text-align: center;
+                color: var(--accent-red);
+                margin-bottom: 20px;
+                padding: 20px;
+                border: 1px solid var(--accent-red);
+                border-radius: 12px;
+                background: rgba(242, 139, 130, 0.1);
+            "
+        >
+            <strong>SYSTEM ERROR:</strong> {{ error }}
+        </div>
+        {% endif %} {% if results %}
         <div
             class="battle-arena {{ 'bull-active' if mood == 'BULL' else '' }} {{ 'bear-active' if mood == 'BEAR' else '' }}"
         >
@@ -409,17 +427,6 @@
         {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
         <div class="oracle-container">
             <div class="oracle-card">
-                <div class="leg">
-                    <span>Action</span>
-                    <span>{{ chosen_one.setup.entry }}</span>
-                </div>
-                <div class="leg">
-                    <span>Target</span>
-                    <span>{{ chosen_one.setup.target }}</span>
-                </div>
-                <div class="leg">
-                    <span>Risk</span> <span>{{ chosen_one.setup.stop }}</span>
-                </div>
                 <div class="oracle-badge">ORACLE PICK OF THE DAY</div>
 
                 <div class="oracle-header">
@@ -464,7 +471,7 @@
                     </div>
                     <div class="strategy-name">{{ chosen_one.setup.type }}</div>
                     <div class="leg">
-                        <span>Entry</span>
+                        <span>Action</span>
                         <span>{{ chosen_one.setup.entry }}</span>
                     </div>
                     <div class="leg">
@@ -478,30 +485,11 @@
                 </div>
             </div>
         </div>
-        {% if error %}
-        <div
-            style="
-                text-align: center;
-                color: var(--accent-red);
-                margin-bottom: 20px;
-                padding: 20px;
-                border: 1px solid var(--accent-red);
-                border-radius: 12px;
-                background: rgba(242, 139, 130, 0.1);
-            "
-        >
-            <strong>SYSTEM ERROR:</strong> {{ error }}
-        </div>
-        {% endif %} {% endif %} {% if results %}
+        {% endif %} {% if results %}
         <div class="results-grid">
-            {% for row in results %} {% if row.ticker != chosen_one.ticker %}
+            {% for row in results %} {% if not chosen_one or row.ticker !=
+            chosen_one.ticker %}
             <div class="stock-card">
-                <div class="leg">
-                    <span>Action</span> <span>{{ row.setup.entry }}</span>
-                </div>
-                <div class="leg">
-                    <span>Target</span> <span>{{ row.setup.target }}</span>
-                </div>
                 <div class="card-header">
                     <span class="ticker">{{ row.ticker }}</span>
                     <span class="price">${{ row.price }}</span>
@@ -523,15 +511,14 @@
                     "
                 >
                     POP: <b style="color: white">{{ row.probability }}%</b> |
-                    VWAP:
-                    <b>${{ row.vwap }}</b>
+                    VWAP: <b>${{ row.vwap }}</b>
                 </div>
 
                 <div class="ai-setup">
                     <div class="ai-title">AI ARCHITECT</div>
                     <div class="strategy-name">{{ row.setup.type }}</div>
                     <div class="leg">
-                        <span>Entry</span> <span>{{ row.setup.entry }}</span>
+                        <span>Action</span> <span>{{ row.setup.entry }}</span>
                     </div>
                     <div class="leg">
                         <span>Target</span> <span>{{ row.setup.target }}</span>
@@ -547,5 +534,26 @@
             >
         </div>
         {% endif %}
+
+        <script>
+            function updateClock() {
+                const now = new Date();
+                const options = {
+                    timeZone: "America/New_York",
+                    hour12: false,
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                };
+                const timeString = new Intl.DateTimeFormat(
+                    "en-US",
+                    options,
+                ).format(now);
+                document.getElementById("live-clock").textContent =
+                    "LIVE: " + timeString + " EST";
+            }
+            setInterval(updateClock, 1000);
+            updateClock();
+        </script>
     </body>
 </html>
