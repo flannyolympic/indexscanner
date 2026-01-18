@@ -142,7 +142,6 @@ def scan():
     results = [analyze_ticker(t) for t in QQQ_TICKERS]
     results = [r for r in results if r and r["signal"] != "NEUTRAL"]
 
-    # --- CALCULATE MOOD ---
     bulls = sum(1 for r in results if "BULLISH" in r["signal"])
     bears = sum(1 for r in results if "BEARISH" in r["signal"])
 
@@ -169,7 +168,7 @@ def search():
     result = analyze_ticker(query)
     results = [result] if result else []
 
-    # Mood for single result
+    # --- MOOD FOR SEARCH ---
     mood = "NEUTRAL"
     if result:
         if "BULLISH" in result["signal"]:
