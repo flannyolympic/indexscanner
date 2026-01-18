@@ -6,14 +6,13 @@ import numpy as np
 import pandas as pd
 import pytz
 import yfinance as yf
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, make_response, redirect, render_template, request, url_for
 from scipy.stats import norm
 
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
 # --- THE MATRIX UNIVERSE ---
-# High Beta & Liquidity focus for Option Spreads
 UNIVERSE = [
     "AAPL",
     "MSFT",
@@ -73,9 +72,9 @@ def get_market_status_color():
 
 def get_market_data(ticker):
     try:
-        # OPTIMIZATION: Switch to 5 days of 15-minute data.
-        # This makes the scanner react to TODAY'S moves, not last week's.
-        df = yf.download(ticker, period="5d", interval="15m", progress=False)
+        # OPTIMIZATION: 5-minute intervals for High Frequency detection
+        # We perform a 5-day lookback which is sufficient for 5m candles
+        df = yf.download(ticker, period="5d", interval="5m", progress=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
         if df.empty or len(df) < 20:
@@ -87,44 +86,41 @@ def get_market_data(ticker):
 
 def calculate_probability(price, target, std_dev, rsi, trend):
     """
-    Live Probability Engine with 'Pulse' Jitter.
+    Live Probability with Micro-Jitter for 'Live' feel.
     """
-    # 1. Volatility Floor (Prevents 0% on weekends)
-    safe_vol = max(std_dev, price * 0.008)
+    # Safety Floor for weekend volatility
+    safe_vol = max(std_dev, price * 0.005)
 
-    # 2. Distance to Target (3-Day Outlook)
+    # 3-Day Outlook
     z_score = abs(target - price) / (safe_vol * np.sqrt(3))
     stat_prob = 2 * norm.sf(z_score) * 100
 
-    # 3. RSI Confluence
+    # RSI Edge
     rsi_edge = 0
     if trend == "LONG" and rsi < 40:
-        rsi_edge = 10
+        rsi_edge = 12
     elif trend == "SHORT" and rsi > 60:
-        rsi_edge = 10
+        rsi_edge = 12
 
     final_pop = stat_prob + rsi_edge
 
-    # 4. OPTIMIZATION: Dynamic "Pulse" Jitter
-    # Mimics live bid/ask bounce. Every scan feels unique.
-    pulse = random.uniform(-0.8, 0.8)
+    # PULSE JITTER: Adds small fluctuation to mimic order book noise
+    pulse = random.uniform(-0.5, 0.5)
 
-    return round(min(max(final_pop + pulse, 38.5), 96.2), 1)
+    return round(min(max(final_pop + pulse, 35.5), 95.5), 1)
 
 
 def determine_strategy(
     price, bb_upper, bb_lower, current_width, avg_width, signal, is_crypto
 ):
     """
-    Matrix Strategy Selector.
+    Strategy Selection based on Band Width (Squeeze vs Expansion)
     """
-    # Squeeze Ratio: Is volatility exploding or compressing?
     vol_ratio = current_width / avg_width if avg_width > 0 else 1.0
-
     setup_text = {"type": "WAIT", "entry": "-", "target": "-", "stop": "-"}
 
     if is_crypto:
-        risk = current_width / 2.5
+        risk = current_width / 2.0
         if "BULLISH" in signal:
             setup_text = {
                 "type": "CRYPTO SCALP LONG",
@@ -142,21 +138,21 @@ def determine_strategy(
 
     else:  # STOCKS
         if "BULLISH" in signal:
-            if vol_ratio > 1.3:  # Super High Vol -> Sell expensive puts
+            if vol_ratio > 1.25:
                 setup_text = {
                     "type": "BULL PUT CREDIT SPREAD",
                     "entry": f"SELL Put ${np.floor(bb_lower)}",
                     "target": "Expire Worthless",
                     "stop": "Close < Strike",
                 }
-            elif vol_ratio < 0.7:  # Super Tight Squeeze -> Butterfly
+            elif vol_ratio < 0.75:
                 setup_text = {
                     "type": "LONG CALL BUTTERFLY",
                     "entry": f"Center ${np.ceil(price)}",
                     "target": "Pin at Strike",
                     "stop": "Wing Breach",
                 }
-            else:  # Normal -> Debit Spread
+            else:
                 setup_text = {
                     "type": "BULL CALL DEBIT SPREAD",
                     "entry": f"BUY Call ${np.ceil(price)}",
@@ -165,14 +161,14 @@ def determine_strategy(
                 }
 
         elif "BEARISH" in signal:
-            if vol_ratio > 1.3:
+            if vol_ratio > 1.25:
                 setup_text = {
                     "type": "BEAR CALL CREDIT SPREAD",
                     "entry": f"SELL Call ${np.ceil(bb_upper)}",
                     "target": "Expire Worthless",
                     "stop": "Close > Strike",
                 }
-            elif vol_ratio < 0.7:
+            elif vol_ratio < 0.75:
                 setup_text = {
                     "type": "LONG PUT BUTTERFLY",
                     "entry": f"Center ${np.floor(price)}",
@@ -207,22 +203,21 @@ def determine_strategy(
 
 
 def get_social_sentiment(rsi, vol_ratio):
-    # Sentiment tied to Volatility Explosion
-    if rsi > 70 and vol_ratio > 1.2:
+    if rsi > 75 and vol_ratio > 1.1:
         return {
             "score": "MAX HYPE",
             "comment": random.choice(["🚀 GAMMA SQUEEZE", "FOMO"]),
             "icon": "🔥",
         }
-    if rsi < 30 and vol_ratio > 1.2:
+    if rsi < 25 and vol_ratio > 1.1:
         return {
             "score": "MAX FEAR",
-            "comment": random.choice(["🩸 CAPITULATION", "LIQUIDATION"]),
+            "comment": random.choice(["🩸 LIQUIDATION", "DUMP"]),
             "icon": "🩸",
         }
     if vol_ratio > 1.1:
-        return {"score": "ACTIVE", "comment": "Whales Entering", "icon": "👀"}
-    return {"score": "QUIET", "comment": "Consolidation", "icon": "💤"}
+        return {"score": "TRENDING", "comment": "High Volume", "icon": "👀"}
+    return {"score": "QUIET", "comment": "Low Vol", "icon": "💤"}
 
 
 def get_vix_data():
@@ -253,7 +248,7 @@ def analyze_ticker(ticker_input):
     if df is None:
         return None
 
-    # Technicals (15m Intervals = 20 period is 5 hours of data)
+    # Technicals (Using 5m candles, so 20 periods = 100 minutes)
     df["SMA_20"] = df["Close"].rolling(window=20).mean()
     df["Std_Dev"] = df["Close"].rolling(window=20).std()
     df["BB_Upper"] = df["SMA_20"] + (df["Std_Dev"] * 2)
@@ -270,10 +265,13 @@ def analyze_ticker(ticker_input):
     latest = df.iloc[-1]
     price = latest["Close"]
 
-    # Volatility Ratio
+    # Relative Volatility
     avg_width = df["BB_Width"].rolling(window=20).mean().iloc[-1]
     current_width = latest["BB_Width"]
-    vol_ratio = current_width / avg_width if avg_width > 0 else 1.0
+
+    # Volume Logic
+    avg_vol = df["Volume"].rolling(window=20).mean().iloc[-1] or 1
+    vol_spike = latest["Volume"] > (avg_vol * 1.5)
 
     # Signal
     signal = "NEUTRAL"
@@ -288,7 +286,7 @@ def analyze_ticker(ticker_input):
         signal = "BEARISH"
         suggestion = "Overbought Reject"
         trend = "SHORT"
-    elif price > latest["VWAP"] and vol_ratio > 1.1:
+    elif vol_spike and price > latest["VWAP"]:
         signal = "BULLISH (VOL)"
         suggestion = "Mom. Breakout"
         trend = "LONG"
@@ -308,7 +306,7 @@ def analyze_ticker(ticker_input):
     probability = calculate_probability(
         price, target_price, latest["Std_Dev"], latest["RSI"], trend
     )
-    social = get_social_sentiment(latest["RSI"], vol_ratio)
+    social = get_social_sentiment(latest["RSI"], vol_spike)
 
     return {
         "ticker": ticker,
@@ -324,6 +322,15 @@ def analyze_ticker(ticker_input):
 
 
 # --- ROUTES ---
+# Force No-Cache Headers on all routes
+@app.after_request
+def add_header(response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 @app.route("/")
 def index():
     return render_template(
