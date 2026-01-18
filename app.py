@@ -1,7 +1,9 @@
 import sqlite3
+from datetime import datetime, time
 
 import numpy as np
 import pandas as pd
+import pytz  # Library to handle Timezones
 import yfinance as yf
 from flask import Flask, redirect, render_template, request, url_for
 
@@ -37,7 +39,27 @@ def init_db():
 init_db()
 
 
-# --- DATA HELPERS ---
+# --- HELPERS ---
+def get_market_status_color():
+    """Checks if US Market is Open (Green) or Closed (Red)"""
+    tz = pytz.timezone("US/Eastern")
+    now = datetime.now(tz)
+
+    # Check Weekday (0=Mon, 6=Sun)
+    if now.weekday() >= 5:
+        return "#f28b82"  # Red (Closed - Weekend)
+
+    # Check Time (09:30 - 16:00)
+    current_time = now.time()
+    market_open = time(9, 30)
+    market_close = time(16, 0)
+
+    if market_open <= current_time <= market_close:
+        return "#81c995"  # Green (Open)
+    else:
+        return "#f28b82"  # Red (Closed - After Hours)
+
+
 def get_market_data(ticker):
     try:
         df = yf.download(ticker, period="1d", interval="1m", progress=False)
@@ -51,30 +73,20 @@ def get_market_data(ticker):
 
 
 def get_vix_data():
-    """Fetches live VIX and determines color/sentiment for the UI"""
     df = get_market_data("^VIX")
     if df is None:
-        return {"price": "ERR", "color": "grey", "label": "Offline"}
+        return {"price": "ERR", "color": "grey"}
 
     price = df.iloc[-1]["Close"]
 
-    # Dynamic Coloring Logic
     if price < 15:
-        return {
-            "price": round(price, 2),
-            "color": "#00e676",
-            "label": "LOW",
-        }  # Bright Green
+        return {"price": round(price, 2), "color": "#00e676"}
     elif 15 <= price < 20:
-        return {
-            "price": round(price, 2),
-            "color": "#ffea00",
-            "label": "ELEVATED",
-        }  # Bright Yellow
+        return {"price": round(price, 2), "color": "#ffea00"}
     elif 20 <= price < 30:
-        return {"price": round(price, 2), "color": "#ff9100", "label": "FEAR"}  # Orange
+        return {"price": round(price, 2), "color": "#ff9100"}
     else:
-        return {"price": round(price, 2), "color": "#ff1744", "label": "PANIC"}  # Red
+        return {"price": round(price, 2), "color": "#ff1744"}
 
 
 def analyze_ticker(ticker):
@@ -95,27 +107,24 @@ def analyze_ticker(ticker):
     df["BB_Upper"] = df["SMA_20"] + (df["Std_Dev"] * 2)
     df["BB_Lower"] = df["SMA_20"] - (df["Std_Dev"] * 2)
 
-    # RSI
     delta = df["Close"].diff(1)
     gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
     rs = gain / loss
     df["RSI"] = 100 - (100 / (1 + rs))
 
-    # VWAP
     df["VWAP"] = (df["Close"] * df["Volume"]).cumsum() / df["Volume"].cumsum()
 
     latest = df.iloc[-1]
     price = latest["Close"]
 
-    # Logic
     signal = "NEUTRAL"
     suggestion = "Wait for Setup"
 
     if price < latest["BB_Lower"] and latest["RSI"] < 30:
         signal = "BULLISH"
         suggestion = f"Oversold Bounce | Call Strike: ${np.ceil(price)}"
-    elif price > latest["BB_Upper"] and latest["RSI"] < 70:  # Fixed logic typo
+    elif price > latest["BB_Upper"] and latest["RSI"] > 70:
         signal = "BEARISH"
         suggestion = f"Overbought Reject | Put Strike: ${np.floor(price)}"
     elif price > latest["VWAP"] and df.iloc[-2]["Close"] < df.iloc[-2]["VWAP"]:
@@ -135,39 +144,42 @@ def analyze_ticker(ticker):
 # --- ROUTES ---
 @app.route("/")
 def index():
-    # Pass VIX data to home page
-    return render_template("index.html", vix=get_vix_data())
+    return render_template(
+        "index.html", vix=get_vix_data(), status_color=get_market_status_color()
+    )
 
 
 @app.route("/scan")
 def scan():
     results = [analyze_ticker(t) for t in QQQ_TICKERS]
     results = [r for r in results if r and r["signal"] != "NEUTRAL"]
-    # Pass VIX data to scan results
     return render_template(
-        "index.html", results=results, title="QQQ Scan Results", vix=get_vix_data()
+        "index.html",
+        results=results,
+        title="QQQ Scan Results",
+        vix=get_vix_data(),
+        status_color=get_market_status_color(),
     )
 
 
 @app.route("/search", methods=["POST"])
 def search():
     query = request.form.get("query")
-    vix = get_vix_data()  # Fetch VIX even during search
-
     if not query:
         return redirect(url_for("index"))
-
     result = analyze_ticker(query)
     results = [result] if result else []
-
     return render_template(
-        "index.html", results=results, title=f"Search: {query.upper()}", vix=vix
+        "index.html",
+        results=results,
+        title=f"Search: {query.upper()}",
+        vix=get_vix_data(),
+        status_color=get_market_status_color(),
     )
 
 
 @app.route("/add_to_watchlist", methods=["POST"])
 def add_to_watchlist():
-    # Placeholder for database save
     return redirect(url_for("index"))
 
 

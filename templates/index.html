@@ -10,12 +10,12 @@
         />
         <style>
             :root {
-                --bg-color: #202124; /* Google Dark Mode BG */
+                --bg-color: #202124;
                 --card-bg: #303134;
                 --input-bg: #303134;
                 --text-main: #e8eaed;
                 --text-muted: #9aa0a6;
-                --accent-green: #81c995; /* Matrix Green */
+                --accent-green: #81c995;
                 --accent-red: #f28b82;
                 --btn-bg: #303134;
                 --btn-hover: #3c4043;
@@ -41,15 +41,15 @@
             .brand {
                 font-weight: 800;
                 font-size: 1.1rem;
-                color: white; /* Default white */
+                color: white;
                 text-decoration: none;
                 display: none;
                 letter-spacing: -0.5px;
             }
-            /* Matrix Green Highlight */
+
+            /* Dynamic Matrix Color comes from Python now */
             .brand span {
-                color: var(--accent-green);
-                text-shadow: 0 0 5px rgba(0, 255, 0, 0.4);
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
             }
 
             @media (min-width: 400px) {
@@ -65,7 +65,7 @@
             .search-input {
                 width: 100%;
                 background-color: var(--input-bg);
-                border: 1px solid #5f6368; /* Subtle border */
+                border: 1px solid #5f6368;
                 color: var(--text-main);
                 padding: 10px 20px;
                 font-size: 1rem;
@@ -109,25 +109,24 @@
                 background: var(--card-bg);
             }
 
-            /* --- "I'M FEELING LUCKY" BUTTON --- */
+            /* --- LUCKY BUTTON --- */
             .button-container {
-                text-align: center; /* Centers the button */
+                text-align: center;
                 margin-bottom: 30px;
             }
 
             .btn-lucky {
                 display: inline-block;
                 background-color: var(--btn-bg);
-                border: 1px solid #303134; /* Blend in */
+                border: 1px solid #303134;
                 color: #e8eaed;
                 padding: 10px 20px;
-                border-radius: 4px; /* Google's slightly rounded rect */
+                border-radius: 4px;
                 font-size: 0.9rem;
                 font-weight: 500;
                 text-decoration: none;
                 transition: all 0.2s;
             }
-
             .btn-lucky:hover {
                 background-color: var(--btn-hover);
                 border: 1px solid #5f6368;
@@ -198,7 +197,7 @@
             .strategy-box {
                 margin-top: 15px;
                 padding: 12px;
-                background: #202124; /* Darker contrast */
+                background: #202124;
                 border-radius: 8px;
                 font-size: 0.9rem;
                 color: #bdc1c6;
@@ -214,7 +213,9 @@
     </head>
     <body>
         <div class="header-container">
-            <a href="/" class="brand">The<span>Matrix</span></a>
+            <a href="/" class="brand">
+                The<span style="color: {{ status_color }};">Matrix</span>
+            </a>
 
             <form class="search-form" action="/search" method="POST">
                 <input
