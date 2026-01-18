@@ -3,21 +3,22 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>MktScan</title>
+        <title>TheMatrix</title>
         <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
             rel="stylesheet"
         />
         <style>
             :root {
-                --bg-color: #121212;
-                --card-bg: #1e1e1e;
+                --bg-color: #202124; /* Google Dark Mode BG */
+                --card-bg: #303134;
                 --input-bg: #303134;
                 --text-main: #e8eaed;
                 --text-muted: #9aa0a6;
-                --accent-blue: #8ab4f8;
-                --signal-green: #81c995;
-                --signal-red: #f28b82;
+                --accent-green: #81c995; /* Matrix Green */
+                --accent-red: #f28b82;
+                --btn-bg: #303134;
+                --btn-hover: #3c4043;
             }
 
             body {
@@ -28,7 +29,7 @@
                 padding: 15px;
             }
 
-            /* --- HEADER & VIX WIDGET --- */
+            /* --- HEADER --- */
             .header-container {
                 display: flex;
                 align-items: center;
@@ -40,10 +41,17 @@
             .brand {
                 font-weight: 800;
                 font-size: 1.1rem;
-                color: white;
+                color: white; /* Default white */
                 text-decoration: none;
-                display: none; /* Hidden on small mobile to save space */
+                display: none;
+                letter-spacing: -0.5px;
             }
+            /* Matrix Green Highlight */
+            .brand span {
+                color: var(--accent-green);
+                text-shadow: 0 0 5px rgba(0, 255, 0, 0.4);
+            }
+
             @media (min-width: 400px) {
                 .brand {
                     display: block;
@@ -52,15 +60,14 @@
 
             .search-form {
                 flex-grow: 1;
-                max-width: 600px;
             }
 
             .search-input {
                 width: 100%;
                 background-color: var(--input-bg);
-                border: 1px solid transparent;
+                border: 1px solid #5f6368; /* Subtle border */
                 color: var(--text-main);
-                padding: 10px 15px;
+                padding: 10px 20px;
                 font-size: 1rem;
                 border-radius: 24px;
                 outline: none;
@@ -68,10 +75,10 @@
             }
             .search-input:focus {
                 background-color: #3c4043;
-                border: 1px solid #5f6368;
+                border-color: var(--accent-green);
             }
 
-            /* THE DYNAMIC VIX BOX */
+            /* --- VIX WIDGET --- */
             .vix-widget {
                 display: flex;
                 flex-direction: column;
@@ -80,53 +87,63 @@
                 background: var(--input-bg);
                 padding: 5px 12px;
                 border-radius: 12px;
-                min-width: 60px;
-                border: 1px solid #444;
+                min-width: 55px;
+                border: 1px solid #5f6368;
             }
-
             .vix-label {
-                font-size: 0.65rem;
+                font-size: 0.6rem;
                 font-weight: 700;
                 color: var(--text-muted);
-                letter-spacing: 1px;
             }
             .vix-price {
-                font-size: 1.1rem;
+                font-size: 1rem;
                 font-weight: 800;
             }
 
             /* --- MACRO FEED --- */
             .macro-container {
-                margin-bottom: 25px;
+                margin-bottom: 20px;
                 border-radius: 12px;
                 overflow: hidden;
                 border: 1px solid #3c4043;
                 background: var(--card-bg);
             }
 
-            /* --- BUTTONS --- */
-            .btn-scan {
-                display: block;
-                width: 100%;
-                padding: 14px;
-                background: var(--accent-blue);
-                color: #202124;
-                text-align: center;
-                text-decoration: none;
-                font-weight: 700;
-                border-radius: 12px;
-                margin-bottom: 25px;
-                box-shadow: 0 4px 12px rgba(138, 180, 248, 0.2);
+            /* --- "I'M FEELING LUCKY" BUTTON --- */
+            .button-container {
+                text-align: center; /* Centers the button */
+                margin-bottom: 30px;
             }
 
-            /* --- RESULTS --- */
+            .btn-lucky {
+                display: inline-block;
+                background-color: var(--btn-bg);
+                border: 1px solid #303134; /* Blend in */
+                color: #e8eaed;
+                padding: 10px 20px;
+                border-radius: 4px; /* Google's slightly rounded rect */
+                font-size: 0.9rem;
+                font-weight: 500;
+                text-decoration: none;
+                transition: all 0.2s;
+            }
+
+            .btn-lucky:hover {
+                background-color: var(--btn-hover);
+                border: 1px solid #5f6368;
+                color: white;
+            }
+
+            /* --- RESULTS GRID --- */
             .section-title {
                 color: var(--text-muted);
                 font-size: 0.8rem;
                 text-transform: uppercase;
-                margin-bottom: 10px;
+                margin-bottom: 15px;
                 letter-spacing: 1px;
                 font-weight: 700;
+                border-bottom: 1px solid #3c4043;
+                padding-bottom: 5px;
             }
 
             .results-grid {
@@ -151,6 +168,7 @@
             .ticker {
                 font-size: 1.5rem;
                 font-weight: 800;
+                color: var(--text-main);
             }
             .price {
                 font-family: monospace;
@@ -167,24 +185,24 @@
                 text-transform: uppercase;
             }
             .bullish {
-                color: var(--signal-green);
-                border: 1px solid var(--signal-green);
+                color: var(--accent-green);
+                border: 1px solid var(--accent-green);
                 background: rgba(129, 201, 149, 0.1);
             }
             .bearish {
-                color: var(--signal-red);
-                border: 1px solid var(--signal-red);
+                color: var(--accent-red);
+                border: 1px solid var(--accent-red);
                 background: rgba(242, 139, 130, 0.1);
             }
 
             .strategy-box {
                 margin-top: 15px;
                 padding: 12px;
-                background: #2a2a2a;
+                background: #202124; /* Darker contrast */
                 border-radius: 8px;
                 font-size: 0.9rem;
                 color: #bdc1c6;
-                border-left: 3px solid var(--accent-blue);
+                border-left: 3px solid var(--accent-green);
             }
 
             .no-results {
@@ -196,9 +214,7 @@
     </head>
     <body>
         <div class="header-container">
-            <a href="/" class="brand"
-                >Mkt<span style="color: var(--accent-blue)">Scan</span></a
-            >
+            <a href="/" class="brand">The<span>Matrix</span></a>
 
             <form class="search-form" action="/search" method="POST">
                 <input
@@ -239,7 +255,9 @@
             </div>
         </div>
 
-        <a href="/scan" class="btn-scan">SCAN QQQ MARKETS</a>
+        <div class="button-container">
+            <a href="/scan" class="btn-lucky">I'm Feeling Lucky</a>
+        </div>
 
         {% if title %}
         <div class="section-title">{{ title }}</div>
@@ -279,8 +297,8 @@
         </div>
         {% elif request.path == '/search' %}
         <div class="no-results">
-            No signals found or invalid ticker.<br />
-            <small>Try adding "-USD" for crypto (e.g. BTC-USD)</small>
+            No signal in the matrix.<br />
+            <small>Try adding "-USD" for crypto.</small>
         </div>
         {% endif %}
     </body>
