@@ -38,7 +38,6 @@ UNIVERSE = [
 ]
 
 
-# --- DATABASE ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -53,6 +52,12 @@ init_db()
 
 
 # --- HELPERS ---
+def get_current_time():
+    """Returns formatted live NY time"""
+    tz = pytz.timezone("US/Eastern")
+    return datetime.now(tz).strftime("%H:%M:%S EST")
+
+
 def get_market_status_color():
     tz = pytz.timezone("US/Eastern")
     now = datetime.now(tz)
@@ -66,7 +71,7 @@ def get_market_status_color():
 
 def get_market_data(ticker):
     try:
-        # Fetch 5 days of 15m data
+        # Fetch 5 days of data to ensure we have enough for volatility
         df = yf.download(ticker, period="5d", interval="15m", progress=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
@@ -77,32 +82,48 @@ def get_market_data(ticker):
         return None
 
 
-def calculate_probability(price, target, std_dev, days=1):
+def calculate_probability(price, target, std_dev, days=3):
+    """
+    Calculates probability of touching target within 'days'.
+    Fixed logic: Uses 3-day volatility window for realistic swing trade odds.
+    """
+    # Volatility scales with square root of time
     volatility = std_dev * np.sqrt(days)
+
     if volatility == 0:
         return 50.0
+
+    # Z-Score: How many standard deviations away is the target?
     z_score = abs(target - price) / volatility
-    probability = 2 * (1 - norm.cdf(z_score))
-    return round(min(max(probability * 100, 12), 94), 1)
+
+    # Survival Function (sf) gives probability of exceeding Z
+    # We multiply by 2 for "touch" probability (up or down path)
+    prob = 2 * norm.sf(z_score)
+
+    # Scale to percentage and clamp
+    pop = prob * 100
+
+    # Realistic Caps: Even the best trade isn't 100%, worst isn't 0%
+    return round(min(max(pop, 15), 88), 1)
 
 
 def get_social_sentiment(ticker, rsi, volume_spike):
     if rsi > 70 and volume_spike:
         return {
-            "score": "EXTREME FOMO",
-            "comment": random.choice(["🚀 TO THE MOON", "💎🙌 DIAMOND HANDS"]),
+            "score": "MAX HYPE",
+            "comment": random.choice(["🚀 MOON MISSION", "💎🙌 HODL"]),
             "icon": "🔥",
         }
     elif rsi < 30 and volume_spike:
         return {
-            "score": "PANIC SELLING",
-            "comment": random.choice(["GUH.", "Buy the Dip?"]),
+            "score": "FEAR SPIKE",
+            "comment": random.choice(["🩸 Blood in streets", "Capitulation?"]),
             "icon": "🩸",
         }
     elif volume_spike:
-        return {"score": "TRENDING", "comment": "Whale Activity Detected", "icon": "👀"}
+        return {"score": "TRENDING", "comment": "Whales Entering", "icon": "👀"}
     else:
-        return {"score": "QUIET", "comment": "Under the radar", "icon": "💤"}
+        return {"score": "QUIET", "comment": "Accumulation Zone", "icon": "💤"}
 
 
 def get_vix_data():
@@ -120,24 +141,19 @@ def get_vix_data():
         return {"price": round(price, 2), "color": "#ff1744"}
 
 
-# --- CORE ANALYZER ---
+# --- ANALYZER ---
 def analyze_ticker(ticker_input):
-    # 1. Clean Input
     ticker = ticker_input.upper().strip()
-
-    # 2. Try fetching data
     df = get_market_data(ticker)
 
-    # 3. Smart Retry for Crypto (Only if original failed)
     if df is None:
         if not ticker.endswith("-USD"):
             crypto_try = f"{ticker}-USD"
             df_crypto = get_market_data(crypto_try)
             if df_crypto is not None:
                 df = df_crypto
-                ticker = crypto_try  # Update ticker name to the one that worked
+                ticker = crypto_try
 
-    # 4. If still no data, return None (Don't crash)
     if df is None:
         return None
 
@@ -158,9 +174,7 @@ def analyze_ticker(ticker_input):
     price = latest["Close"]
     std_dev = latest["Std_Dev"]
 
-    # Volume Logic
     avg_vol = df["Volume"].rolling(window=20).mean().iloc[-1]
-    # Handle cases where volume might be 0 or NaN
     if pd.isna(avg_vol) or avg_vol == 0:
         avg_vol = 1
     vol_spike = latest["Volume"] > (avg_vol * 1.5)
@@ -183,24 +197,26 @@ def analyze_ticker(ticker_input):
         suggestion = "Volume Breakout"
         setup_type = "LONG"
 
-    # AI Setup & Probability
-    target_price = (
-        price + (std_dev * 2) if setup_type == "LONG" else price - (std_dev * 2)
-    )
-    probability = calculate_probability(price, target_price, std_dev)
+    # AI Setup - Target 1.5 Std Dev (Realistic Swing)
+    target_dist = std_dev * 1.5
+    target_price = price + target_dist if setup_type == "LONG" else price - target_dist
+
+    # Calculate Probability (3 Day Outlook)
+    probability = calculate_probability(price, target_price, std_dev, days=3)
+
     social = get_social_sentiment(ticker, latest["RSI"], vol_spike)
 
     setup_text = {"type": "NO SETUP", "entry": "-", "target": "-", "stop": "-"}
     if setup_type == "LONG":
         setup_text = {
-            "type": "SNIPER LONG",
+            "type": "SWING LONG",
             "entry": f"${price:,.2f}",
             "target": f"${target_price:,.2f}",
             "stop": f"${(price - std_dev):,.2f}",
         }
     elif setup_type == "SHORT":
         setup_text = {
-            "type": "SNIPER SHORT",
+            "type": "SWING SHORT",
             "entry": f"${price:,.2f}",
             "target": f"${target_price:,.2f}",
             "stop": f"${(price + std_dev):,.2f}",
@@ -223,7 +239,10 @@ def analyze_ticker(ticker_input):
 @app.route("/")
 def index():
     return render_template(
-        "index.html", vix=get_vix_data(), status_color=get_market_status_color()
+        "index.html",
+        vix=get_vix_data(),
+        status_color=get_market_status_color(),
+        timestamp=get_current_time(),
     )
 
 
@@ -236,7 +255,6 @@ def scan():
     raw_results = [analyze_ticker(t) for t in scan_list]
     results = [r for r in raw_results if r]
 
-    # Pick Chosen One
     active_setups = [r for r in results if r["signal"] != "NEUTRAL"]
     if active_setups:
         chosen_one = sorted(
@@ -245,7 +263,6 @@ def scan():
     else:
         chosen_one = results[0] if results else None
 
-    # Mood
     bulls = sum(1 for r in results if "BULLISH" in r["signal"])
     bears = sum(1 for r in results if "BEARISH" in r["signal"])
     mood = "BULL" if bulls > bears else "BEAR"
@@ -257,6 +274,7 @@ def scan():
         mood=mood,
         vix=get_vix_data(),
         status_color=get_market_status_color(),
+        timestamp=get_current_time(),
     )
 
 
@@ -268,7 +286,6 @@ def search():
 
     result = analyze_ticker(query)
 
-    # ERROR HANDLING: If result is None, don't crash, just show empty
     if result is None:
         return render_template(
             "index.html",
@@ -276,6 +293,7 @@ def search():
             error=f"Could not find data for '{query}'",
             vix=get_vix_data(),
             status_color=get_market_status_color(),
+            timestamp=get_current_time(),
         )
 
     results = [result]
@@ -292,6 +310,7 @@ def search():
         mood=mood,
         vix=get_vix_data(),
         status_color=get_market_status_color(),
+        timestamp=get_current_time(),
     )
 
 

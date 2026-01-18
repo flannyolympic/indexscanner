@@ -333,9 +333,22 @@
     </head>
     <body>
         <div class="header-container">
-            <a href="/" class="brand"
-                >The<span style="color: {{ status_color }};">Matrix</span></a
-            >
+            <div style="display: flex; flex-direction: column">
+                <a href="/" class="brand"
+                    >The<span style="color: {{ status_color }};"
+                        >Matrix</span
+                    ></a
+                >
+                <span
+                    style="
+                        font-size: 0.6rem;
+                        color: #5f6368;
+                        letter-spacing: 1px;
+                        margin-top: 2px;
+                    "
+                    >LIVE: {{ timestamp }}</span
+                >
+            </div>
             <form class="search-form" action="/search" method="POST">
                 <input
                     type="text"
