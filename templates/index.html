@@ -3,21 +3,21 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>QQQ Zero-Day Scanner</title>
+        <title>Market Scanner</title>
         <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
             rel="stylesheet"
         />
         <style>
-            /* --- 1. DARK MODE AESTHETIC --- */
             :root {
                 --bg-color: #121212;
                 --card-bg: #1e1e1e;
-                --text-main: #e0e0e0;
-                --text-muted: #a0a0a0;
-                --accent-green: #00fa9a;
-                --accent-red: #ff4d4d;
-                --accent-blue: #2962ff;
+                --input-bg: #303134;
+                --text-main: #e8eaed;
+                --text-muted: #9aa0a6;
+                --accent-green: #8ab4f8; /* Google Blueish */
+                --accent-red: #f28b82;
+                --signal-green: #81c995;
             }
 
             body {
@@ -25,64 +25,87 @@
                 background-color: var(--bg-color);
                 color: var(--text-main);
                 margin: 0;
-                padding: 20px;
+                padding: 15px;
             }
 
-            /* --- 2. HEADER & NAVIGATION --- */
-            .header {
+            /* --- GOOGLE STYLE HEADER --- */
+            .header-container {
                 display: flex;
-                justify-content: space-between;
                 align-items: center;
+                gap: 15px;
                 margin-bottom: 20px;
-                border-bottom: 1px solid #333;
-                padding-bottom: 15px;
             }
-            h1 {
-                font-size: 1.5rem;
+
+            .brand {
                 font-weight: 800;
-                margin: 0;
-                letter-spacing: -1px;
-            }
-            .nav-links a {
-                color: var(--text-muted);
+                font-size: 1.2rem;
+                color: white;
                 text-decoration: none;
-                margin-left: 15px;
+            }
+
+            /* The Search Bar */
+            .search-form {
+                flex-grow: 1;
+            }
+
+            .search-input {
+                width: 100%;
+                background-color: var(--input-bg);
+                border: 1px solid transparent;
+                color: var(--text-main);
+                padding: 10px 15px;
+                font-size: 1rem;
+                border-radius: 24px; /* The Google "Pill" Shape */
+                outline: none;
+                transition: background 0.2s;
+                box-sizing: border-box; /* Fixes padding issues */
+            }
+
+            .search-input:focus {
+                background-color: #3c4043;
+                border: 1px solid #5f6368;
+            }
+
+            .vix-link {
                 font-size: 0.9rem;
                 font-weight: 600;
-            }
-            .nav-links a:hover {
-                color: var(--text-main);
+                color: var(--accent-red);
+                text-decoration: none;
+                white-space: nowrap;
             }
 
-            /* --- 3. THE MACRO FEED (Sticky Top) --- */
+            /* --- MACRO WIDGET --- */
             .macro-container {
-                margin-bottom: 30px;
+                margin-bottom: 25px;
                 border-radius: 12px;
                 overflow: hidden;
-                border: 1px solid #333;
+                border: 1px solid #3c4043;
                 background: var(--card-bg);
             }
 
-            /* --- 4. ACTION BUTTONS --- */
+            /* --- BUTTONS --- */
             .btn-scan {
                 display: block;
                 width: 100%;
-                padding: 15px;
-                background: linear-gradient(135deg, #2962ff 0%, #0039cb 100%);
-                color: white;
+                padding: 12px;
+                background: #8ab4f8; /* Google Blue */
+                color: #202124;
                 text-align: center;
                 text-decoration: none;
                 font-weight: 700;
-                border-radius: 12px;
+                border-radius: 8px;
                 margin-bottom: 25px;
-                box-shadow: 0 4px 15px rgba(41, 98, 255, 0.4);
-                transition: transform 0.1s;
-            }
-            .btn-scan:active {
-                transform: scale(0.98);
             }
 
-            /* --- 5. MOBILE CARDS LAYOUT --- */
+            /* --- RESULTS --- */
+            .section-title {
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                margin-bottom: 10px;
+                letter-spacing: 1px;
+            }
+
             .results-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -93,8 +116,7 @@
                 background: var(--card-bg);
                 border-radius: 12px;
                 padding: 20px;
-                border: 1px solid #333;
-                position: relative;
+                border: 1px solid #3c4043;
             }
 
             .card-header {
@@ -115,31 +137,19 @@
 
             .signal-badge {
                 display: inline-block;
-                padding: 5px 10px;
+                padding: 4px 10px;
                 border-radius: 4px;
                 font-size: 0.8rem;
                 font-weight: 700;
                 text-transform: uppercase;
             }
             .bullish {
-                background: rgba(0, 250, 154, 0.15);
-                color: var(--accent-green);
-                border: 1px solid var(--accent-green);
+                color: var(--signal-green);
+                border: 1px solid var(--signal-green);
             }
             .bearish {
-                background: rgba(255, 77, 77, 0.15);
                 color: var(--accent-red);
                 border: 1px solid var(--accent-red);
-            }
-
-            .data-row {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 8px;
-                font-size: 0.9rem;
-            }
-            .label {
-                color: var(--text-muted);
             }
 
             .strategy-box {
@@ -147,33 +157,36 @@
                 padding: 10px;
                 background: #2a2a2a;
                 border-radius: 6px;
-                font-size: 0.85rem;
-                border-left: 3px solid var(--accent-blue);
+                font-size: 0.9rem;
+                color: #bdc1c6;
+                border-left: 3px solid var(--accent-green);
             }
 
-            .save-btn {
-                width: 100%;
-                margin-top: 15px;
-                padding: 8px;
-                background: transparent;
-                border: 1px solid #444;
+            .no-results {
+                text-align: center;
                 color: var(--text-muted);
-                border-radius: 6px;
-                cursor: pointer;
-            }
-            .save-btn:hover {
-                background: #333;
-                color: white;
+                padding: 20px;
+                font-style: italic;
             }
         </style>
     </head>
     <body>
-        <div class="header">
-            <h1>QQQ<span style="color: var(--accent-blue)">Scout</span></h1>
-            <div class="nav-links">
-                <a href="/vix" style="color: var(--accent-red)">VIX Gauge</a>
-                <a href="/watchlist">Watchlist</a>
-            </div>
+        <div class="header-container">
+            <a href="/" class="brand"
+                >Mkt<span style="color: var(--accent-green)">Scan</span></a
+            >
+
+            <form class="search-form" action="/search" method="POST">
+                <input
+                    type="text"
+                    name="query"
+                    class="search-input"
+                    placeholder="Search (e.g. BTC, TSLA)"
+                    autocomplete="off"
+                />
+            </form>
+
+            <a href="/vix" class="vix-link">VIX Gauge</a>
         </div>
 
         <div class="macro-container">
@@ -186,7 +199,7 @@
                 >
                     {
                     "width": "100%",
-                    "height": "300",
+                    "height": "250",
                     "colorTheme": "dark",
                     "isTransparent": true,
                     "locale": "en",
@@ -197,9 +210,11 @@
             </div>
         </div>
 
-        <a href="/scan" class="btn-scan">RUN LIVE SCAN</a>
+        <a href="/scan" class="btn-scan">Scan QQQ Top 10</a>
 
-        {% if results %}
+        {% if title %}
+        <div class="section-title">{{ title }}</div>
+        {% endif %} {% if results %}
         <div class="results-grid">
             {% for row in results %}
             <div class="stock-card">
@@ -216,45 +231,24 @@
                     </span>
                 </div>
 
-                <div class="data-row">
-                    <span class="label">RSI (14)</span>
-                    <span>{{ row.rsi }}</span>
-                </div>
-                <div class="data-row">
-                    <span class="label">VWAP</span>
-                    <span>${{ row.vwap }}</span>
-                </div>
-
                 <div class="strategy-box">{{ row.suggestion }}</div>
-
-                <form action="/add_to_watchlist" method="POST">
-                    <input
-                        type="hidden"
-                        name="ticker"
-                        value="{{ row.ticker }}"
-                    />
-                    <input
-                        type="hidden"
-                        name="signal"
-                        value="{{ row.signal }}"
-                    />
-                    <input type="hidden" name="price" value="{{ row.price }}" />
-                    <input
-                        type="hidden"
-                        name="strategy"
-                        value="{{ row.suggestion }}"
-                    />
-                    <button type="submit" class="save-btn">
-                        Save to Watchlist
-                    </button>
-                </form>
+                <div
+                    style="
+                        margin-top: 10px;
+                        font-size: 0.8rem;
+                        color: var(--text-muted);
+                    "
+                >
+                    RSI: {{ row.rsi }} | VWAP: {{ row.vwap }}
+                </div>
             </div>
             {% endfor %}
         </div>
-        {% else %}
-        <p style="text-align: center; color: var(--text-muted)">
-            Markets are shifting. Tap "Run Live Scan" to find opportunities.
-        </p>
+        {% elif request.path == '/search' %}
+        <div class="no-results">
+            No data found. If searching Crypto, try adding "-USD" (e.g.,
+            SOL-USD).
+        </div>
         {% endif %}
     </body>
 </html>
