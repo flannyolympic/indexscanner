@@ -3,7 +3,7 @@ from datetime import datetime, time
 
 import numpy as np
 import pandas as pd
-import pytz  # Library to handle Timezones
+import pytz
 import yfinance as yf
 from flask import Flask, redirect, render_template, request, url_for
 
@@ -41,23 +41,14 @@ init_db()
 
 # --- HELPERS ---
 def get_market_status_color():
-    """Checks if US Market is Open (Green) or Closed (Red)"""
     tz = pytz.timezone("US/Eastern")
     now = datetime.now(tz)
-
-    # Check Weekday (0=Mon, 6=Sun)
     if now.weekday() >= 5:
-        return "#f28b82"  # Red (Closed - Weekend)
-
-    # Check Time (09:30 - 16:00)
+        return "#f28b82"
     current_time = now.time()
-    market_open = time(9, 30)
-    market_close = time(16, 0)
-
-    if market_open <= current_time <= market_close:
-        return "#81c995"  # Green (Open)
-    else:
-        return "#f28b82"  # Red (Closed - After Hours)
+    if time(9, 30) <= current_time <= time(16, 0):
+        return "#81c995"
+    return "#f28b82"
 
 
 def get_market_data(ticker):
@@ -76,9 +67,7 @@ def get_vix_data():
     df = get_market_data("^VIX")
     if df is None:
         return {"price": "ERR", "color": "grey"}
-
     price = df.iloc[-1]["Close"]
-
     if price < 15:
         return {"price": round(price, 2), "color": "#00e676"}
     elif 15 <= price < 20:
@@ -101,7 +90,6 @@ def analyze_ticker(ticker):
     if df is None or len(df) < 20:
         return None
 
-    # Indicators
     df["SMA_20"] = df["Close"].rolling(window=20).mean()
     df["Std_Dev"] = df["Close"].rolling(window=20).std()
     df["BB_Upper"] = df["SMA_20"] + (df["Std_Dev"] * 2)
@@ -153,10 +141,21 @@ def index():
 def scan():
     results = [analyze_ticker(t) for t in QQQ_TICKERS]
     results = [r for r in results if r and r["signal"] != "NEUTRAL"]
+
+    # --- CALCULATE MOOD ---
+    bulls = sum(1 for r in results if "BULLISH" in r["signal"])
+    bears = sum(1 for r in results if "BEARISH" in r["signal"])
+
+    mood = "NEUTRAL"
+    if bulls > bears:
+        mood = "BULL"
+    elif bears > bulls:
+        mood = "BEAR"
+
     return render_template(
         "index.html",
         results=results,
-        title="QQQ Scan Results",
+        mood=mood,
         vix=get_vix_data(),
         status_color=get_market_status_color(),
     )
@@ -169,10 +168,19 @@ def search():
         return redirect(url_for("index"))
     result = analyze_ticker(query)
     results = [result] if result else []
+
+    # Mood for single result
+    mood = "NEUTRAL"
+    if result:
+        if "BULLISH" in result["signal"]:
+            mood = "BULL"
+        elif "BEARISH" in result["signal"]:
+            mood = "BEAR"
+
     return render_template(
         "index.html",
         results=results,
-        title=f"Search: {query.upper()}",
+        mood=mood,
         vix=get_vix_data(),
         status_color=get_market_status_color(),
     )
