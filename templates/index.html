@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=49"
+            href="{{ url_for('static', filename='icon.png') }}?v=50"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=49"
+            href="{{ url_for('static', filename='icon.png') }}?v=50"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -180,7 +180,6 @@
                 height: 160px;
                 align-items: center;
             }
-
             .core-glow {
                 position: absolute;
                 top: 50%;
@@ -191,7 +190,6 @@
                 opacity: 0.7;
                 z-index: 1;
             }
-
             .glow-green {
                 width: 110px;
                 height: 110px;
@@ -202,7 +200,6 @@
                 );
                 animation: radiatePulse 3s ease-out infinite;
             }
-
             .glow-gold {
                 width: 140px;
                 height: 140px;
@@ -213,7 +210,6 @@
                 );
                 animation: radiatePulse 4s ease-out infinite 1.5s;
             }
-
             @keyframes radiatePulse {
                 0% {
                     transform: translate(-50%, -50%) scale(0.8);
@@ -285,7 +281,6 @@
                 }
             }
 
-            /* CLOAK MODE OVERLAY */
             #loading-overlay {
                 position: fixed;
                 top: 0;
@@ -308,7 +303,6 @@
                 display: flex;
                 opacity: 1;
             }
-
             .goku-container {
                 position: relative;
                 width: 100%;
@@ -318,7 +312,6 @@
                 align-items: center;
                 justify-content: center;
             }
-
             .goku-img {
                 height: auto;
                 width: auto;
@@ -328,11 +321,11 @@
                 position: relative;
                 z-index: 10;
                 transition: filter 0.2s;
-                opacity: 0; /* Hidden until loaded */
+                opacity: 0;
             }
             .goku-img.visible {
                 opacity: 0.95;
-            } /* Fade in once loaded */
+            }
 
             .search-dock-container {
                 position: fixed;
@@ -630,6 +623,59 @@
                 border-left: 3px solid var(--gold);
             }
 
+            /* NEWS MODULE */
+            .news-container {
+                margin-top: 20px;
+                padding: 15px;
+                border-radius: 12px;
+                background: rgba(0, 0, 0, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .news-title {
+                font-size: 0.7rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 10px;
+                color: var(--text-muted);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .news-item {
+                display: block;
+                text-decoration: none;
+                padding: 10px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                transition: background 0.2s;
+            }
+            .news-item:last-child {
+                border-bottom: none;
+            }
+            .news-item:hover {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 8px;
+            }
+            .headline {
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: #fff;
+                margin-bottom: 4px;
+                line-height: 1.4;
+            }
+            .source {
+                font-size: 0.65rem;
+                color: #9aa0a6;
+            }
+
+            /* SENTIMENT COLORS */
+            .bull-mode .news-title {
+                color: var(--accent-green);
+            }
+            .bear-mode .news-title {
+                color: var(--accent-red);
+            }
+
             .results-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -783,7 +829,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=49"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=50"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
@@ -883,7 +929,6 @@
             <div class="launcher-container">
                 <div class="core-glow glow-green"></div>
                 <div class="core-glow glow-gold"></div>
-
                 <div class="rocket-btn" onclick="launchRocket()">
                     <div class="rocket-icon">🚀</div>
                 </div>
@@ -909,7 +954,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=49"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=50"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -917,7 +962,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=49"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=50"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -954,6 +999,7 @@
                             >"{{ chosen_one.social.comment }}"</span
                         >
                     </div>
+
                     <div
                         class="ai-setup {{ 'kill-switch-active' if 'KILL SWITCH' in chosen_one.setup.type else '' }}"
                     >
@@ -975,6 +1021,28 @@
                             STOP: {{ chosen_one.setup.stop }}
                         </div>
                     </div>
+
+                    {% if chosen_one.news %}
+                    <div
+                        class="news-container {{ 'bull-mode' if 'BULLISH' in chosen_one.signal else 'bear-mode' }}"
+                    >
+                        <div class="news-title">
+                            {{ '🔥 BULLISH CATALYSTS' if 'BULLISH' in
+                            chosen_one.signal else '🩸 RISK FACTORS & HEADLINES'
+                            }}
+                        </div>
+                        {% for item in chosen_one.news %}
+                        <a
+                            href="{{ item.link }}"
+                            target="_blank"
+                            class="news-item"
+                        >
+                            <div class="headline">{{ item.title }}</div>
+                            <div class="source">{{ item.publisher }}</div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% endif %} {% if results %}
@@ -1196,7 +1264,6 @@
 
             new MarketPulse();
 
-            // ROCKET LAUNCH
             function launchRocket() {
                 const btn = document.querySelector(".rocket-btn");
                 const overlay = document.getElementById("loading-overlay");
@@ -1208,8 +1275,6 @@
 
                 setTimeout(() => {
                     overlay.classList.add("active");
-
-                    // Wait for overlay fade, then reveal GIF
                     setTimeout(() => {
                         if (gif.complete) {
                             gif.classList.add("visible");
@@ -1217,7 +1282,6 @@
                             gif.onload = () => gif.classList.add("visible");
                         }
                     }, 100);
-
                     setTimeout(() => {
                         window.location.href = "/scan";
                     }, 2500);
