@@ -11,11 +11,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=15"
+            href="{{ url_for('static', filename='icon.png') }}?v=16"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=15"
+            href="{{ url_for('static', filename='icon.png') }}?v=16"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -121,7 +121,7 @@
                 font-weight: 800;
             }
 
-            /* --- ROCKET LAUNCHER BUTTON --- */
+            /* ROCKET LAUNCHER */
             .launcher-container {
                 display: flex;
                 justify-content: center;
@@ -130,36 +130,33 @@
                 z-index: 10;
             }
             .rocket-btn {
-                width: 80px;
-                height: 80px;
+                width: 90px;
+                height: 90px;
                 background: linear-gradient(
                     145deg,
-                    rgba(30, 30, 30, 0.9),
-                    rgba(10, 10, 10, 1)
+                    rgba(40, 40, 40, 0.9),
+                    rgba(15, 15, 15, 1)
                 );
                 border: 2px solid rgba(255, 255, 255, 0.1);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 2.5rem;
+                font-size: 3rem;
                 cursor: pointer;
                 box-shadow:
-                    0 10px 30px rgba(0, 0, 0, 0.5),
+                    0 15px 40px rgba(0, 0, 0, 0.6),
                     inset 0 0 20px rgba(255, 255, 255, 0.05);
                 transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 position: relative;
-                overflow: visible;
             }
-
-            /* Idle Pulse */
             .rocket-btn::after {
                 content: "";
                 position: absolute;
-                top: -5px;
-                left: -5px;
-                right: -5px;
-                bottom: -5px;
+                top: -10px;
+                left: -10px;
+                right: -10px;
+                bottom: -10px;
                 border-radius: 50%;
                 border: 2px solid var(--accent-green);
                 opacity: 0;
@@ -168,31 +165,27 @@
             @keyframes sonarPulse {
                 0% {
                     transform: scale(1);
-                    opacity: 0.5;
+                    opacity: 0.4;
                 }
                 100% {
-                    transform: scale(1.5);
+                    transform: scale(1.4);
                     opacity: 0;
                 }
-            }
-
-            .rocket-btn:hover {
-                transform: scale(1.1);
-                border-color: var(--accent-green);
-                box-shadow: 0 0 30px rgba(0, 230, 118, 0.3);
             }
             .rocket-btn:active {
                 transform: scale(0.9);
             }
 
-            /* Launch Animation Class */
+            /* LAUNCH ANIMATION */
             .rocket-btn.launching {
-                animation: launchSequence 0.8s ease-in forwards;
-                pointer-events: none; /* Prevent double click */
+                animation: launchSequence 1s
+                    cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+                pointer-events: none;
                 border-color: var(--gold);
+                background: var(--gold);
             }
             .rocket-btn.launching .rocket-icon {
-                animation: shake 0.2s linear infinite;
+                animation: shake 0.1s linear infinite;
             }
 
             @keyframes launchSequence {
@@ -200,27 +193,27 @@
                     transform: translateY(0) scale(0.9);
                     box-shadow: 0 0 50px var(--gold);
                 }
-                40% {
-                    transform: translateY(20px) scale(0.8);
-                } /* Anticipation */
+                30% {
+                    transform: translateY(30px) scale(0.8);
+                } /* Coils down */
                 100% {
-                    transform: translateY(-120vh) scale(1.5);
+                    transform: translateY(-150vh) scale(1.5);
                     opacity: 0;
                 } /* Blast off */
             }
             @keyframes shake {
                 0% {
-                    transform: translate(1px, 1px) rotate(0deg);
+                    transform: translate(2px, 2px) rotate(0deg);
                 }
                 50% {
-                    transform: translate(-1px, -1px) rotate(-1deg);
+                    transform: translate(-2px, -2px) rotate(-2deg);
                 }
                 100% {
-                    transform: translate(1px, -1px) rotate(1deg);
+                    transform: translate(2px, -2px) rotate(2deg);
                 }
             }
 
-            /* --- FLOATING DOCK --- */
+            /* FLOATING DOCK */
             .search-dock-container {
                 position: fixed;
                 bottom: calc(20px + env(safe-area-inset-bottom));
@@ -304,6 +297,7 @@
                 }
             }
 
+            /* POPUPS */
             #search-results {
                 position: absolute;
                 bottom: 80px;
@@ -571,7 +565,7 @@
                 align-items: center;
                 justify-content: center;
                 opacity: 0;
-                transition: opacity 0.5s ease;
+                transition: opacity 0.3s ease;
             }
             #loading-overlay.active {
                 display: flex;
@@ -979,23 +973,24 @@
 
             new MarketPulse();
 
-            // ROCKET LAUNCH LOGIC
+            // ROCKET LAUNCH
             function launchRocket() {
                 const btn = document.querySelector(".rocket-btn");
                 const overlay = document.getElementById("loading-overlay");
 
-                // 1. Add Launch Animation Class
+                // HAPTIC FEEDBACK (Mobile Only)
+                if (navigator.vibrate) navigator.vibrate(50);
+
                 btn.classList.add("launching");
 
-                // 2. Wait for rocket to leave screen (400ms) then fade in overlay
+                // TIMING SYNCED TO CSS ANIMATION
                 setTimeout(() => {
                     overlay.classList.add("active");
-                }, 400);
+                }, 500); // Overlay fades in as rocket leaves
 
-                // 3. Redirect after animation completes (800ms)
                 setTimeout(() => {
                     window.location.href = "/scan";
-                }, 800);
+                }, 1100); // Redirect after rocket is fully gone
             }
 
             function updateClock() {
