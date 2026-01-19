@@ -11,11 +11,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=10"
+            href="{{ url_for('static', filename='icon.png') }}?v=11"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=10"
+            href="{{ url_for('static', filename='icon.png') }}?v=11"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -35,9 +35,9 @@
                 --accent-green: #00e676;
                 --accent-red: #ff1744;
                 --gold: #ffd700;
-                --card-bg: rgba(20, 20, 20, 0.6);
-                --input-bg: rgba(10, 10, 10, 0.85);
-                --setup-bg: rgba(30, 30, 30, 0.6);
+                --card-bg: rgba(10, 10, 10, 0.7);
+                --input-bg: rgba(5, 5, 5, 0.85);
+                --setup-bg: rgba(20, 20, 20, 0.6);
                 --max-width: 1400px;
                 --dock-height: 75px;
             }
@@ -61,6 +61,7 @@
                 overflow-x: hidden;
             }
 
+            /* --- DIGITAL RAIN CANVAS --- */
             #market-canvas {
                 position: fixed;
                 top: 0;
@@ -78,6 +79,7 @@
                 position: relative;
             }
 
+            /* HEADER */
             .header-container {
                 display: flex;
                 align-items: center;
@@ -94,7 +96,7 @@
                 color: white;
                 text-decoration: none;
                 letter-spacing: -1px;
-                text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
             }
 
             .vix-widget {
@@ -102,13 +104,13 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                background: rgba(10, 10, 10, 0.7);
-                backdrop-filter: blur(8px);
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(5px);
                 padding: 8px 16px;
                 border-radius: 12px;
                 min-width: 65px;
                 border: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
             }
             .vix-label {
                 font-size: 0.6rem;
@@ -121,7 +123,7 @@
                 font-weight: 800;
             }
 
-            /* FLOATING COMMAND DOCK */
+            /* FLOATING DOCK */
             .search-dock-container {
                 position: fixed;
                 bottom: calc(20px + env(safe-area-inset-bottom));
@@ -137,8 +139,8 @@
                 width: 100%;
                 height: 65px;
                 background: var(--input-bg);
-                backdrop-filter: blur(25px);
-                -webkit-backdrop-filter: blur(25px);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 border-top: 1px solid rgba(255, 255, 255, 0.2);
                 border-radius: 40px;
@@ -153,7 +155,6 @@
                 transform: translateY(-5px);
                 border-color: var(--gold);
             }
-
             .search-icon {
                 width: 45px;
                 height: 45px;
@@ -206,6 +207,7 @@
                 }
             }
 
+            /* POPUPS */
             #search-results {
                 position: absolute;
                 bottom: 80px;
@@ -281,6 +283,7 @@
                 line-height: 1.5;
             }
 
+            /* CARDS */
             .macro-container {
                 margin-bottom: 25px;
                 border-radius: 16px;
@@ -782,39 +785,33 @@
         </div>
 
         <script>
+            // --- NEO PROTOCOL: DIGITAL RAIN ENGINE ---
             class MarketPulse {
                 constructor() {
                     this.canvas = document.getElementById("market-canvas");
                     this.ctx = this.canvas.getContext("2d");
                     this.vix = 18;
-                    this.points = [];
-                    this.maxPoints = 0;
+                    this.drops = [];
+                    this.fontSize = 14;
+                    this.columns = 0;
                     this.lastTick = 0;
-                    this.isRunning = true; // Battery Optimization Flag
+                    this.isRunning = true;
                     this.resize();
-
-                    let price = this.canvas.height / 2;
-                    for (let i = 0; i < this.maxPoints; i++) {
-                        price += (Math.random() - 0.5) * 5;
-                        this.points.push(price);
-                    }
 
                     window.addEventListener("resize", () => this.resize());
                     document.addEventListener("visibilitychange", () =>
                         this.handleVisibility(),
-                    ); // OPTIMIZATION
-
+                    );
                     requestAnimationFrame((ts) => this.animate(ts));
                     this.startHeartbeat();
                 }
 
-                // OPTIMIZATION: Pause when tab is hidden to save battery
                 handleVisibility() {
                     if (document.hidden) {
                         this.isRunning = false;
                     } else {
                         this.isRunning = true;
-                        this.lastTick = performance.now(); // Reset tick to prevent jump
+                        this.lastTick = performance.now();
                         requestAnimationFrame((ts) => this.animate(ts));
                     }
                 }
@@ -822,90 +819,75 @@
                 resize() {
                     this.canvas.width = window.innerWidth;
                     this.canvas.height = window.innerHeight;
-                    this.maxPoints = Math.ceil(this.canvas.width / 5);
-                    while (this.points.length < this.maxPoints)
-                        this.points.push(this.canvas.height / 2);
+                    this.columns = Math.floor(
+                        this.canvas.width / this.fontSize,
+                    );
+                    this.drops = [];
+                    for (let i = 0; i < this.columns; i++) {
+                        this.drops[i] = Math.random() * -100; // Stagger start times
+                    }
                 }
 
                 getVixColor(vix) {
-                    if (vix < 15) return "0, 230, 118";
-                    if (vix < 20) return "255, 215, 0";
-                    return "255, 23, 68";
-                }
-
-                update() {
-                    this.points.shift();
-                    const volatility = (this.vix / 15) * 6;
-                    const lastPrice = this.points[this.points.length - 1];
-
-                    let change = (Math.random() - 0.5) * volatility;
-                    let newPrice = lastPrice + change;
-
-                    const center = this.canvas.height / 2;
-                    newPrice += (center - newPrice) * 0.02;
-
-                    if (newPrice < 0) newPrice = 0;
-                    if (newPrice > this.canvas.height)
-                        newPrice = this.canvas.height;
-
-                    this.points.push(newPrice);
+                    // Returns [R, G, B]
+                    if (vix < 15) return [0, 230, 118]; // Matrix Green
+                    if (vix < 20) return [255, 215, 0]; // Warning Gold
+                    return [255, 23, 68]; // Panic Red
                 }
 
                 animate(timestamp) {
-                    if (!this.isRunning) return; // Stop if backgrounded
+                    if (!this.isRunning) return;
 
-                    const speedDelay = Math.max(40, 180 - this.vix * 6);
+                    // DYNAMIC SPEED: High VIX = Faster Rain
+                    const speed = Math.max(30, 80 - this.vix * 2);
 
                     if (!this.lastTick) this.lastTick = timestamp;
-
-                    if (timestamp - this.lastTick > speedDelay) {
-                        this.update();
-                        this.lastTick = timestamp;
+                    if (timestamp - this.lastTick < speed) {
+                        requestAnimationFrame((ts) => this.animate(ts));
+                        return;
                     }
+                    this.lastTick = timestamp;
 
-                    this.ctx.clearRect(
+                    // Fade Effect (Trail)
+                    this.ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+                    this.ctx.fillRect(
                         0,
                         0,
                         this.canvas.width,
                         this.canvas.height,
                     );
-                    const rgb = this.getVixColor(this.vix);
 
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(0, this.canvas.height);
-                    this.points.forEach((y, i) => this.ctx.lineTo(i * 5, y));
-                    this.ctx.lineTo(
-                        (this.points.length - 1) * 5,
-                        this.canvas.height,
-                    );
-                    this.ctx.closePath();
+                    const [r, g, b] = this.getVixColor(this.vix);
+                    this.ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                    this.ctx.font = this.fontSize + "px monospace";
 
-                    const gradient = this.ctx.createLinearGradient(
-                        0,
-                        0,
-                        0,
-                        this.canvas.height,
-                    );
-                    gradient.addColorStop(0, `rgba(${rgb}, 0.2)`);
-                    gradient.addColorStop(1, `rgba(${rgb}, 0)`);
-                    this.ctx.fillStyle = gradient;
-                    this.ctx.fill();
+                    for (let i = 0; i < this.drops.length; i++) {
+                        // Random Katakana + Latin
+                        const text = String.fromCharCode(
+                            0x30a0 + Math.random() * 96,
+                        );
+                        this.ctx.fillText(
+                            text,
+                            i * this.fontSize,
+                            this.drops[i] * this.fontSize,
+                        );
 
-                    this.ctx.beginPath();
-                    this.points.forEach((y, i) => {
-                        if (i === 0) this.ctx.moveTo(i * 5, y);
-                        else this.ctx.lineTo(i * 5, y);
-                    });
-                    this.ctx.lineWidth = 2;
-                    this.ctx.strokeStyle = `rgba(${rgb}, 0.8)`;
-                    this.ctx.stroke();
+                        // Reset drop or move it down
+                        if (
+                            this.drops[i] * this.fontSize >
+                                this.canvas.height &&
+                            Math.random() > 0.975
+                        ) {
+                            this.drops[i] = 0;
+                        }
+                        this.drops[i]++;
+                    }
 
                     requestAnimationFrame((ts) => this.animate(ts));
                 }
 
                 startHeartbeat() {
                     setInterval(() => {
-                        // Only poll if visible to save data
                         if (!document.hidden) {
                             fetch("/api/vix")
                                 .then((r) => r.json())
@@ -935,6 +917,7 @@
 
             new MarketPulse();
 
+            // UI Logic
             function updateClock() {
                 const now = new Date();
                 const options = {
