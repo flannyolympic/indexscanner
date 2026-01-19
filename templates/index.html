@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=40"
+            href="{{ url_for('static', filename='icon.png') }}?v=41"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=40"
+            href="{{ url_for('static', filename='icon.png') }}?v=41"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -170,16 +170,85 @@
                 white-space: nowrap;
             }
 
-            /* ROCKET LAUNCHER & SUN PARTICLES */
+            /* SOLAR FLARE ENGINE */
             .launcher-container {
                 display: flex;
                 justify-content: center;
                 margin-bottom: 40px;
                 position: relative;
                 z-index: 10;
-                height: 140px;
+                height: 160px;
                 align-items: center;
             }
+
+            /* The Rotating Sun Auras */
+            .solar-aura {
+                position: absolute;
+                width: 140px;
+                height: 140px;
+                border-radius: 50%;
+                z-index: 1;
+                pointer-events: none;
+                opacity: 0.6;
+            }
+
+            .aura-green {
+                background: radial-gradient(
+                    circle,
+                    transparent 30%,
+                    rgba(0, 230, 118, 0.2) 60%,
+                    rgba(0, 230, 118, 0) 70%
+                );
+                border: 2px dashed rgba(0, 230, 118, 0.6);
+                animation:
+                    spinClockwise 10s linear infinite,
+                    pulseFlare 4s ease-in-out infinite;
+            }
+
+            .aura-gold {
+                width: 160px;
+                height: 160px; /* Slightly larger */
+                background: radial-gradient(
+                    circle,
+                    transparent 30%,
+                    rgba(255, 215, 0, 0.2) 60%,
+                    rgba(255, 215, 0, 0) 70%
+                );
+                border: 2px dashed rgba(255, 215, 0, 0.6);
+                animation:
+                    spinCounter 12s linear infinite,
+                    pulseFlare 4s ease-in-out infinite 2s; /* Offset pulse */
+            }
+
+            @keyframes spinClockwise {
+                from {
+                    transform: rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+            @keyframes spinCounter {
+                from {
+                    transform: rotate(360deg);
+                }
+                to {
+                    transform: rotate(0deg);
+                }
+            }
+            @keyframes pulseFlare {
+                0%,
+                100% {
+                    opacity: 0.4;
+                    transform: scale(0.95) rotate(var(--rot));
+                }
+                50% {
+                    opacity: 0.8;
+                    transform: scale(1.05) rotate(var(--rot));
+                    filter: drop-shadow(0 0 15px currentColor);
+                }
+            }
+
             .rocket-btn {
                 width: 90px;
                 height: 90px;
@@ -234,57 +303,6 @@
                 }
                 100% {
                     transform: translate(-2px, -2px);
-                }
-            }
-
-            /* NEW FLAME PULSE ANIMATION */
-            .sun-particle {
-                position: absolute;
-                width: 15px;
-                height: 15px;
-                border-radius: 50%;
-                pointer-events: none;
-                opacity: 0;
-                z-index: 1;
-            }
-            .sun-green {
-                background: radial-gradient(
-                    circle,
-                    #fff 10%,
-                    #00e676 50%,
-                    transparent 80%
-                );
-                box-shadow: 0 0 20px 5px rgba(0, 230, 118, 0.6);
-                animation: flameFloat 3s infinite ease-out;
-            }
-            .sun-gold {
-                background: radial-gradient(
-                    circle,
-                    #fff 10%,
-                    #ffd700 50%,
-                    transparent 80%
-                );
-                box-shadow: 0 0 20px 5px rgba(255, 215, 0, 0.6);
-                animation: flameFloat 3s infinite ease-out 1.5s;
-            }
-
-            @keyframes flameFloat {
-                0% {
-                    transform: translate(-50%, 0) scale(0.5);
-                    opacity: 0;
-                }
-                20% {
-                    opacity: 1;
-                    transform: translate(-50%, -40px) scale(1.2);
-                }
-                50% {
-                    transform: translate(-50%, -80px) scale(1.5);
-                    box-shadow: 0 0 40px 10px currentColor;
-                }
-                100% {
-                    transform: translate(-50%, -200px) scale(0.5);
-                    opacity: 0;
-                    filter: blur(4px);
                 }
             }
 
@@ -890,7 +908,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='goku.png') }}?v=40"
+                    src="{{ url_for('static', filename='goku.png') }}?v=41"
                     class="goku-img"
                     alt="Charge"
                 />
@@ -989,22 +1007,8 @@
             </div>
 
             <div class="launcher-container">
-                <div
-                    class="sun-particle sun-green"
-                    style="left: 20%; top: 60%"
-                ></div>
-                <div
-                    class="sun-particle sun-gold"
-                    style="left: 80%; top: 50%"
-                ></div>
-                <div
-                    class="sun-particle sun-green"
-                    style="left: 70%; top: 70%"
-                ></div>
-                <div
-                    class="sun-particle sun-gold"
-                    style="left: 30%; top: 40%"
-                ></div>
+                <div class="solar-aura aura-green"></div>
+                <div class="solar-aura aura-gold"></div>
 
                 <div class="rocket-btn" onclick="launchRocket()">
                     <div class="rocket-icon">🚀</div>
@@ -1031,7 +1035,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=40"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=41"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -1039,7 +1043,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=40"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=41"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />

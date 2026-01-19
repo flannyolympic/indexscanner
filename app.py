@@ -22,8 +22,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.0.1 STABLE ---
-APP_VERSION = "v1.0.1 Stable"
+# --- VERSION 1.0.2 SOLAR FLARE ---
+APP_VERSION = "v1.0.2 Solar Flare"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -68,6 +68,7 @@ UNIVERSE = [
 
 
 def init_db():
+    # Critical for stability: Allow multi-thread access
     conn = sqlite3.connect(DB_NAME, check_same_thread=False)
     c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS watchlist
@@ -97,13 +98,12 @@ def get_market_status_color():
     return "#ff5252"
 
 
-# --- ROBUST DATA FETCHING (OPTIMIZED) ---
+# --- ROBUST DATA FETCHING ---
 def get_market_data(ticker, retries=3):
     attempt = 0
     while attempt <= retries:
         try:
-            # Smart Jitter: Random delay to prevent concurrent worker collisions
-            # Higher jitter for VIX to avoid startup race condition
+            # Jitter prevents rate limit collisions
             jitter = (
                 random.uniform(0.5, 2.0)
                 if ticker == "^VIX"
@@ -119,10 +119,9 @@ def get_market_data(ticker, retries=3):
                 return df
 
         except Exception as e:
-            # Silent fail on attempt 1, log on attempt 2+
             if attempt > 0:
                 logger.warning(f"Retry {attempt}/{retries} for {ticker}: {e}")
-            t_module.sleep(2**attempt)  # Exponential backoff
+            t_module.sleep(2**attempt)
 
         attempt += 1
 
