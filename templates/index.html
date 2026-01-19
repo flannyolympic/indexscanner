@@ -11,11 +11,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=14"
+            href="{{ url_for('static', filename='icon.png') }}?v=15"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=14"
+            href="{{ url_for('static', filename='icon.png') }}?v=15"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -35,9 +35,9 @@
                 --accent-green: #00e676;
                 --accent-red: #ff1744;
                 --gold: #ffd700;
-                --card-bg: rgba(12, 12, 12, 0.7);
+                --card-bg: rgba(15, 15, 15, 0.6);
                 --input-bg: rgba(5, 5, 5, 0.85);
-                --setup-bg: rgba(20, 20, 20, 0.6);
+                --setup-bg: rgba(25, 25, 25, 0.6);
                 --max-width: 1400px;
                 --dock-height: 75px;
             }
@@ -61,7 +61,6 @@
                 overflow-x: hidden;
             }
 
-            /* LIVE BACKGROUND LAYER */
             #market-canvas {
                 position: fixed;
                 top: 0;
@@ -69,11 +68,7 @@
                 width: 100%;
                 height: 100%;
                 z-index: -1;
-                background: radial-gradient(
-                    circle at center,
-                    #111 0%,
-                    #000 100%
-                );
+                background: #050505;
             }
 
             .app-wrapper {
@@ -83,7 +78,6 @@
                 position: relative;
             }
 
-            /* HEADER */
             .header-container {
                 display: flex;
                 align-items: center;
@@ -127,7 +121,106 @@
                 font-weight: 800;
             }
 
-            /* FLOATING DOCK */
+            /* --- ROCKET LAUNCHER BUTTON --- */
+            .launcher-container {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 40px;
+                position: relative;
+                z-index: 10;
+            }
+            .rocket-btn {
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(
+                    145deg,
+                    rgba(30, 30, 30, 0.9),
+                    rgba(10, 10, 10, 1)
+                );
+                border: 2px solid rgba(255, 255, 255, 0.1);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2.5rem;
+                cursor: pointer;
+                box-shadow:
+                    0 10px 30px rgba(0, 0, 0, 0.5),
+                    inset 0 0 20px rgba(255, 255, 255, 0.05);
+                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                position: relative;
+                overflow: visible;
+            }
+
+            /* Idle Pulse */
+            .rocket-btn::after {
+                content: "";
+                position: absolute;
+                top: -5px;
+                left: -5px;
+                right: -5px;
+                bottom: -5px;
+                border-radius: 50%;
+                border: 2px solid var(--accent-green);
+                opacity: 0;
+                animation: sonarPulse 2s infinite;
+            }
+            @keyframes sonarPulse {
+                0% {
+                    transform: scale(1);
+                    opacity: 0.5;
+                }
+                100% {
+                    transform: scale(1.5);
+                    opacity: 0;
+                }
+            }
+
+            .rocket-btn:hover {
+                transform: scale(1.1);
+                border-color: var(--accent-green);
+                box-shadow: 0 0 30px rgba(0, 230, 118, 0.3);
+            }
+            .rocket-btn:active {
+                transform: scale(0.9);
+            }
+
+            /* Launch Animation Class */
+            .rocket-btn.launching {
+                animation: launchSequence 0.8s ease-in forwards;
+                pointer-events: none; /* Prevent double click */
+                border-color: var(--gold);
+            }
+            .rocket-btn.launching .rocket-icon {
+                animation: shake 0.2s linear infinite;
+            }
+
+            @keyframes launchSequence {
+                0% {
+                    transform: translateY(0) scale(0.9);
+                    box-shadow: 0 0 50px var(--gold);
+                }
+                40% {
+                    transform: translateY(20px) scale(0.8);
+                } /* Anticipation */
+                100% {
+                    transform: translateY(-120vh) scale(1.5);
+                    opacity: 0;
+                } /* Blast off */
+            }
+            @keyframes shake {
+                0% {
+                    transform: translate(1px, 1px) rotate(0deg);
+                }
+                50% {
+                    transform: translate(-1px, -1px) rotate(-1deg);
+                }
+                100% {
+                    transform: translate(1px, -1px) rotate(1deg);
+                }
+            }
+
+            /* --- FLOATING DOCK --- */
             .search-dock-container {
                 position: fixed;
                 bottom: calc(20px + env(safe-area-inset-bottom));
@@ -211,7 +304,6 @@
                 }
             }
 
-            /* POPUPS */
             #search-results {
                 position: absolute;
                 bottom: 80px;
@@ -287,7 +379,6 @@
                 line-height: 1.5;
             }
 
-            /* CARDS */
             .macro-container {
                 margin-bottom: 25px;
                 border-radius: 16px;
@@ -296,35 +387,6 @@
                 background: var(--card-bg);
                 backdrop-filter: blur(10px);
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-            }
-
-            .button-container {
-                text-align: center;
-                margin-bottom: 30px;
-            }
-            .btn-lucky {
-                display: inline-block;
-                background: linear-gradient(
-                    135deg,
-                    rgba(40, 40, 40, 0.9) 0%,
-                    rgba(10, 10, 10, 0.9) 100%
-                );
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                color: #e8eaed;
-                padding: 18px 40px;
-                border-radius: 50px;
-                font-size: 1.1rem;
-                font-weight: 800;
-                text-decoration: none;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-                transition: all 0.3s ease;
-            }
-            .btn-lucky:hover {
-                transform: translateY(-3px);
-                border-color: var(--gold);
-                color: white;
-                box-shadow: 0 15px 50px rgba(255, 215, 0, 0.1);
             }
 
             .battle-arena {
@@ -508,9 +570,12 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
+                opacity: 0;
+                transition: opacity 0.5s ease;
             }
             #loading-overlay.active {
                 display: flex;
+                opacity: 1;
             }
             .spinner {
                 width: 50px;
@@ -627,17 +692,10 @@
                 </div>
             </div>
 
-            <div class="button-container">
-                <a
-                    href="/scan"
-                    class="btn-lucky"
-                    onclick="
-                        document
-                            .getElementById('loading-overlay')
-                            .classList.add('active')
-                    "
-                    >I'm Feeling Lucky</a
-                >
+            <div class="launcher-container">
+                <div class="rocket-btn" onclick="launchRocket()">
+                    <div class="rocket-icon">🚀</div>
+                </div>
             </div>
 
             {% if error %}
@@ -821,7 +879,7 @@
 
                 initElements() {
                     this.elements = [];
-                    const count = Math.floor(this.canvas.width / 30); // Optimized count
+                    const count = Math.floor(this.canvas.width / 30);
                     for (let i = 0; i < count; i++) {
                         this.elements.push(this.createParticle());
                     }
@@ -831,7 +889,7 @@
                     return {
                         x: Math.random() * this.canvas.width,
                         y: Math.random() * this.canvas.height,
-                        size: 14 + Math.random() * 24, // Depth
+                        size: 14 + Math.random() * 24,
                         speed: 0.5 + Math.random() * 1.5,
                         icon: "🐂",
                         assigned: false,
@@ -839,7 +897,6 @@
                 }
 
                 getVixStats(vix) {
-                    // [Bull Prob, R, G, B, Speed]
                     if (vix < 15) return [0.85, 0, 230, 118, 0.8];
                     if (vix < 25) return [0.5, 255, 215, 0, 1.2];
                     return [0.15, 255, 23, 68, 2.0];
@@ -852,16 +909,12 @@
                         this.vix,
                     );
 
-                    // Clear
                     this.ctx.clearRect(
                         0,
                         0,
                         this.canvas.width,
                         this.canvas.height,
                     );
-
-                    // BATCH RENDERING: Sort of. We loop once but keep logic tight.
-                    // Setting shadow once per frame is efficient enough for this count.
                     this.ctx.shadowBlur = 10;
                     this.ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
 
@@ -889,7 +942,6 @@
                             }
                         }
 
-                        // Opacity based on depth
                         const opacity = (p.size / 40) * 0.5;
                         this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
                         this.ctx.font = `${p.size}px serif`;
@@ -927,7 +979,25 @@
 
             new MarketPulse();
 
-            // Standard UI Logic
+            // ROCKET LAUNCH LOGIC
+            function launchRocket() {
+                const btn = document.querySelector(".rocket-btn");
+                const overlay = document.getElementById("loading-overlay");
+
+                // 1. Add Launch Animation Class
+                btn.classList.add("launching");
+
+                // 2. Wait for rocket to leave screen (400ms) then fade in overlay
+                setTimeout(() => {
+                    overlay.classList.add("active");
+                }, 400);
+
+                // 3. Redirect after animation completes (800ms)
+                setTimeout(() => {
+                    window.location.href = "/scan";
+                }, 800);
+            }
+
             function updateClock() {
                 const now = new Date();
                 const options = {
