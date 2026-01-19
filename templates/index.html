@@ -11,18 +11,18 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=7"
+            href="{{ url_for('static', filename='icon.png') }}?v=8"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=7"
+            href="{{ url_for('static', filename='icon.png') }}?v=8"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
             name="apple-mobile-web-app-status-bar-style"
             content="black-translucent"
         />
-        <meta name="theme-color" content="#1a1a1a" />
+        <meta name="theme-color" content="#000000" />
 
         <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap"
@@ -32,17 +32,12 @@
             :root {
                 --text-main: #e8eaed;
                 --text-muted: #9aa0a6;
-                --accent-green: #81c995;
-                --accent-red: #f28b82;
+                --accent-green: #00e676;
+                --accent-red: #ff1744;
                 --gold: #ffd700;
-                --card-bg: rgba(
-                    30,
-                    31,
-                    34,
-                    0.7
-                ); /* Translucent for background effect */
-                --input-bg: rgba(20, 21, 23, 0.85);
-                --setup-bg: rgba(42, 43, 46, 0.6);
+                --card-bg: rgba(20, 20, 20, 0.6);
+                --input-bg: rgba(10, 10, 10, 0.85);
+                --setup-bg: rgba(30, 30, 30, 0.6);
                 --max-width: 1400px;
                 --dock-height: 75px;
             }
@@ -61,24 +56,20 @@
                 padding-left: max(20px, env(safe-area-inset-left));
                 padding-right: max(20px, env(safe-area-inset-right));
                 -webkit-tap-highlight-color: transparent;
-                background-color: #000; /* Fallback */
+                background-color: #000;
                 min-height: 100vh;
                 overflow-x: hidden;
             }
 
-            /* --- THE LIVE MARKET BACKGROUND --- */
+            /* --- THE LIVE CHART BACKGROUND --- */
             #market-canvas {
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
-                z-index: -1; /* Behind everything */
-                background: radial-gradient(
-                    circle at top center,
-                    #1a1b1e 0%,
-                    #0d0d0e 80%
-                );
+                z-index: -1;
+                background: #000; /* Pure black base */
             }
 
             .app-wrapper {
@@ -105,10 +96,7 @@
                 color: white;
                 text-decoration: none;
                 letter-spacing: -1px;
-                text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            }
-            .brand span {
-                text-shadow: 0 0 20px rgba(129, 201, 149, 0.8);
+                text-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
             }
 
             .vix-widget {
@@ -116,13 +104,13 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                background: rgba(30, 31, 34, 0.6);
+                background: rgba(10, 10, 10, 0.7);
                 backdrop-filter: blur(8px);
                 padding: 8px 16px;
                 border-radius: 12px;
                 min-width: 65px;
                 border: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             }
             .vix-label {
                 font-size: 0.6rem;
@@ -147,7 +135,6 @@
                 flex-direction: column;
                 align-items: center;
             }
-
             .search-dock {
                 width: 100%;
                 height: 65px;
@@ -155,21 +142,19 @@
                 backdrop-filter: blur(25px);
                 -webkit-backdrop-filter: blur(25px);
                 border: 1px solid rgba(255, 255, 255, 0.1);
-                border-top: 1px solid rgba(255, 255, 255, 0.15);
+                border-top: 1px solid rgba(255, 255, 255, 0.2);
                 border-radius: 40px;
                 padding: 0 10px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
                 transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             }
             .search-dock:focus-within {
                 transform: translateY(-5px);
                 border-color: var(--gold);
-                box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
             }
-
             .search-icon {
                 width: 45px;
                 height: 45px;
@@ -178,10 +163,10 @@
                 justify-content: center;
                 background: var(--accent-green);
                 border-radius: 50%;
-                color: #202124;
+                color: #000;
                 font-weight: 900;
                 cursor: pointer;
-                box-shadow: 0 0 15px rgba(129, 201, 149, 0.4);
+                box-shadow: 0 0 15px rgba(0, 230, 118, 0.4);
                 flex-shrink: 0;
             }
             .search-input {
@@ -194,8 +179,6 @@
                 outline: none;
                 font-weight: 500;
             }
-
-            /* INTEGRATED ORB */
             .info-orb-embedded {
                 width: 40px;
                 height: 40px;
@@ -210,7 +193,7 @@
                 cursor: pointer;
                 animation: pulseOrb 3s infinite ease-in-out;
                 flex-shrink: 0;
-                background: rgba(0, 0, 0, 0.2);
+                background: rgba(0, 0, 0, 0.3);
             }
             @keyframes pulseOrb {
                 0% {
@@ -230,11 +213,11 @@
                 bottom: 80px;
                 left: 0;
                 width: 100%;
-                background: rgba(30, 31, 34, 0.95);
+                background: rgba(10, 10, 10, 0.95);
                 backdrop-filter: blur(20px);
-                border: 1px solid #5f6368;
+                border: 1px solid #333;
                 border-radius: 20px;
-                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
                 display: none;
                 overflow: hidden;
                 max-height: 40vh;
@@ -266,13 +249,13 @@
                 bottom: 80px;
                 right: 0;
                 width: 280px;
-                background: rgba(30, 31, 34, 0.95);
+                background: rgba(10, 10, 10, 0.95);
                 backdrop-filter: blur(20px);
                 border: 1px solid var(--gold);
                 border-radius: 16px;
                 border-bottom-right-radius: 4px;
                 padding: 20px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
                 opacity: 0;
                 visibility: hidden;
                 transform: translateY(15px) scale(0.95);
@@ -300,7 +283,7 @@
                 line-height: 1.5;
             }
 
-            /* --- CONTENT CARDS (Translucent) --- */
+            /* --- CARDS --- */
             .macro-container {
                 margin-bottom: 25px;
                 border-radius: 16px;
@@ -308,7 +291,7 @@
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 background: var(--card-bg);
                 backdrop-filter: blur(10px);
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
             }
 
             .button-container {
@@ -319,8 +302,8 @@
                 display: inline-block;
                 background: linear-gradient(
                     135deg,
-                    rgba(60, 64, 67, 0.8) 0%,
-                    rgba(32, 33, 36, 0.8) 100%
+                    rgba(40, 40, 40, 0.9) 0%,
+                    rgba(10, 10, 10, 0.9) 100%
                 );
                 backdrop-filter: blur(10px);
                 border: 1px solid rgba(255, 255, 255, 0.2);
@@ -330,15 +313,14 @@
                 font-size: 1.1rem;
                 font-weight: 800;
                 text-decoration: none;
-                letter-spacing: 0.5px;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
                 transition: all 0.3s ease;
             }
             .btn-lucky:hover {
                 transform: translateY(-3px);
                 border-color: var(--gold);
                 color: white;
-                box-shadow: 0 15px 40px rgba(255, 215, 0, 0.2);
+                box-shadow: 0 15px 50px rgba(255, 215, 0, 0.1);
             }
 
             .battle-arena {
@@ -359,28 +341,28 @@
             .bull-active .bull-icon {
                 fill: var(--accent-green);
                 opacity: 1;
-                filter: drop-shadow(0 0 20px rgba(129, 201, 149, 0.6));
+                filter: drop-shadow(0 0 20px rgba(0, 230, 118, 0.4));
                 transform: scale(1.2);
             }
             .bear-active .bear-icon {
                 fill: var(--accent-red);
                 opacity: 1;
-                filter: drop-shadow(0 0 20px rgba(242, 139, 130, 0.6));
+                filter: drop-shadow(0 0 20px rgba(255, 23, 68, 0.4));
                 transform: scale(1.2);
             }
 
             .oracle-card {
                 background: linear-gradient(
                     145deg,
-                    rgba(43, 43, 43, 0.8) 0%,
-                    rgba(26, 26, 26, 0.9) 100%
+                    rgba(30, 30, 30, 0.9) 0%,
+                    rgba(10, 10, 10, 0.95) 100%
                 );
                 backdrop-filter: blur(15px);
                 border: 1px solid var(--gold);
                 border-radius: 24px;
                 padding: 30px;
                 position: relative;
-                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
             }
             .oracle-badge {
                 position: absolute;
@@ -477,12 +459,12 @@
             .bullish {
                 color: var(--accent-green);
                 border: 1px solid var(--accent-green);
-                background: rgba(129, 201, 149, 0.1);
+                background: rgba(0, 230, 118, 0.1);
             }
             .bearish {
                 color: var(--accent-red);
                 border: 1px solid var(--accent-red);
-                background: rgba(242, 139, 130, 0.1);
+                background: rgba(255, 23, 68, 0.1);
             }
             .ai-setup {
                 margin-top: auto;
@@ -515,8 +497,8 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(10, 10, 12, 0.9);
-                backdrop-filter: blur(15px);
+                background: rgba(0, 0, 0, 0.9);
+                backdrop-filter: blur(20px);
                 z-index: 9999;
                 display: none;
                 flex-direction: column;
@@ -802,15 +784,22 @@
         </div>
 
         <script>
-            // --- LIVE MARKET BACKGROUND ENGINE ---
+            // --- LIVE CHART ENGINE ---
             class MarketPulse {
                 constructor() {
                     this.canvas = document.getElementById("market-canvas");
                     this.ctx = this.canvas.getContext("2d");
                     this.vix = 18; // Default
-                    this.lines = [];
+                    this.points = [];
+                    this.maxPoints = 0;
                     this.resize();
-                    this.initLines();
+
+                    // Initial Random Walk
+                    let price = this.canvas.height / 2;
+                    for (let i = 0; i < this.maxPoints; i++) {
+                        price += (Math.random() - 0.5) * 5;
+                        this.points.push(price);
+                    }
 
                     window.addEventListener("resize", () => this.resize());
                     this.animate();
@@ -820,27 +809,41 @@
                 resize() {
                     this.canvas.width = window.innerWidth;
                     this.canvas.height = window.innerHeight;
-                    this.initLines();
-                }
-
-                initLines() {
-                    this.lines = [];
-                    const lineCount = 5;
-                    for (let i = 0; i < lineCount; i++) {
-                        this.lines.push({
-                            y:
-                                (this.canvas.height / lineCount) * i +
-                                this.canvas.height / (lineCount * 2),
-                            offset: Math.random() * 100,
-                            speed: 1 + Math.random(),
-                        });
+                    this.maxPoints = Math.ceil(this.canvas.width / 5); // 1 point per 5px
+                    // Fill array if needed
+                    while (this.points.length < this.maxPoints) {
+                        this.points.push(this.canvas.height / 2);
                     }
                 }
 
                 getVixColor(vix) {
-                    if (vix < 15) return "rgba(0, 230, 118, "; // Green
-                    if (vix < 20) return "rgba(255, 215, 0, "; // Gold
-                    return "rgba(255, 23, 68, "; // Red
+                    if (vix < 15) return "0, 230, 118"; // Green RGB
+                    if (vix < 20) return "255, 215, 0"; // Gold RGB
+                    return "255, 23, 68"; // Red RGB
+                }
+
+                update() {
+                    // Remove first point
+                    this.points.shift();
+
+                    // Calculate volatility based on VIX
+                    const volatility = (this.vix / 10) * 4; // Higher VIX = Bigger jumps
+                    const lastPrice = this.points[this.points.length - 1];
+
+                    // Random Walk
+                    let change = (Math.random() - 0.5) * volatility;
+                    let newPrice = lastPrice + change;
+
+                    // Keep in bounds (mostly centered vertically)
+                    const center = this.canvas.height / 2;
+                    if (newPrice < 0 || newPrice > this.canvas.height) {
+                        newPrice = center;
+                    }
+
+                    // Mean Reversion (pull back to center slowly)
+                    newPrice += (center - newPrice) * 0.01;
+
+                    this.points.push(newPrice);
                 }
 
                 animate() {
@@ -850,36 +853,45 @@
                         this.canvas.width,
                         this.canvas.height,
                     );
+                    this.update(); // Generate next point
 
-                    // Speed and Amplitude based on VIX
-                    const speedMult = this.vix / 15;
-                    const ampMult = this.vix * 1.5;
-                    const colorBase = this.getVixColor(this.vix);
+                    const rgb = this.getVixColor(this.vix);
 
-                    this.lines.forEach((line, index) => {
-                        this.ctx.beginPath();
-                        this.ctx.lineWidth = 2;
-                        this.ctx.strokeStyle =
-                            colorBase + (0.1 + index * 0.05) + ")"; // Fade out effect
+                    // Draw Filled Area
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, this.canvas.height); // Bottom Left
 
-                        for (let x = 0; x <= this.canvas.width; x += 10) {
-                            // Sine Wave Physics
-                            const y =
-                                line.y +
-                                Math.sin(
-                                    x * 0.005 +
-                                        Date.now() *
-                                            0.001 *
-                                            line.speed *
-                                            speedMult +
-                                        line.offset,
-                                ) *
-                                    ampMult;
-                            if (x === 0) this.ctx.moveTo(x, y);
-                            else this.ctx.lineTo(x, y);
-                        }
-                        this.ctx.stroke();
+                    this.points.forEach((y, i) => {
+                        this.ctx.lineTo(i * 5, y);
                     });
+
+                    this.ctx.lineTo(
+                        (this.points.length - 1) * 5,
+                        this.canvas.height,
+                    ); // Bottom Right
+                    this.ctx.closePath();
+
+                    // Gradient Fill
+                    const gradient = this.ctx.createLinearGradient(
+                        0,
+                        0,
+                        0,
+                        this.canvas.height,
+                    );
+                    gradient.addColorStop(0, `rgba(${rgb}, 0.2)`); // Top (Color)
+                    gradient.addColorStop(1, `rgba(${rgb}, 0)`); // Bottom (Transparent)
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.fill();
+
+                    // Draw Line on Top
+                    this.ctx.beginPath();
+                    this.points.forEach((y, i) => {
+                        if (i === 0) this.ctx.moveTo(i * 5, y);
+                        else this.ctx.lineTo(i * 5, y);
+                    });
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeStyle = `rgba(${rgb}, 0.8)`;
+                    this.ctx.stroke();
 
                     requestAnimationFrame(() => this.animate());
                 }
@@ -890,9 +902,7 @@
                             .then((r) => r.json())
                             .then((data) => {
                                 if (data.price !== "ERR") {
-                                    // Smooth transition (lerp) could go here, but jump is fine for responsiveness
                                     this.vix = parseFloat(data.price);
-                                    // Update Widget text too
                                     const widget =
                                         document.getElementById("vix-display");
                                     if (widget) {
@@ -906,14 +916,13 @@
                                     }
                                 }
                             });
-                    }, 10000); // Check every 10s
+                    }, 10000);
                 }
             }
 
-            // Init Background
             new MarketPulse();
 
-            // --- EXISTING UI LOGIC ---
+            // --- STANDARD UI LOGIC ---
             function updateClock() {
                 const now = new Date();
                 const options = {
@@ -938,7 +947,6 @@
                 bubble.classList.toggle("active");
             }
 
-            // Hide popup logic
             document.addEventListener("click", function (event) {
                 const bubble = document.getElementById("hft-info");
                 const trigger = document.querySelector(".info-orb-embedded");
