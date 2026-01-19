@@ -23,8 +23,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.0.7 CLEAN PROTOCOL ---
-APP_VERSION = "v1.0.7 Clean"
+# --- VERSION 1.0.8 FINAL POLISH ---
+APP_VERSION = "v1.0.8 Stable"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -33,9 +33,9 @@ logger = logging.getLogger("HFT_Scanner")
 # Robust Cache
 VIX_CACHE = {
     "data": {
-        "price": "WAIT",
+        "price": "...",
         "color": "grey",
-        "label": "INITIALIZING",
+        "label": "LOADING",
         "market_status": "grey",
     },
     "last_updated": 0,
@@ -137,7 +137,7 @@ def get_vix_data(force_update=False):
             if VIX_CACHE["last_updated"] > 0:
                 return VIX_CACHE["data"]
             return {
-                "price": "N/A",
+                "price": "...",
                 "color": "grey",
                 "label": "OFFLINE",
                 "market_status": status_color,

@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=45"
+            href="{{ url_for('static', filename='icon.png') }}?v=46"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=45"
+            href="{{ url_for('static', filename='icon.png') }}?v=46"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -302,7 +302,6 @@
                 }
             }
 
-            /* CLOAK MODE OVERLAY */
             #loading-overlay {
                 position: fixed;
                 top: 0;
@@ -324,7 +323,6 @@
                 display: flex;
                 opacity: 1;
             }
-
             .goku-container {
                 position: relative;
                 width: 100%;
@@ -332,15 +330,15 @@
                 height: 60vh;
                 display: flex;
                 align-items: center;
-                justify-content: center;
+                justify-content: flex-start;
             }
-
             .goku-img {
                 height: 100%;
                 width: auto;
                 object-fit: contain;
                 position: relative;
                 z-index: 10;
+                margin-left: -5vw;
                 transition: filter 0.2s;
                 opacity: 0.9;
             }
