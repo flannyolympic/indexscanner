@@ -1,13 +1,13 @@
 import logging
 import random
 import sqlite3
-import time as t_module
+import time as t_module  # Standard time for caching
 from datetime import datetime, time
 
 import numpy as np
 import pandas as pd
 import pytz
-import requests  # NEW: For the autocomplete proxy
+import requests
 import yfinance as yf
 from flask import (
     Flask,
@@ -27,7 +27,12 @@ DB_NAME = "watchlist.db"
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
 
-# --- THE MATRIX UNIVERSE (Default fallback) ---
+# --- MEMORY CACHE ---
+# Stores VIX data to prevent Yahoo Rate Limiting
+# TTL (Time To Live) = 60 seconds
+VIX_CACHE = {"data": {"price": "WAIT", "color": "grey"}, "last_updated": 0}
+
+# --- THE MATRIX UNIVERSE ---
 UNIVERSE = [
     "AAPL",
     "MSFT",
@@ -55,7 +60,6 @@ UNIVERSE = [
 ]
 
 
-# --- DATABASE ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -88,6 +92,7 @@ def get_market_status_color():
 
 def get_market_data(ticker):
     try:
+        # Use simple download to minimize overhead
         df = yf.download(ticker, period="5d", interval="5m", progress=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
@@ -112,6 +117,7 @@ def calculate_probability(price, target, std_dev, rsi, trend):
 
     final_pop = stat_prob + rsi_edge
 
+    # Adaptive Jitter based on Volatility
     vol_percent = (std_dev / price) * 100
     pulse_magnitude = min(vol_percent, 2.0)
     pulse = random.uniform(-pulse_magnitude, pulse_magnitude)
@@ -145,7 +151,7 @@ def determine_strategy(
         if "BULLISH" in signal:
             if vol_ratio > 1.25:
                 setup_text = {
-                    "type": "BULL PUT CREDIT SPREAD",
+                    "type": "BULL PUT SPREAD",
                     "entry": f"SELL Put ${np.floor(bb_lower)}",
                     "target": "Expire Worthless",
                     "stop": "Close < Strike",
@@ -154,20 +160,20 @@ def determine_strategy(
                 setup_text = {
                     "type": "LONG CALL BUTTERFLY",
                     "entry": f"Center ${np.ceil(price)}",
-                    "target": "Pin at Strike",
+                    "target": "Pin Strike",
                     "stop": "Wing Breach",
                 }
             else:
                 setup_text = {
-                    "type": "BULL CALL DEBIT SPREAD",
+                    "type": "BULL CALL SPREAD",
                     "entry": f"BUY Call ${np.ceil(price)}",
-                    "target": f"Target ${np.ceil(bb_upper)}",
+                    "target": f"${np.ceil(bb_upper)}",
                     "stop": "-40% Prem",
                 }
         elif "BEARISH" in signal:
             if vol_ratio > 1.25:
                 setup_text = {
-                    "type": "BEAR CALL CREDIT SPREAD",
+                    "type": "BEAR CALL SPREAD",
                     "entry": f"SELL Call ${np.ceil(bb_upper)}",
                     "target": "Expire Worthless",
                     "stop": "Close > Strike",
@@ -176,14 +182,14 @@ def determine_strategy(
                 setup_text = {
                     "type": "LONG PUT BUTTERFLY",
                     "entry": f"Center ${np.floor(price)}",
-                    "target": "Pin at Strike",
+                    "target": "Pin Strike",
                     "stop": "Wing Breach",
                 }
             else:
                 setup_text = {
-                    "type": "BEAR PUT DEBIT SPREAD",
+                    "type": "BEAR PUT SPREAD",
                     "entry": f"BUY Put ${np.floor(price)}",
-                    "target": f"Target ${np.floor(bb_lower)}",
+                    "target": f"${np.floor(bb_lower)}",
                     "stop": "-40% Prem",
                 }
         else:
@@ -222,26 +228,46 @@ def get_social_sentiment(rsi, vol_ratio):
     return {"score": "QUIET", "comment": "Consolidation", "icon": "💤"}
 
 
+# --- OPTIMIZED CACHED VIX ---
 def get_vix_data():
-    df = get_market_data("^VIX")
-    if df is None:
-        return {"price": "ERR", "color": "grey"}
-    price = df.iloc[-1]["Close"]
-    if price < 15:
-        return {"price": round(price, 2), "color": "#00e676"}
-    elif 15 <= price < 20:
-        return {"price": round(price, 2), "color": "#ffea00"}
-    elif 20 <= price < 30:
-        return {"price": round(price, 2), "color": "#ff9100"}
-    else:
-        return {"price": round(price, 2), "color": "#ff1744"}
+    global VIX_CACHE
+
+    # If cached data is fresh (< 60 seconds old), return it
+    if t_module.time() - VIX_CACHE["last_updated"] < 60:
+        return VIX_CACHE["data"]
+
+    try:
+        df = get_market_data("^VIX")
+        if df is None:
+            # If download fails but we have old data, return old data (Better than error)
+            return (
+                VIX_CACHE["data"]
+                if VIX_CACHE["last_updated"] > 0
+                else {"price": "ERR", "color": "grey"}
+            )
+
+        price = df.iloc[-1]["Close"]
+        color = "#00e676"  # Green
+        if 15 <= price < 20:
+            color = "#ffea00"  # Gold
+        elif price >= 20:
+            color = "#ff1744"  # Red
+
+        new_data = {"price": round(price, 2), "color": color}
+
+        # Update Cache
+        VIX_CACHE["data"] = new_data
+        VIX_CACHE["last_updated"] = t_module.time()
+
+        return new_data
+    except Exception as e:
+        logger.error(f"VIX Update Failed: {e}")
+        return VIX_CACHE["data"]  # Fallback
 
 
 def analyze_ticker(ticker_input):
     ticker = ticker_input.upper().strip()
     df = get_market_data(ticker)
-
-    # Auto-add -USD if stock fails but crypto might match
     if df is None:
         if not ticker.endswith("-USD"):
             df = get_market_data(f"{ticker}-USD")
@@ -265,7 +291,6 @@ def analyze_ticker(ticker_input):
 
     latest = df.iloc[-1]
     price = latest["Close"]
-
     avg_width = df["BB_Width"].rolling(window=20).mean().iloc[-1]
     current_width = latest["BB_Width"]
     avg_vol = df["Volume"].rolling(window=20).mean().iloc[-1] or 1
@@ -317,27 +342,19 @@ def analyze_ticker(ticker_input):
     }
 
 
-# --- NEW: AUTOCOMPLETE PROXY ROUTE ---
 @app.route("/suggest")
 def suggest():
     query = request.args.get("q", "")
     if not query:
         return jsonify([])
-
-    # Use Yahoo Finance's Public Autocomplete API
-    # We must mimic a browser user-agent to avoid blocking
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
-    url = f"https://query2.finance.yahoo.com/v1/finance/search?q={query}&quotesCount=10&newsCount=0"
-
+    headers = {"User-Agent": "Mozilla/5.0"}
+    url = f"https://query2.finance.yahoo.com/v1/finance/search?q={query}&quotesCount=5&newsCount=0"
     try:
         response = requests.get(url, headers=headers)
         data = response.json()
         suggestions = []
         if "quotes" in data:
             for item in data["quotes"]:
-                # Filter for Stocks, ETFs, Crypto (ignore futures/options if desired)
                 if "symbol" in item:
                     suggestions.append(
                         {
@@ -347,8 +364,7 @@ def suggest():
                         }
                     )
         return jsonify(suggestions)
-    except Exception as e:
-        logger.error(f"Autosuggest error: {e}")
+    except:
         return jsonify([])
 
 
@@ -387,10 +403,8 @@ def scan():
     bulls = sum(1 for r in results if "BULLISH" in r["signal"])
     bears = sum(1 for r in results if "BEARISH" in r["signal"])
     mood = "BULL" if bulls > bears else "BEAR"
-
     elapsed = round(t_module.time() - start_time, 2)
     logger.info(f"Scan complete in {elapsed}s")
-
     return render_template(
         "index.html",
         results=results,
@@ -417,11 +431,13 @@ def search():
             status_color=get_market_status_color(),
             timestamp=get_current_time(),
         )
-    mood = "NEUTRAL"
-    if "BULLISH" in result["signal"]:
-        mood = "BULL"
-    elif "BEARISH" in result["signal"]:
-        mood = "BEAR"
+    mood = (
+        "BULL"
+        if "BULLISH" in result["signal"]
+        else "BEAR"
+        if "BEARISH" in result["signal"]
+        else "NEUTRAL"
+    )
     return render_template(
         "index.html",
         results=[result],
@@ -433,12 +449,9 @@ def search():
     )
 
 
-# --- NEW: LIVE VIX HEARTBEAT ---
 @app.route("/api/vix")
 def api_vix():
-    # Returns raw JSON for the background animation to consume
-    data = get_vix_data()
-    return jsonify(data)
+    return jsonify(get_vix_data())
 
 
 if __name__ == "__main__":
