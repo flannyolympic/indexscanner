@@ -1,6 +1,7 @@
 import logging
 import random
 import sqlite3
+import threading
 import time as t_module
 from datetime import datetime, time
 
@@ -22,8 +23,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.0.2 SOLAR FLARE ---
-APP_VERSION = "v1.0.2 Solar Flare"
+# --- VERSION 1.0.3 STABILITY ---
+APP_VERSION = "v1.0.3 Stable"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -68,7 +69,6 @@ UNIVERSE = [
 
 
 def init_db():
-    # Critical for stability: Allow multi-thread access
     conn = sqlite3.connect(DB_NAME, check_same_thread=False)
     c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS watchlist
@@ -79,6 +79,21 @@ def init_db():
 
 
 init_db()
+
+
+# --- BACKGROUND TASK FOR VIX ---
+def background_vix_updater():
+    """Fetches VIX data in the background to prevent startup lag/errors"""
+    while True:
+        try:
+            get_vix_data(force_update=True)
+        except Exception as e:
+            logger.warning(f"VIX BG Update Failed: {e}")
+        t_module.sleep(60)  # Update every 60 seconds
+
+
+# Start background thread on launch
+threading.Thread(target=background_vix_updater, daemon=True).start()
 
 
 # --- HELPERS ---
@@ -103,12 +118,7 @@ def get_market_data(ticker, retries=3):
     attempt = 0
     while attempt <= retries:
         try:
-            # Jitter prevents rate limit collisions
-            jitter = (
-                random.uniform(0.5, 2.0)
-                if ticker == "^VIX"
-                else random.uniform(0.1, 0.5)
-            )
+            jitter = random.uniform(0.1, 0.5)
             t_module.sleep(jitter)
 
             df = yf.download(ticker, period="5d", interval="5m", progress=False)
@@ -250,9 +260,9 @@ def get_social_sentiment(rsi, vol_ratio):
 
 
 # --- VIX SPECTRUM ---
-def get_vix_data():
+def get_vix_data(force_update=False):
     global VIX_CACHE
-    if t_module.time() - VIX_CACHE["last_updated"] < 60:
+    if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
         return VIX_CACHE["data"]
 
     try:
