@@ -11,11 +11,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=12"
+            href="{{ url_for('static', filename='icon.png') }}?v=13"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=12"
+            href="{{ url_for('static', filename='icon.png') }}?v=13"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -35,7 +35,7 @@
                 --accent-green: #00e676;
                 --accent-red: #ff1744;
                 --gold: #ffd700;
-                --card-bg: rgba(15, 15, 15, 0.75);
+                --card-bg: rgba(15, 15, 15, 0.6);
                 --input-bg: rgba(5, 5, 5, 0.85);
                 --setup-bg: rgba(25, 25, 25, 0.6);
                 --max-width: 1400px;
@@ -61,7 +61,7 @@
                 overflow-x: hidden;
             }
 
-            /* --- THE LIVE BATTLEFIELD BACKGROUND --- */
+            /* LIVE BACKGROUND LAYER */
             #market-canvas {
                 position: fixed;
                 top: 0;
@@ -785,18 +785,18 @@
         </div>
 
         <script>
-            // --- BULL & BEAR MATRIX ENGINE ---
             class MarketPulse {
                 constructor() {
                     this.canvas = document.getElementById("market-canvas");
                     this.ctx = this.canvas.getContext("2d");
                     this.vix = 18;
-                    this.drops = [];
-                    this.fontSize = 24; // Bigger for Icons
-                    this.columns = 0;
+                    this.elements = [];
                     this.lastTick = 0;
                     this.isRunning = true;
                     this.resize();
+
+                    // Initial Seed
+                    this.initElements();
 
                     window.addEventListener("resize", () => this.resize());
                     document.addEventListener("visibilitychange", () =>
@@ -819,100 +819,107 @@
                 resize() {
                     this.canvas.width = window.innerWidth;
                     this.canvas.height = window.innerHeight;
-                    this.columns = Math.floor(
-                        this.canvas.width / this.fontSize,
-                    );
-                    this.drops = [];
-                    for (let i = 0; i < this.columns; i++) {
-                        this.drops[i] = {
-                            y: Math.random() * this.canvas.height,
-                            speed: 1 + Math.random(),
-                            icon: "🐂",
-                        };
+                    this.initElements();
+                }
+
+                initElements() {
+                    this.elements = [];
+                    const count = Math.floor(this.canvas.width / 25); // Responsive count
+                    for (let i = 0; i < count; i++) {
+                        this.elements.push(this.createParticle());
                     }
+                }
+
+                createParticle() {
+                    return {
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: 14 + Math.random() * 20, // Size variation = Depth
+                        speed: 0.5 + Math.random() * 1.5, // Parallax speed
+                        icon: "🐂", // Placeholder
+                    };
                 }
 
                 getVixStats(vix) {
                     // Returns [Bull Probability, Color, SpeedMultiplier]
-                    if (vix < 15) return [0.85, "rgba(0, 230, 118, 0.4)", 0.8]; // Calm, mostly Bulls
-                    if (vix < 25) return [0.5, "rgba(255, 215, 0, 0.4)", 1.2]; // Mixed, Gold
-                    return [0.15, "rgba(255, 23, 68, 0.4)", 2.0]; // Panic, mostly Bears
+                    if (vix < 15) return [0.85, "rgba(0, 230, 118, ", 0.8];
+                    if (vix < 25) return [0.5, "rgba(255, 215, 0, ", 1.2];
+                    return [0.15, "rgba(255, 23, 68, ", 2.0];
                 }
 
                 animate(timestamp) {
                     if (!this.isRunning) return;
 
-                    const [bullProb, color, speedMult] = this.getVixStats(
+                    const [bullProb, colorBase, speedMult] = this.getVixStats(
                         this.vix,
                     );
-                    const speed = 40; // Base Frame Time
 
-                    if (!this.lastTick) this.lastTick = timestamp;
-                    if (timestamp - this.lastTick < speed) {
-                        requestAnimationFrame((ts) => this.animate(ts));
-                        return;
-                    }
-                    this.lastTick = timestamp;
-
-                    // Fade Effect
-                    this.ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-                    this.ctx.fillRect(
+                    this.ctx.clearRect(
                         0,
                         0,
                         this.canvas.width,
                         this.canvas.height,
                     );
 
-                    this.ctx.font = this.fontSize + "px serif";
-                    this.ctx.fillStyle = color; // Tinting isn't perfect for Emojis but helps overlay
-
-                    for (let i = 0; i < this.drops.length; i++) {
-                        const drop = this.drops[i];
-
-                        // Randomly assign icon based on VIX probability
-                        if (Math.random() < 0.05) {
-                            drop.icon = Math.random() < bullProb ? "🐂" : "🐻";
+                    this.elements.forEach((p) => {
+                        // Logic: Assign Icon if not set (or occasionally switch for chaos)
+                        if (!p.assigned) {
+                            p.icon = Math.random() < bullProb ? "🐂" : "🐻";
+                            p.assigned = true;
                         }
 
-                        this.ctx.fillText(drop.icon, i * this.fontSize, drop.y);
+                        // Parallax Physics: Bigger = Faster
+                        const depthSpeed = (p.size / 20) * p.speed * speedMult;
 
-                        // PHYSICS: Bulls Float UP, Bears Fall DOWN
-                        if (drop.icon === "🐂") {
-                            drop.y -= drop.speed * speedMult; // Rise
-                            if (drop.y < -30) drop.y = this.canvas.height + 30; // Loop bottom
+                        if (p.icon === "🐂") {
+                            p.y -= depthSpeed; // Rise
+                            if (p.y < -30) {
+                                p.y = this.canvas.height + 30;
+                                p.x = Math.random() * this.canvas.width;
+                                p.assigned = false;
+                            }
                         } else {
-                            drop.y += drop.speed * speedMult; // Fall
-                            if (drop.y > this.canvas.height + 30) drop.y = -30; // Loop top
+                            p.y += depthSpeed; // Fall
+                            if (p.y > this.canvas.height + 30) {
+                                p.y = -30;
+                                p.x = Math.random() * this.canvas.width;
+                                p.assigned = false;
+                            }
                         }
-                    }
+
+                        // Draw with Depth (Opacity based on size)
+                        const opacity = (p.size / 34) * 0.4; // Max 0.4 opacity
+                        this.ctx.font = `${p.size}px serif`;
+                        this.ctx.fillStyle = colorBase + opacity + ")";
+                        this.ctx.fillText(p.icon, p.x, p.y);
+                    });
 
                     requestAnimationFrame((ts) => this.animate(ts));
                 }
 
-                startHeartbeat() {
-                    setInterval(() => {
+                async startHeartbeat() {
+                    setInterval(async () => {
                         if (!document.hidden) {
-                            fetch("/api/vix")
-                                .then((r) => r.json())
-                                .then((data) => {
-                                    if (data.price !== "ERR") {
-                                        this.vix = parseFloat(data.price);
-                                        const widget =
-                                            document.getElementById(
-                                                "vix-display",
-                                            );
-                                        if (widget) {
-                                            widget.style.borderColor =
-                                                data.color;
-                                            widget.querySelector(
-                                                ".vix-price",
-                                            ).style.color = data.color;
-                                            widget.querySelector(
-                                                ".vix-price",
-                                            ).textContent = data.price;
-                                        }
+                            try {
+                                const res = await fetch("/api/vix");
+                                const data = await res.json();
+                                if (data.price !== "ERR") {
+                                    this.vix = parseFloat(data.price);
+                                    const widget =
+                                        document.getElementById("vix-display");
+                                    if (widget) {
+                                        widget.style.borderColor = data.color;
+                                        widget.querySelector(
+                                            ".vix-price",
+                                        ).style.color = data.color;
+                                        widget.querySelector(
+                                            ".vix-price",
+                                        ).textContent = data.price;
                                     }
-                                });
+                                }
+                            } catch (e) {
+                                console.log("Pulse skipped");
+                            }
                         }
                     }, 10000);
                 }
@@ -920,7 +927,6 @@
 
             new MarketPulse();
 
-            // UI Logic
             function updateClock() {
                 const now = new Date();
                 const options = {
@@ -941,8 +947,7 @@
             updateClock();
 
             function toggleInfoBubble() {
-                const bubble = document.getElementById("hft-info");
-                bubble.classList.toggle("active");
+                document.getElementById("hft-info").classList.toggle("active");
             }
 
             document.addEventListener("click", function (event) {
@@ -978,34 +983,36 @@
                     return;
                 }
 
-                debounceTimer = setTimeout(() => {
-                    fetch(`/suggest?q=${query}`)
-                        .then((response) => response.json())
-                        .then((data) => {
-                            resultsBox.innerHTML = "";
-                            if (data.length > 0) {
-                                resultsBox.style.display = "block";
-                                data.forEach((item) => {
-                                    const div = document.createElement("div");
-                                    div.className = "result-item";
-                                    div.innerHTML = `
-                                <div class="item-info"><span class="item-symbol">${item.symbol}</span><span class="item-name">${item.name}</span></div>
-                                <span class="item-exch">${item.exch}</span>
-                            `;
-                                    div.onclick = () => {
-                                        input.value = item.symbol;
-                                        resultsBox.style.display = "none";
-                                        document
-                                            .getElementById("loading-overlay")
-                                            .classList.add("active");
-                                        form.submit();
-                                    };
-                                    resultsBox.appendChild(div);
-                                });
-                            } else {
-                                resultsBox.style.display = "none";
-                            }
-                        });
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const res = await fetch(`/suggest?q=${query}`);
+                        const data = await res.json();
+                        resultsBox.innerHTML = "";
+                        if (data.length > 0) {
+                            resultsBox.style.display = "block";
+                            data.forEach((item) => {
+                                const div = document.createElement("div");
+                                div.className = "result-item";
+                                div.innerHTML = `
+                            <div class="item-info"><span class="item-symbol">${item.symbol}</span><span class="item-name">${item.name}</span></div>
+                            <span class="item-exch">${item.exch}</span>
+                        `;
+                                div.onclick = () => {
+                                    input.value = item.symbol;
+                                    resultsBox.style.display = "none";
+                                    document
+                                        .getElementById("loading-overlay")
+                                        .classList.add("active");
+                                    form.submit();
+                                };
+                                resultsBox.appendChild(div);
+                            });
+                        } else {
+                            resultsBox.style.display = "none";
+                        }
+                    } catch (e) {
+                        console.log("Search error");
+                    }
                 }, 250);
             });
         </script>
