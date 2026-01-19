@@ -11,11 +11,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=11"
+            href="{{ url_for('static', filename='icon.png') }}?v=12"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=11"
+            href="{{ url_for('static', filename='icon.png') }}?v=12"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -35,9 +35,9 @@
                 --accent-green: #00e676;
                 --accent-red: #ff1744;
                 --gold: #ffd700;
-                --card-bg: rgba(10, 10, 10, 0.7);
+                --card-bg: rgba(15, 15, 15, 0.75);
                 --input-bg: rgba(5, 5, 5, 0.85);
-                --setup-bg: rgba(20, 20, 20, 0.6);
+                --setup-bg: rgba(25, 25, 25, 0.6);
                 --max-width: 1400px;
                 --dock-height: 75px;
             }
@@ -61,7 +61,7 @@
                 overflow-x: hidden;
             }
 
-            /* --- DIGITAL RAIN CANVAS --- */
+            /* --- THE LIVE BATTLEFIELD BACKGROUND --- */
             #market-canvas {
                 position: fixed;
                 top: 0;
@@ -69,7 +69,7 @@
                 width: 100%;
                 height: 100%;
                 z-index: -1;
-                background: #000;
+                background: #050505;
             }
 
             .app-wrapper {
@@ -96,7 +96,7 @@
                 color: white;
                 text-decoration: none;
                 letter-spacing: -1px;
-                text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
             }
 
             .vix-widget {
@@ -104,13 +104,13 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                background: rgba(0, 0, 0, 0.6);
-                backdrop-filter: blur(5px);
+                background: rgba(10, 10, 10, 0.6);
+                backdrop-filter: blur(8px);
                 padding: 8px 16px;
                 border-radius: 12px;
                 min-width: 65px;
                 border: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
             }
             .vix-label {
                 font-size: 0.6rem;
@@ -139,8 +139,8 @@
                 width: 100%;
                 height: 65px;
                 background: var(--input-bg);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
+                backdrop-filter: blur(25px);
+                -webkit-backdrop-filter: blur(25px);
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 border-top: 1px solid rgba(255, 255, 255, 0.2);
                 border-radius: 40px;
@@ -785,14 +785,14 @@
         </div>
 
         <script>
-            // --- NEO PROTOCOL: DIGITAL RAIN ENGINE ---
+            // --- BULL & BEAR MATRIX ENGINE ---
             class MarketPulse {
                 constructor() {
                     this.canvas = document.getElementById("market-canvas");
                     this.ctx = this.canvas.getContext("2d");
                     this.vix = 18;
                     this.drops = [];
-                    this.fontSize = 14;
+                    this.fontSize = 24; // Bigger for Icons
                     this.columns = 0;
                     this.lastTick = 0;
                     this.isRunning = true;
@@ -824,22 +824,28 @@
                     );
                     this.drops = [];
                     for (let i = 0; i < this.columns; i++) {
-                        this.drops[i] = Math.random() * -100; // Stagger start times
+                        this.drops[i] = {
+                            y: Math.random() * this.canvas.height,
+                            speed: 1 + Math.random(),
+                            icon: "🐂",
+                        };
                     }
                 }
 
-                getVixColor(vix) {
-                    // Returns [R, G, B]
-                    if (vix < 15) return [0, 230, 118]; // Matrix Green
-                    if (vix < 20) return [255, 215, 0]; // Warning Gold
-                    return [255, 23, 68]; // Panic Red
+                getVixStats(vix) {
+                    // Returns [Bull Probability, Color, SpeedMultiplier]
+                    if (vix < 15) return [0.85, "rgba(0, 230, 118, 0.4)", 0.8]; // Calm, mostly Bulls
+                    if (vix < 25) return [0.5, "rgba(255, 215, 0, 0.4)", 1.2]; // Mixed, Gold
+                    return [0.15, "rgba(255, 23, 68, 0.4)", 2.0]; // Panic, mostly Bears
                 }
 
                 animate(timestamp) {
                     if (!this.isRunning) return;
 
-                    // DYNAMIC SPEED: High VIX = Faster Rain
-                    const speed = Math.max(30, 80 - this.vix * 2);
+                    const [bullProb, color, speedMult] = this.getVixStats(
+                        this.vix,
+                    );
+                    const speed = 40; // Base Frame Time
 
                     if (!this.lastTick) this.lastTick = timestamp;
                     if (timestamp - this.lastTick < speed) {
@@ -848,8 +854,8 @@
                     }
                     this.lastTick = timestamp;
 
-                    // Fade Effect (Trail)
-                    this.ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+                    // Fade Effect
+                    this.ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
                     this.ctx.fillRect(
                         0,
                         0,
@@ -857,30 +863,27 @@
                         this.canvas.height,
                     );
 
-                    const [r, g, b] = this.getVixColor(this.vix);
-                    this.ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-                    this.ctx.font = this.fontSize + "px monospace";
+                    this.ctx.font = this.fontSize + "px serif";
+                    this.ctx.fillStyle = color; // Tinting isn't perfect for Emojis but helps overlay
 
                     for (let i = 0; i < this.drops.length; i++) {
-                        // Random Katakana + Latin
-                        const text = String.fromCharCode(
-                            0x30a0 + Math.random() * 96,
-                        );
-                        this.ctx.fillText(
-                            text,
-                            i * this.fontSize,
-                            this.drops[i] * this.fontSize,
-                        );
+                        const drop = this.drops[i];
 
-                        // Reset drop or move it down
-                        if (
-                            this.drops[i] * this.fontSize >
-                                this.canvas.height &&
-                            Math.random() > 0.975
-                        ) {
-                            this.drops[i] = 0;
+                        // Randomly assign icon based on VIX probability
+                        if (Math.random() < 0.05) {
+                            drop.icon = Math.random() < bullProb ? "🐂" : "🐻";
                         }
-                        this.drops[i]++;
+
+                        this.ctx.fillText(drop.icon, i * this.fontSize, drop.y);
+
+                        // PHYSICS: Bulls Float UP, Bears Fall DOWN
+                        if (drop.icon === "🐂") {
+                            drop.y -= drop.speed * speedMult; // Rise
+                            if (drop.y < -30) drop.y = this.canvas.height + 30; // Loop bottom
+                        } else {
+                            drop.y += drop.speed * speedMult; // Fall
+                            if (drop.y > this.canvas.height + 30) drop.y = -30; // Loop top
+                        }
                     }
 
                     requestAnimationFrame((ts) => this.animate(ts));
