@@ -11,11 +11,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=13"
+            href="{{ url_for('static', filename='icon.png') }}?v=14"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=13"
+            href="{{ url_for('static', filename='icon.png') }}?v=14"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -35,9 +35,9 @@
                 --accent-green: #00e676;
                 --accent-red: #ff1744;
                 --gold: #ffd700;
-                --card-bg: rgba(15, 15, 15, 0.6);
+                --card-bg: rgba(12, 12, 12, 0.7);
                 --input-bg: rgba(5, 5, 5, 0.85);
-                --setup-bg: rgba(25, 25, 25, 0.6);
+                --setup-bg: rgba(20, 20, 20, 0.6);
                 --max-width: 1400px;
                 --dock-height: 75px;
             }
@@ -69,7 +69,11 @@
                 width: 100%;
                 height: 100%;
                 z-index: -1;
-                background: #050505;
+                background: radial-gradient(
+                    circle at center,
+                    #111 0%,
+                    #000 100%
+                );
             }
 
             .app-wrapper {
@@ -96,7 +100,7 @@
                 color: white;
                 text-decoration: none;
                 letter-spacing: -1px;
-                text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+                text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
             }
 
             .vix-widget {
@@ -105,7 +109,7 @@
                 align-items: center;
                 justify-content: center;
                 background: rgba(10, 10, 10, 0.6);
-                backdrop-filter: blur(8px);
+                backdrop-filter: blur(10px);
                 padding: 8px 16px;
                 border-radius: 12px;
                 min-width: 65px;
@@ -791,29 +795,22 @@
                     this.ctx = this.canvas.getContext("2d");
                     this.vix = 18;
                     this.elements = [];
-                    this.lastTick = 0;
                     this.isRunning = true;
                     this.resize();
-
-                    // Initial Seed
                     this.initElements();
 
                     window.addEventListener("resize", () => this.resize());
                     document.addEventListener("visibilitychange", () =>
                         this.handleVisibility(),
                     );
-                    requestAnimationFrame((ts) => this.animate(ts));
+                    requestAnimationFrame(() => this.animate());
                     this.startHeartbeat();
                 }
 
                 handleVisibility() {
-                    if (document.hidden) {
-                        this.isRunning = false;
-                    } else {
-                        this.isRunning = true;
-                        this.lastTick = performance.now();
-                        requestAnimationFrame((ts) => this.animate(ts));
-                    }
+                    this.isRunning = !document.hidden;
+                    if (this.isRunning)
+                        requestAnimationFrame(() => this.animate());
                 }
 
                 resize() {
@@ -824,7 +821,7 @@
 
                 initElements() {
                     this.elements = [];
-                    const count = Math.floor(this.canvas.width / 25); // Responsive count
+                    const count = Math.floor(this.canvas.width / 30); // Optimized count
                     for (let i = 0; i < count; i++) {
                         this.elements.push(this.createParticle());
                     }
@@ -834,26 +831,28 @@
                     return {
                         x: Math.random() * this.canvas.width,
                         y: Math.random() * this.canvas.height,
-                        size: 14 + Math.random() * 20, // Size variation = Depth
-                        speed: 0.5 + Math.random() * 1.5, // Parallax speed
-                        icon: "🐂", // Placeholder
+                        size: 14 + Math.random() * 24, // Depth
+                        speed: 0.5 + Math.random() * 1.5,
+                        icon: "🐂",
+                        assigned: false,
                     };
                 }
 
                 getVixStats(vix) {
-                    // Returns [Bull Probability, Color, SpeedMultiplier]
-                    if (vix < 15) return [0.85, "rgba(0, 230, 118, ", 0.8];
-                    if (vix < 25) return [0.5, "rgba(255, 215, 0, ", 1.2];
-                    return [0.15, "rgba(255, 23, 68, ", 2.0];
+                    // [Bull Prob, R, G, B, Speed]
+                    if (vix < 15) return [0.85, 0, 230, 118, 0.8];
+                    if (vix < 25) return [0.5, 255, 215, 0, 1.2];
+                    return [0.15, 255, 23, 68, 2.0];
                 }
 
-                animate(timestamp) {
+                animate() {
                     if (!this.isRunning) return;
 
-                    const [bullProb, colorBase, speedMult] = this.getVixStats(
+                    const [bullProb, r, g, b, speedMult] = this.getVixStats(
                         this.vix,
                     );
 
+                    // Clear
                     this.ctx.clearRect(
                         0,
                         0,
@@ -861,40 +860,43 @@
                         this.canvas.height,
                     );
 
+                    // BATCH RENDERING: Sort of. We loop once but keep logic tight.
+                    // Setting shadow once per frame is efficient enough for this count.
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
+
                     this.elements.forEach((p) => {
-                        // Logic: Assign Icon if not set (or occasionally switch for chaos)
                         if (!p.assigned) {
                             p.icon = Math.random() < bullProb ? "🐂" : "🐻";
                             p.assigned = true;
                         }
 
-                        // Parallax Physics: Bigger = Faster
-                        const depthSpeed = (p.size / 20) * p.speed * speedMult;
+                        const depthSpeed = (p.size / 25) * p.speed * speedMult;
 
                         if (p.icon === "🐂") {
-                            p.y -= depthSpeed; // Rise
-                            if (p.y < -30) {
-                                p.y = this.canvas.height + 30;
+                            p.y -= depthSpeed;
+                            if (p.y < -40) {
+                                p.y = this.canvas.height + 40;
                                 p.x = Math.random() * this.canvas.width;
                                 p.assigned = false;
                             }
                         } else {
-                            p.y += depthSpeed; // Fall
-                            if (p.y > this.canvas.height + 30) {
-                                p.y = -30;
+                            p.y += depthSpeed;
+                            if (p.y > this.canvas.height + 40) {
+                                p.y = -40;
                                 p.x = Math.random() * this.canvas.width;
                                 p.assigned = false;
                             }
                         }
 
-                        // Draw with Depth (Opacity based on size)
-                        const opacity = (p.size / 34) * 0.4; // Max 0.4 opacity
+                        // Opacity based on depth
+                        const opacity = (p.size / 40) * 0.5;
+                        this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
                         this.ctx.font = `${p.size}px serif`;
-                        this.ctx.fillStyle = colorBase + opacity + ")";
                         this.ctx.fillText(p.icon, p.x, p.y);
                     });
 
-                    requestAnimationFrame((ts) => this.animate(ts));
+                    requestAnimationFrame(() => this.animate());
                 }
 
                 async startHeartbeat() {
@@ -917,9 +919,7 @@
                                         ).textContent = data.price;
                                     }
                                 }
-                            } catch (e) {
-                                console.log("Pulse skipped");
-                            }
+                            } catch (e) {}
                         }
                     }, 15000);
                 }
@@ -927,6 +927,7 @@
 
             new MarketPulse();
 
+            // Standard UI Logic
             function updateClock() {
                 const now = new Date();
                 const options = {
@@ -1010,9 +1011,7 @@
                         } else {
                             resultsBox.style.display = "none";
                         }
-                    } catch (e) {
-                        console.log("Search error");
-                    }
+                    } catch (e) {}
                 }, 250);
             });
         </script>
