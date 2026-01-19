@@ -23,8 +23,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.0.4 RAIDEN PROTOCOL ---
-APP_VERSION = "v1.0.4 Raiden"
+# --- VERSION 1.0.5 STABILITY PATCH ---
+APP_VERSION = "v1.0.5 Live"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -81,20 +81,6 @@ def init_db():
 init_db()
 
 
-# --- BACKGROUND TASK FOR VIX ---
-def background_vix_updater():
-    """Fetches VIX data in the background to prevent startup lag/errors"""
-    while True:
-        try:
-            get_vix_data(force_update=True)
-        except Exception as e:
-            logger.warning(f"VIX BG Update Failed: {e}")
-        t_module.sleep(60)
-
-
-threading.Thread(target=background_vix_updater, daemon=True).start()
-
-
 # --- HELPERS ---
 def get_current_time():
     tz = pytz.timezone("US/Eastern")
@@ -117,6 +103,7 @@ def get_market_data(ticker, retries=3):
     attempt = 0
     while attempt <= retries:
         try:
+            # Jitter prevents rate limit collisions
             jitter = random.uniform(0.1, 0.5)
             t_module.sleep(jitter)
 
@@ -135,6 +122,56 @@ def get_market_data(ticker, retries=3):
         attempt += 1
 
     return None
+
+
+# --- VIX SPECTRUM LOGIC ---
+def get_vix_data(force_update=False):
+    global VIX_CACHE
+    if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
+        return VIX_CACHE["data"]
+
+    try:
+        status_color = get_market_status_color()
+        df = get_market_data("^VIX", retries=3)
+
+        if df is None:
+            if VIX_CACHE["last_updated"] > 0:
+                return VIX_CACHE["data"]
+            return {
+                "price": "N/A",
+                "color": "grey",
+                "label": "OFFLINE",
+                "market_status": status_color,
+            }
+
+        price = df.iloc[-1]["Close"]
+
+        if price < 12:
+            color, label = "#00E676", "COMPLACENCY"
+        elif 12 <= price < 15:
+            color, label = "#66BB6A", "CALM"
+        elif 15 <= price < 20:
+            color, label = "#FFD600", "MILD"
+        elif 20 <= price < 30:
+            color, label = "#FF9100", "ELEVATED"
+        elif 30 <= price < 40:
+            color, label = "#FF3D00", "ANXIETY"
+        elif 40 <= price < 50:
+            color, label = "#D50000", "CRISIS"
+        else:
+            color, label = "#880E4F", "SHOCK"
+
+        new_data = {
+            "price": round(price, 2),
+            "color": color,
+            "label": label,
+            "market_status": status_color,
+        }
+        VIX_CACHE["data"] = new_data
+        VIX_CACHE["last_updated"] = t_module.time()
+        return new_data
+    except Exception:
+        return VIX_CACHE["data"]
 
 
 # --- CORE LOGIC ---
@@ -256,56 +293,6 @@ def get_social_sentiment(rsi, vol_ratio):
     if vol_ratio > 1.1:
         return {"score": "TRENDING", "comment": "High Volume", "icon": "👀"}
     return {"score": "QUIET", "comment": "Consolidation", "icon": "💤"}
-
-
-# --- VIX SPECTRUM ---
-def get_vix_data(force_update=False):
-    global VIX_CACHE
-    if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
-        return VIX_CACHE["data"]
-
-    try:
-        status_color = get_market_status_color()
-        df = get_market_data("^VIX", retries=3)
-
-        if df is None:
-            if VIX_CACHE["last_updated"] > 0:
-                return VIX_CACHE["data"]
-            return {
-                "price": "N/A",
-                "color": "grey",
-                "label": "OFFLINE",
-                "market_status": status_color,
-            }
-
-        price = df.iloc[-1]["Close"]
-
-        if price < 12:
-            color, label = "#00E676", "COMPLACENCY"
-        elif 12 <= price < 15:
-            color, label = "#66BB6A", "CALM"
-        elif 15 <= price < 20:
-            color, label = "#FFD600", "MILD"
-        elif 20 <= price < 30:
-            color, label = "#FF9100", "ELEVATED"
-        elif 30 <= price < 40:
-            color, label = "#FF3D00", "ANXIETY"
-        elif 40 <= price < 50:
-            color, label = "#D50000", "CRISIS"
-        else:
-            color, label = "#880E4F", "SHOCK"
-
-        new_data = {
-            "price": round(price, 2),
-            "color": color,
-            "label": label,
-            "market_status": status_color,
-        }
-        VIX_CACHE["data"] = new_data
-        VIX_CACHE["last_updated"] = t_module.time()
-        return new_data
-    except Exception:
-        return VIX_CACHE["data"]
 
 
 def analyze_ticker(ticker_input):
@@ -503,5 +490,25 @@ def api_vix():
     return jsonify(get_vix_data())
 
 
+# --- CRITICAL FIX: DEFINE FUNCTION BEFORE STARTING THREAD ---
+def background_vix_updater():
+    """Fetches VIX data in the background to prevent startup lag/errors"""
+    # Wait 3 seconds on boot to let the server settle
+    t_module.sleep(3)
+    while True:
+        try:
+            get_vix_data(force_update=True)
+        except Exception as e:
+            logger.warning(f"VIX BG Update Failed: {e}")
+        t_module.sleep(60)
+
+
+# START BACKGROUND THREAD (Placed safely at the end)
+if __name__ != "__main__":
+    # For Gunicorn/Production
+    threading.Thread(target=background_vix_updater, daemon=True).start()
+
 if __name__ == "__main__":
+    # For Local Dev
+    threading.Thread(target=background_vix_updater, daemon=True).start()
     app.run(debug=True)
