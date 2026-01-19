@@ -23,16 +23,16 @@
             as="image"
             href="{{ url_for('static', filename='hellboy.png') }}"
         />
-
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=26"
+            href="{{ url_for('static', filename='icon.png') }}?v=28"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=26"
+            href="{{ url_for('static', filename='icon.png') }}?v=28"
         />
+
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
             name="apple-mobile-web-app-status-bar-style"
@@ -175,21 +175,6 @@
             .rocket-btn:active {
                 transform: scale(0.9);
             }
-            .rocket-btn:hover {
-                transform: scale(1.1);
-                border-color: var(--gold);
-                box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
-                animation: engineRumble 0.1s infinite;
-            }
-            @keyframes engineRumble {
-                0% {
-                    transform: scale(1.1) translate(1px, 1px);
-                }
-                100% {
-                    transform: scale(1.1) translate(0, 0);
-                }
-            }
-
             .rocket-btn.launching {
                 animation: launchSequence 1s
                     cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
@@ -370,6 +355,15 @@
             @keyframes violentShake {
                 0% {
                     transform: translate(2px, 2px);
+                }
+                25% {
+                    transform: translate(-2px, -2px);
+                }
+                50% {
+                    transform: translate(2px, -2px);
+                }
+                75% {
+                    transform: translate(-2px, 2px);
                 }
                 100% {
                     transform: translate(0, 0);
@@ -556,32 +550,21 @@
                 line-height: 1.5;
             }
 
-            .battle-arena {
-                display: flex;
-                justify-content: center;
-                gap: 40px;
+            /* --- ORACLE CARD MASCOT SYSTEM --- */
+            .oracle-container {
                 margin-bottom: 40px;
-                height: 80px;
-                align-items: center;
+                animation: slideUp 0.6s ease-out;
+                position: relative;
             }
-            .battle-icon {
-                width: 60px;
-                height: 60px;
-                fill: #4a4a4a;
-                opacity: 0.3;
-                transition: all 0.5s;
-            }
-            .bull-active .bull-icon {
-                fill: var(--accent-green);
-                opacity: 1;
-                filter: drop-shadow(0 0 30px rgba(0, 230, 118, 0.8));
-                transform: scale(1.3);
-            }
-            .bear-active .bear-icon {
-                fill: var(--accent-red);
-                opacity: 1;
-                filter: drop-shadow(0 0 30px rgba(255, 23, 68, 0.8));
-                transform: scale(1.3);
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
             .oracle-card {
@@ -596,7 +579,45 @@
                 padding: 30px;
                 position: relative;
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+                overflow: visible;
             }
+
+            /* THE MASCOT (Shrek/Hellboy) */
+            .oracle-mascot-container {
+                position: absolute;
+                right: -20px;
+                top: -50px;
+                width: 140px;
+                height: 140px;
+                z-index: 20;
+                pointer-events: none;
+            }
+            .oracle-mascot-img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                opacity: 0;
+                animation: igniteReveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)
+                    0.3s forwards;
+            }
+            .mascot-shrek {
+                filter: drop-shadow(0 0 30px rgba(0, 230, 118, 0.8));
+            }
+            .mascot-hellboy {
+                filter: drop-shadow(0 0 30px rgba(255, 23, 68, 0.8));
+            }
+
+            @keyframes igniteReveal {
+                0% {
+                    transform: scale(0) translateY(50px) rotate(-20deg);
+                    opacity: 0;
+                }
+                100% {
+                    transform: scale(1) translateY(0) rotate(0deg);
+                    opacity: 1;
+                }
+            }
+
             .oracle-badge {
                 position: absolute;
                 top: -14px;
@@ -871,23 +892,27 @@
             >
                 {{ error }}
             </div>
-            {% endif %} {% if results %}
-            <div
-                class="battle-arena {{ 'bull-active' if mood == 'BULL' else '' }} {{ 'bear-active' if mood == 'BEAR' else '' }}"
-            >
-                <svg
-                    class="battle-icon bull-icon"
-                    viewBox="0 0 512 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <path
-                        d="M149.3 429.3c15.2-14.1 27.6-35.4 34-58.6 3.9-14.2 3.1-28.8 6.4-43 4.2-18.3 11.2-35.8 22.3-51.1 11.1-15.3 25.5-27.4 42-35.5 16.5-8.1 34.6-11.6 52.6-10.4 18 1.2 35.8 7.2 51.3 17.5 30.9 20.6 55.6 51 72.5 86.8 4.2 8.9 7.7 18.2 10.3 27.8 2.6 9.6 4.3 19.5 4.9 29.5 0.6 10-0.2 20.1-2.4 30-2.2 9.9-5.7 19.4-10.4 28.3-9.3 17.8-23.7 32.2-41.2 41.5-17.5 9.3-37.4 12.9-56.9 10.5-9.7-1.2-19.1-4.2-27.7-8.9-8.6-4.7-16.5-10.9-23.2-18.4l-38.3 38.3c-6.2 6.2-16.4 6.2-22.6 0l-73.4-73.4c-6.3-6.2-6.3-16.4-0.2-22.5zM454 134c-11.2-25.1-30.8-45.6-54.7-57.2-23.9-11.6-51.5-14.1-77.1-7.1-12.8 3.5-24.8 9.5-35.4 17.6-10.6 8.1-19.5 18.3-26.2 29.9-13.4 23.2-17.7 50.8-12.2 77 2.8 13.1 8.3 25.4 16.1 36.1 7.8 10.7 17.9 19.4 29.5 25.2 23.2 11.6 50.8 11.6 74 0 11.6-5.8 21.7-14.5 29.5-25.2 7.8-10.7 13.3-23 16.1-36.1 5.5-26.2 1.2-53.8-12.2-77-6.7-11.6-15.6-21.8-26.2-29.9-10.6-8.1-22.6-14.1-35.4-17.6-25.6-7-53.2-4.5-77.1 7.1-23.9 11.6-43.5 32.1-54.7 57.2-5.6 12.5-8.4 26.2-8.4 40 0 55.2 44.8 100 100 100s100-44.8 100-100c0-13.8-2.8-27.5-8.4-40z"
-                    />
-                </svg>
-            </div>
             {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
             <div class="oracle-container">
                 <div class="oracle-card">
+                    {% if 'BULLISH' in chosen_one.signal %}
+                    <div class="oracle-mascot-container">
+                        <img
+                            src="{{ url_for('static', filename='shrek.png') }}"
+                            class="oracle-mascot-img mascot-shrek"
+                            alt="Bullish"
+                        />
+                    </div>
+                    {% elif 'BEARISH' in chosen_one.signal %}
+                    <div class="oracle-mascot-container">
+                        <img
+                            src="{{ url_for('static', filename='hellboy.png') }}"
+                            class="oracle-mascot-img mascot-hellboy"
+                            alt="Bearish"
+                        />
+                    </div>
+                    {% endif %}
+
                     <div class="oracle-badge">ORACLE PICK</div>
                     <div class="oracle-header">
                         <div>
@@ -947,6 +972,10 @@
                 </div>
             </div>
             {% endif %} {% if results %}
+            <div
+                class="battle-arena {{ 'bull-active' if mood == 'BULL' else '' }} {{ 'bear-active' if mood == 'BEAR' else '' }}"
+            ></div>
+
             <div class="results-grid">
                 {% for row in results %} {% if not chosen_one or row.ticker !=
                 chosen_one.ticker %}
@@ -997,7 +1026,6 @@
         </div>
 
         <script>
-            // --- SHREK & HELLBOY CANVAS ENGINE ---
             class MarketPulse {
                 constructor() {
                     this.canvas = document.getElementById("market-canvas");
@@ -1006,46 +1034,20 @@
                     this.elements = [];
                     this.isRunning = true;
                     this.dpr = window.devicePixelRatio || 1;
-                    this.resizeTimeout = null; // Debounce Optimization
+                    this.resize();
+                    this.initElements();
 
-                    this.shrek = new Image();
-                    this.shrek.src = "/static/shrek.png";
-                    this.hellboy = new Image();
-                    this.hellboy.src = "/static/hellboy.png";
-                    this.assetsLoaded = false;
-
-                    let loadedCount = 0;
-                    const onAssetLoad = () => {
-                        loadedCount++;
-                        if (loadedCount === 2) {
-                            this.assetsLoaded = true;
-                            this.resize();
-                            this.initElements();
-                            requestAnimationFrame(() => this.animate());
-                        }
-                    };
-                    this.shrek.onload = onAssetLoad;
-                    this.hellboy.onload = onAssetLoad;
-                    // Fallback if images fail
-                    this.shrek.onerror = onAssetLoad;
-                    this.hellboy.onerror = onAssetLoad;
-
-                    window.addEventListener("resize", () => {
-                        clearTimeout(this.resizeTimeout);
-                        this.resizeTimeout = setTimeout(
-                            () => this.resize(),
-                            200,
-                        );
-                    });
+                    window.addEventListener("resize", () => this.resize());
                     document.addEventListener("visibilitychange", () =>
                         this.handleVisibility(),
                     );
+                    requestAnimationFrame(() => this.animate());
                     this.startHeartbeat();
                 }
 
                 handleVisibility() {
                     this.isRunning = !document.hidden;
-                    if (this.isRunning && this.assetsLoaded)
+                    if (this.isRunning)
                         requestAnimationFrame(() => this.animate());
                 }
 
@@ -1059,7 +1061,7 @@
 
                 initElements() {
                     this.elements = [];
-                    const count = Math.floor(window.innerWidth / 40);
+                    const count = Math.floor(window.innerWidth / 30);
                     for (let i = 0; i < count; i++) {
                         this.elements.push(this.createParticle());
                     }
@@ -1069,24 +1071,25 @@
                     return {
                         x: Math.random() * window.innerWidth,
                         y: Math.random() * window.innerHeight,
-                        size: 20 + Math.random() * 30,
+                        size: 14 + Math.random() * 24,
                         speed: 0.5 + Math.random() * 1.5,
-                        img: null,
-                        wobble: Math.random() * Math.PI * 2,
+                        icon: "🐂",
                         assigned: false,
                     };
                 }
 
                 getVixStats(vix) {
-                    if (vix < 15) return [0.85, 0.8];
-                    if (vix < 25) return [0.5, 1.2];
-                    return [0.15, 2.0];
+                    if (vix < 15) return [0.85, 0, 230, 118, 0.8];
+                    if (vix < 25) return [0.5, 255, 215, 0, 1.2];
+                    return [0.15, 255, 23, 68, 2.0];
                 }
 
                 animate() {
                     if (!this.isRunning) return;
 
-                    const [shrekProb, speedMult] = this.getVixStats(this.vix);
+                    const [bullProb, r, g, b, speedMult] = this.getVixStats(
+                        this.vix,
+                    );
 
                     this.ctx.clearRect(
                         0,
@@ -1094,47 +1097,37 @@
                         this.canvas.width,
                         this.canvas.height,
                     );
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
 
                     this.elements.forEach((p) => {
                         if (!p.assigned) {
-                            p.img =
-                                Math.random() < shrekProb
-                                    ? this.shrek
-                                    : this.hellboy;
+                            p.icon = Math.random() < bullProb ? "🐂" : "🐻";
                             p.assigned = true;
                         }
 
-                        const depthSpeed = (p.size / 30) * p.speed * speedMult;
-                        p.wobble += 0.05;
+                        const depthSpeed = (p.size / 25) * p.speed * speedMult;
 
-                        if (p.img === this.shrek) {
+                        if (p.icon === "🐂") {
                             p.y -= depthSpeed;
-                            if (p.y < -50) {
-                                p.y = window.innerHeight + 50;
+                            if (p.y < -40) {
+                                p.y = window.innerHeight + 40;
                                 p.x = Math.random() * window.innerWidth;
                                 p.assigned = false;
                             }
                         } else {
                             p.y += depthSpeed;
-                            if (p.y > window.innerHeight + 50) {
-                                p.y = -50;
+                            if (p.y > window.innerHeight + 40) {
+                                p.y = -40;
                                 p.x = Math.random() * window.innerWidth;
                                 p.assigned = false;
                             }
                         }
 
-                        if (p.img.complete) {
-                            const pulse = Math.sin(p.wobble) * 2;
-                            this.ctx.globalAlpha = (p.size / 50) * 0.7;
-                            this.ctx.drawImage(
-                                p.img,
-                                p.x,
-                                p.y,
-                                p.size + pulse,
-                                p.size + pulse,
-                            );
-                            this.ctx.globalAlpha = 1.0;
-                        }
+                        const opacity = (p.size / 40) * 0.5;
+                        this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                        this.ctx.font = `${p.size}px serif`;
+                        this.ctx.fillText(p.icon, p.x, p.y);
                     });
 
                     requestAnimationFrame(() => this.animate());
@@ -1173,6 +1166,7 @@
 
             new MarketPulse();
 
+            // ROCKET LAUNCH
             function launchRocket() {
                 const btn = document.querySelector(".rocket-btn");
                 const overlay = document.getElementById("loading-overlay");
@@ -1297,12 +1291,26 @@
                                     document
                                         .getElementById("loading-overlay")
                                         .classList.add("active");
-                                    fireBlast(
-                                        document.querySelector(
-                                            ".goku-container",
-                                        ),
-                                    );
-                                    form.submit();
+                                    // Trigger blast on search too!
+                                    document
+                                        .querySelector(".goku-img")
+                                        .classList.add("charging");
+                                    document
+                                        .querySelector(".energy-orb")
+                                        .classList.add("active");
+                                    setTimeout(() => {
+                                        document
+                                            .querySelector(".energy-beam")
+                                            .classList.add("firing");
+                                        fireBlast(
+                                            document.querySelector(
+                                                ".goku-container",
+                                            ),
+                                        );
+                                    }, 1500);
+                                    setTimeout(() => {
+                                        form.submit();
+                                    }, 2500);
                                 };
                                 resultsBox.appendChild(div);
                             });
