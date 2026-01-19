@@ -22,11 +22,15 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
+# --- DYNAMIC VERSIONING ---
+# This reflects the ongoing development status
+APP_VERSION = "BETA v0.9.8"
+
 # Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
 
-# VIX Cache with "Ghost" Data Persistence
+# Cache
 VIX_CACHE = {
     "data": {
         "price": "WAIT",
@@ -87,16 +91,15 @@ def get_market_status_color():
     tz = pytz.timezone("US/Eastern")
     now = datetime.now(tz)
     if now.weekday() >= 5:
-        return "#ff5252"  # Closed (Weekend) - Red
+        return "#ff5252"
     current_time = now.time()
     if time(9, 30) <= current_time <= time(16, 0):
-        return "#00e676"  # Open - Green
-    return "#ff5252"  # Closed - Red
+        return "#00e676"
+    return "#ff5252"
 
 
 def get_market_data(ticker):
     try:
-        # Fetch tiny amount of data for speed
         df = yf.download(ticker, period="5d", interval="5m", progress=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
@@ -231,11 +234,9 @@ def get_social_sentiment(rsi, vol_ratio):
     return {"score": "QUIET", "comment": "Consolidation", "icon": "💤"}
 
 
-# --- VIX SPECTRUM LOGIC (MATCHING UPLOADED CHART) ---
+# --- VIX SPECTRUM LOGIC ---
 def get_vix_data():
     global VIX_CACHE
-
-    # 60 Second Cache Rule
     if t_module.time() - VIX_CACHE["last_updated"] < 60:
         return VIX_CACHE["data"]
 
@@ -244,7 +245,6 @@ def get_vix_data():
         df = get_market_data("^VIX")
 
         if df is None:
-            # Ghost Protocol: Serve old data if new fetch fails
             if VIX_CACHE["last_updated"] > 0:
                 return VIX_CACHE["data"]
             return {
@@ -256,28 +256,20 @@ def get_vix_data():
 
         price = df.iloc[-1]["Close"]
 
-        # PRECISE CHART MATCHING
         if price < 12:
-            color = "#00E676"  # Bright Green
-            label = "COMPLACENCY"
+            color, label = "#00E676", "COMPLACENCY"
         elif 12 <= price < 15:
-            color = "#66BB6A"  # Calm/Healthy Green
-            label = "CALM"
+            color, label = "#66BB6A", "CALM"
         elif 15 <= price < 20:
-            color = "#FFD600"  # Mild/Yellow
-            label = "MILD"
+            color, label = "#FFD600", "MILD"
         elif 20 <= price < 30:
-            color = "#FF9100"  # Elevated/Orange
-            label = "ELEVATED"
+            color, label = "#FF9100", "ELEVATED"
         elif 30 <= price < 40:
-            color = "#FF3D00"  # Anxiety/Dark Orange
-            label = "ANXIETY"
+            color, label = "#FF3D00", "ANXIETY"
         elif 40 <= price < 50:
-            color = "#D50000"  # Crisis/Red
-            label = "CRISIS"
-        else:  # 50+
-            color = "#880E4F"  # Shock/Maroon
-            label = "SHOCK"
+            color, label = "#D50000", "CRISIS"
+        else:
+            color, label = "#880E4F", "SHOCK"
 
         new_data = {
             "price": round(price, 2),
@@ -285,12 +277,10 @@ def get_vix_data():
             "label": label,
             "market_status": status_color,
         }
-
         VIX_CACHE["data"] = new_data
         VIX_CACHE["last_updated"] = t_module.time()
         return new_data
     except Exception:
-        # Fallback to cache on any crash
         return VIX_CACHE["data"]
 
 
@@ -409,11 +399,13 @@ def add_header(response):
 
 @app.route("/")
 def index():
+    # Pass version to template for footer
     return render_template(
         "index.html",
         vix=get_vix_data(),
         status_color=get_market_status_color(),
         timestamp=get_current_time(),
+        version=APP_VERSION,
     )
 
 
@@ -444,6 +436,7 @@ def scan():
         vix=get_vix_data(),
         status_color=get_market_status_color(),
         timestamp=get_current_time(),
+        version=APP_VERSION,
     )
 
 
@@ -461,6 +454,7 @@ def search():
             vix=get_vix_data(),
             status_color=get_market_status_color(),
             timestamp=get_current_time(),
+            version=APP_VERSION,
         )
     mood = (
         "BULL"
@@ -477,6 +471,7 @@ def search():
         vix=get_vix_data(),
         status_color=get_market_status_color(),
         timestamp=get_current_time(),
+        version=APP_VERSION,
     )
 
 

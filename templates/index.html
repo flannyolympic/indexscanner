@@ -23,14 +23,15 @@
             as="image"
             href="{{ url_for('static', filename='hellboy.png') }}"
         />
+
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=38"
+            href="{{ url_for('static', filename='icon.png') }}?v=39"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=38"
+            href="{{ url_for('static', filename='icon.png') }}?v=39"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -66,9 +67,8 @@
                 color: var(--text-main);
                 margin: 0;
                 padding: 20px;
-                padding-bottom: calc(
-                    var(--dock-height) + 50px + env(safe-area-inset-bottom)
-                );
+                /* Space for Footer */
+                padding-bottom: 120px;
                 padding-left: max(20px, env(safe-area-inset-left));
                 padding-right: max(20px, env(safe-area-inset-right));
                 -webkit-tap-highlight-color: transparent;
@@ -109,6 +109,19 @@
                 text-decoration: none;
                 letter-spacing: -1px;
                 text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            }
+
+            .beta-pill {
+                display: inline-block;
+                font-size: 0.6rem;
+                font-weight: 800;
+                color: #000;
+                background: var(--gold);
+                padding: 2px 6px;
+                border-radius: 4px;
+                margin-left: 8px;
+                vertical-align: middle;
+                letter-spacing: 0.5px;
             }
 
             .vix-widget {
@@ -804,29 +817,51 @@
                 color: white;
                 text-align: right;
             }
-
-            /* DYNAMIC STOP LOSS BOX */
             .stop-loss-box {
                 margin-top: 10px;
                 padding: 8px;
+                background: rgba(255, 23, 68, 0.15);
+                border: 1px solid var(--accent-red);
                 border-radius: 8px;
                 font-size: 0.75rem;
+                color: #ff8a80;
                 text-align: center;
                 font-weight: 700;
                 letter-spacing: 0.5px;
             }
-            /* Default Green (Safe) */
-            .stop-green {
-                background: rgba(0, 230, 118, 0.15);
-                border: 1px solid var(--accent-green);
-                color: var(--accent-green);
+            .kill-switch-active {
+                border-color: var(--accent-red) !important;
+                animation: borderPulse 1s infinite;
             }
-            /* Danger Red (Volatile) */
-            .stop-red {
-                background: rgba(255, 23, 68, 0.15);
-                border: 1px solid var(--accent-red);
-                color: var(--accent-red);
-                animation: borderPulse 2s infinite;
+
+            /* FOOTER & ULA */
+            .app-footer {
+                margin-top: 40px;
+                padding: 20px 0;
+                text-align: center;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .ula-text {
+                font-size: 0.65rem;
+                color: #5f6368;
+                line-height: 1.6;
+                max-width: 600px;
+                margin: 0 auto 15px;
+            }
+            .version-info {
+                font-size: 0.7rem;
+                color: var(--accent-green);
+                font-family: monospace;
+                opacity: 0.8;
+            }
+            .status-dot {
+                height: 8px;
+                width: 8px;
+                background-color: var(--accent-green);
+                border-radius: 50%;
+                display: inline-block;
+                margin-right: 5px;
+                box-shadow: 0 0 5px var(--accent-green);
             }
         </style>
     </head>
@@ -853,7 +888,7 @@
                             id="matrix-logo"
                             style="color: {{ status_color }}; transition: color 0.5s ease;"
                             >Matrix</span
-                        ></a
+                        ><span class="beta-pill">BETA</span></a
                     >
                     <span
                         id="live-clock"
@@ -1030,7 +1065,6 @@
                             >"{{ chosen_one.social.comment }}"</span
                         >
                     </div>
-
                     <div
                         class="ai-setup {{ 'kill-switch-active' if 'KILL SWITCH' in chosen_one.setup.type else '' }}"
                     >
@@ -1048,10 +1082,7 @@
                             <span>Target</span>
                             <span>{{ chosen_one.setup.target }}</span>
                         </div>
-
-                        <div
-                            class="stop-loss-box {{ 'stop-red' if vix.price|float > 20 else 'stop-green' }}"
-                        >
+                        <div class="stop-loss-box">
                             STOP: {{ chosen_one.setup.stop }}
                         </div>
                     </div>
@@ -1106,6 +1137,23 @@
                 >
             </div>
             {% endif %}
+
+            <footer class="app-footer">
+                <div class="footer-content">
+                    <p class="ula-text">
+                        <strong>OPEN SOURCE INITIATIVE</strong><br />
+                        This platform is an educational tool designed for market
+                        engagement and visual analysis. Data is provided for
+                        entertainment purposes only and does not constitute
+                        financial advice. Built with 💚 for digital
+                        sustainability and efficiency.
+                    </p>
+                    <div class="version-info">
+                        <span class="status-dot"></span> {{ version }} |
+                        Continuous Deployment
+                    </div>
+                </div>
+            </footer>
         </div>
 
         <script>
