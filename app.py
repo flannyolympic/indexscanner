@@ -433,5 +433,13 @@ def search():
     )
 
 
+# --- NEW: LIVE VIX HEARTBEAT ---
+@app.route("/api/vix")
+def api_vix():
+    # Returns raw JSON for the background animation to consume
+    data = get_vix_data()
+    return jsonify(data)
+
+
 if __name__ == "__main__":
     app.run(debug=True)
