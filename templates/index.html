@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=46"
+            href="{{ url_for('static', filename='icon.png') }}?v=47"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=46"
+            href="{{ url_for('static', filename='icon.png') }}?v=47"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -170,7 +170,6 @@
                 white-space: nowrap;
             }
 
-            /* SOLAR FLARE ENGINE */
             .launcher-container {
                 display: flex;
                 justify-content: center;
@@ -303,7 +302,7 @@
                 }
             }
 
-            /* CENTERED RAIDEN OVERLAY */
+            /* CLOAK MODE OVERLAY */
             #loading-overlay {
                 position: fixed;
                 top: 0;
@@ -312,11 +311,12 @@
                 height: 100%;
                 background: rgba(0, 0, 0, 0.7);
                 backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px); /* Safari Fix */
                 z-index: 9999;
                 display: none;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center; /* PERFECT CENTERING */
+                justify-content: center;
                 opacity: 0;
                 transition: opacity 0.3s ease-in-out;
                 overflow: hidden;
@@ -329,17 +329,18 @@
             .goku-container {
                 position: relative;
                 width: 100%;
-                height: 100%;
+                max-width: 800px;
+                height: 60vh;
                 display: flex;
                 align-items: center;
-                justify-content: center; /* ENSURES GIF IS DEAD CENTER */
+                justify-content: center;
             }
 
             .goku-img {
                 height: auto;
-                max-height: 60vh; /* Limits height so it fits on screens */
                 width: auto;
-                max-width: 90vw; /* Prevents overflow */
+                max-height: 60vh;
+                max-width: 90vw;
                 object-fit: contain;
                 position: relative;
                 z-index: 10;
@@ -796,7 +797,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=46"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=47"
                     class="goku-img"
                     alt="Scanning..."
                 />
@@ -921,7 +922,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=46"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=47"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -929,7 +930,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=46"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=47"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
