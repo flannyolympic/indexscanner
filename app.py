@@ -1,24 +1,33 @@
 import logging
 import random
 import sqlite3
-import time as t_module  # Renamed to avoid conflict with datetime.time
+import time as t_module
 from datetime import datetime, time
 
 import numpy as np
 import pandas as pd
 import pytz
+import requests  # NEW: For the autocomplete proxy
 import yfinance as yf
-from flask import Flask, make_response, redirect, render_template, request, url_for
+from flask import (
+    Flask,
+    jsonify,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from scipy.stats import norm
 
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# Set up logging to track HFT performance
+# Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
 
-# --- THE MATRIX UNIVERSE ---
+# --- THE MATRIX UNIVERSE (Default fallback) ---
 UNIVERSE = [
     "AAPL",
     "MSFT",
@@ -46,6 +55,7 @@ UNIVERSE = [
 ]
 
 
+# --- DATABASE ---
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -78,7 +88,6 @@ def get_market_status_color():
 
 def get_market_data(ticker):
     try:
-        # OPTIMIZATION: 5-minute intervals for High Frequency detection
         df = yf.download(ticker, period="5d", interval="5m", progress=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
@@ -91,17 +100,10 @@ def get_market_data(ticker):
 
 
 def calculate_probability(price, target, std_dev, rsi, trend):
-    """
-    ALGORITHM UPGRADE: Volatility-Adaptive Probability
-    """
-    # Safety Floor
     safe_vol = max(std_dev, price * 0.005)
-
-    # 3-Day Outlook
     z_score = abs(target - price) / (safe_vol * np.sqrt(3))
     stat_prob = 2 * norm.sf(z_score) * 100
 
-    # RSI Edge
     rsi_edge = 0
     if trend == "LONG" and rsi < 40:
         rsi_edge = 12
@@ -110,10 +112,8 @@ def calculate_probability(price, target, std_dev, rsi, trend):
 
     final_pop = stat_prob + rsi_edge
 
-    # DYNAMIC PULSE: Jitter is now scaled by the asset's volatility percentage.
-    # Crypto will "pulse" more aggressively than stocks.
     vol_percent = (std_dev / price) * 100
-    pulse_magnitude = min(vol_percent, 2.0)  # Cap at 2% swing
+    pulse_magnitude = min(vol_percent, 2.0)
     pulse = random.uniform(-pulse_magnitude, pulse_magnitude)
 
     return round(min(max(final_pop + pulse, 35.5), 96.2), 1)
@@ -240,6 +240,8 @@ def get_vix_data():
 def analyze_ticker(ticker_input):
     ticker = ticker_input.upper().strip()
     df = get_market_data(ticker)
+
+    # Auto-add -USD if stock fails but crypto might match
     if df is None:
         if not ticker.endswith("-USD"):
             df = get_market_data(f"{ticker}-USD")
@@ -315,6 +317,41 @@ def analyze_ticker(ticker_input):
     }
 
 
+# --- NEW: AUTOCOMPLETE PROXY ROUTE ---
+@app.route("/suggest")
+def suggest():
+    query = request.args.get("q", "")
+    if not query:
+        return jsonify([])
+
+    # Use Yahoo Finance's Public Autocomplete API
+    # We must mimic a browser user-agent to avoid blocking
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    url = f"https://query2.finance.yahoo.com/v1/finance/search?q={query}&quotesCount=10&newsCount=0"
+
+    try:
+        response = requests.get(url, headers=headers)
+        data = response.json()
+        suggestions = []
+        if "quotes" in data:
+            for item in data["quotes"]:
+                # Filter for Stocks, ETFs, Crypto (ignore futures/options if desired)
+                if "symbol" in item:
+                    suggestions.append(
+                        {
+                            "symbol": item["symbol"],
+                            "name": item.get("shortname", item.get("longname", "")),
+                            "exch": item.get("exchDisp", item.get("exchange", "")),
+                        }
+                    )
+        return jsonify(suggestions)
+    except Exception as e:
+        logger.error(f"Autosuggest error: {e}")
+        return jsonify([])
+
+
 @app.after_request
 def add_header(response):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -335,7 +372,7 @@ def index():
 
 @app.route("/scan")
 def scan():
-    start_time = t_module.time()  # Latency Timer
+    start_time = t_module.time()
     scan_list = random.sample(UNIVERSE, 8)
     if "BTC-USD" not in scan_list:
         scan_list.append("BTC-USD")

@@ -37,3 +37,4 @@ yfinance
 pandas
 numpy
 scipy
+requests
