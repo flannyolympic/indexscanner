@@ -1,7 +1,7 @@
 import logging
 import random
 import sqlite3
-import time as t_module  # Standard time for caching
+import time as t_module
 from datetime import datetime, time
 
 import numpy as np
@@ -12,7 +12,6 @@ import yfinance as yf
 from flask import (
     Flask,
     jsonify,
-    make_response,
     redirect,
     render_template,
     request,
@@ -23,16 +22,16 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# Logging setup
+# Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
 
-# --- MEMORY CACHE ---
-# Stores VIX data to prevent Yahoo Rate Limiting
-# TTL (Time To Live) = 60 seconds
-VIX_CACHE = {"data": {"price": "WAIT", "color": "grey"}, "last_updated": 0}
+# Cache
+VIX_CACHE = {
+    "data": {"price": "WAIT", "color": "grey", "market_status": "grey"},
+    "last_updated": 0,
+}
 
-# --- THE MATRIX UNIVERSE ---
 UNIVERSE = [
     "AAPL",
     "MSFT",
@@ -82,17 +81,21 @@ def get_current_time():
 def get_market_status_color():
     tz = pytz.timezone("US/Eastern")
     now = datetime.now(tz)
+    # Weekends = Red
     if now.weekday() >= 5:
         return "#f28b82"
+
+    # Weekdays 9:30 - 4:00 = Green
     current_time = now.time()
     if time(9, 30) <= current_time <= time(16, 0):
-        return "#81c995"
+        return "#00e676"
+
+    # After Hours = Red
     return "#f28b82"
 
 
 def get_market_data(ticker):
     try:
-        # Use simple download to minimize overhead
         df = yf.download(ticker, period="5d", interval="5m", progress=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
@@ -100,10 +103,11 @@ def get_market_data(ticker):
             return None
         return df
     except Exception as e:
-        logger.error(f"Data fetch error for {ticker}: {e}")
+        logger.error(f"Data fetch error: {e}")
         return None
 
 
+# --- CORE LOGIC ---
 def calculate_probability(price, target, std_dev, rsi, trend):
     safe_vol = max(std_dev, price * 0.005)
     z_score = abs(target - price) / (safe_vol * np.sqrt(3))
@@ -116,8 +120,6 @@ def calculate_probability(price, target, std_dev, rsi, trend):
         rsi_edge = 12
 
     final_pop = stat_prob + rsi_edge
-
-    # Adaptive Jitter based on Volatility
     vol_percent = (std_dev / price) * 100
     pulse_magnitude = min(vol_percent, 2.0)
     pulse = random.uniform(-pulse_magnitude, pulse_magnitude)
@@ -228,23 +230,24 @@ def get_social_sentiment(rsi, vol_ratio):
     return {"score": "QUIET", "comment": "Consolidation", "icon": "💤"}
 
 
-# --- OPTIMIZED CACHED VIX ---
+# --- VIX & STATUS API ---
 def get_vix_data():
     global VIX_CACHE
 
-    # If cached data is fresh (< 60 seconds old), return it
+    # Check Cache (1 min)
     if t_module.time() - VIX_CACHE["last_updated"] < 60:
         return VIX_CACHE["data"]
 
     try:
+        # Get Market Status Color Live
+        status_color = get_market_status_color()
+
         df = get_market_data("^VIX")
         if df is None:
-            # If download fails but we have old data, return old data (Better than error)
-            return (
-                VIX_CACHE["data"]
-                if VIX_CACHE["last_updated"] > 0
-                else {"price": "ERR", "color": "grey"}
-            )
+            # Preserve old data if fetch fails
+            if VIX_CACHE["last_updated"] > 0:
+                return VIX_CACHE["data"]
+            return {"price": "ERR", "color": "grey", "market_status": status_color}
 
         price = df.iloc[-1]["Close"]
         color = "#00e676"  # Green
@@ -253,16 +256,18 @@ def get_vix_data():
         elif price >= 20:
             color = "#ff1744"  # Red
 
-        new_data = {"price": round(price, 2), "color": color}
+        new_data = {
+            "price": round(price, 2),
+            "color": color,
+            "market_status": status_color,
+        }
 
-        # Update Cache
         VIX_CACHE["data"] = new_data
         VIX_CACHE["last_updated"] = t_module.time()
 
         return new_data
-    except Exception as e:
-        logger.error(f"VIX Update Failed: {e}")
-        return VIX_CACHE["data"]  # Fallback
+    except Exception:
+        return VIX_CACHE["data"]
 
 
 def analyze_ticker(ticker_input):
@@ -372,12 +377,12 @@ def suggest():
 def add_header(response):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
     return response
 
 
 @app.route("/")
 def index():
+    # Pass initial status color to template
     return render_template(
         "index.html",
         vix=get_vix_data(),
