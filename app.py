@@ -22,13 +22,18 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# Logging setup
+# Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
 
-# VIX & Status Cache
+# VIX Cache (Now stores range label)
 VIX_CACHE = {
-    "data": {"price": "WAIT", "color": "grey", "market_status": "grey"},
+    "data": {
+        "price": "WAIT",
+        "color": "grey",
+        "label": "LOADING",
+        "market_status": "grey",
+    },
     "last_updated": 0,
 }
 
@@ -60,7 +65,6 @@ UNIVERSE = [
 
 
 def init_db():
-    # check_same_thread=False prevents crashes under high traffic
     conn = sqlite3.connect(DB_NAME, check_same_thread=False)
     c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS watchlist
@@ -83,11 +87,11 @@ def get_market_status_color():
     tz = pytz.timezone("US/Eastern")
     now = datetime.now(tz)
     if now.weekday() >= 5:
-        return "#f28b82"  # Closed (Weekend)
+        return "#f28b82"
     current_time = now.time()
     if time(9, 30) <= current_time <= time(16, 0):
-        return "#00e676"  # Open
-    return "#f28b82"  # Closed
+        return "#00e676"
+    return "#f28b82"
 
 
 def get_market_data(ticker):
@@ -226,7 +230,7 @@ def get_social_sentiment(rsi, vol_ratio):
     return {"score": "QUIET", "comment": "Consolidation", "icon": "💤"}
 
 
-# --- API & CACHING ---
+# --- VIX SPECTRUM API ---
 def get_vix_data():
     global VIX_CACHE
     if t_module.time() - VIX_CACHE["last_updated"] < 60:
@@ -235,23 +239,49 @@ def get_vix_data():
     try:
         status_color = get_market_status_color()
         df = get_market_data("^VIX")
+
         if df is None:
             if VIX_CACHE["last_updated"] > 0:
                 return VIX_CACHE["data"]
-            return {"price": "ERR", "color": "grey", "market_status": status_color}
+            return {
+                "price": "ERR",
+                "color": "grey",
+                "label": "OFFLINE",
+                "market_status": status_color,
+            }
 
         price = df.iloc[-1]["Close"]
-        color = "#00e676"
-        if 15 <= price < 20:
-            color = "#ffea00"
-        elif price >= 20:
-            color = "#ff1744"
+
+        # --- THE VIX SPECTRUM LOGIC ---
+        if price < 12:
+            color = "#00E676"  # Bright Green
+            label = "COMPLACENCY"
+        elif 12 <= price < 15:
+            color = "#81C784"  # Calm/Healthy Green
+            label = "CALM"
+        elif 15 <= price < 20:
+            color = "#FFD600"  # Gold
+            label = "MILD"
+        elif 20 <= price < 30:
+            color = "#FF9100"  # Orange
+            label = "ELEVATED"
+        elif 30 <= price < 40:
+            color = "#FF3D00"  # Deep Orange
+            label = "ANXIETY"
+        elif 40 <= price < 50:
+            color = "#D50000"  # Red
+            label = "CRISIS"
+        else:  # 50+
+            color = "#880E4F"  # Deep Maroon
+            label = "SHOCK"
 
         new_data = {
             "price": round(price, 2),
             "color": color,
+            "label": label,
             "market_status": status_color,
         }
+
         VIX_CACHE["data"] = new_data
         VIX_CACHE["last_updated"] = t_module.time()
         return new_data
