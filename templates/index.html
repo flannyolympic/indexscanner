@@ -27,11 +27,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=25"
+            href="{{ url_for('static', filename='icon.png') }}?v=26"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=25"
+            href="{{ url_for('static', filename='icon.png') }}?v=26"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -51,7 +51,7 @@
                 --accent-green: #00e676;
                 --accent-red: #ff1744;
                 --gold: #ffd700;
-                --card-bg: rgba(15, 15, 15, 0.8);
+                --card-bg: rgba(15, 15, 15, 0.75);
                 --input-bg: rgba(5, 5, 5, 0.85);
                 --setup-bg: rgba(25, 25, 25, 0.6);
                 --max-width: 1400px;
@@ -77,7 +77,6 @@
                 overflow-x: hidden;
             }
 
-            /* LIVE BACKGROUND LAYER */
             #market-canvas {
                 position: fixed;
                 top: 0;
@@ -85,11 +84,7 @@
                 width: 100%;
                 height: 100%;
                 z-index: -1;
-                background: radial-gradient(
-                    circle at center,
-                    #111 0%,
-                    #000 100%
-                );
+                background: #050505;
             }
 
             .app-wrapper {
@@ -144,7 +139,7 @@
                 transition: color 0.5s ease;
             }
 
-            /* --- ADVANCED ROCKET LAUNCHER --- */
+            /* ROCKET LAUNCHER */
             .launcher-container {
                 display: flex;
                 justify-content: center;
@@ -154,81 +149,75 @@
                 height: 140px;
                 align-items: center;
             }
-
             .rocket-btn {
-                width: 100px;
-                height: 100px;
+                width: 90px;
+                height: 90px;
                 background: linear-gradient(
                     145deg,
                     rgba(40, 40, 40, 0.9),
                     rgba(15, 15, 15, 1)
                 );
-                border: 3px solid rgba(255, 255, 255, 0.1);
+                border: 2px solid rgba(255, 255, 255, 0.2);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 4rem;
+                font-size: 3.5rem;
                 cursor: pointer;
+                position: relative;
+                z-index: 5;
                 box-shadow:
                     0 15px 40px rgba(0, 0, 0, 0.6),
                     inset 0 0 20px rgba(255, 255, 255, 0.05);
-                transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                position: relative;
-                z-index: 5;
+                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 touch-action: manipulation;
             }
-
-            /* HOVER: IGNITION MODE */
+            .rocket-btn:active {
+                transform: scale(0.9);
+            }
             .rocket-btn:hover {
                 transform: scale(1.1);
                 border-color: var(--gold);
                 box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
                 animation: engineRumble 0.1s infinite;
             }
-
             @keyframes engineRumble {
                 0% {
                     transform: scale(1.1) translate(1px, 1px);
-                }
-                25% {
-                    transform: scale(1.1) translate(-1px, -1px);
-                }
-                50% {
-                    transform: scale(1.1) translate(-1px, 1px);
-                }
-                75% {
-                    transform: scale(1.1) translate(1px, -1px);
                 }
                 100% {
                     transform: scale(1.1) translate(0, 0);
                 }
             }
 
-            .rocket-btn:active {
-                transform: scale(0.9);
-            }
-
-            /* LAUNCH SEQUENCE */
             .rocket-btn.launching {
                 animation: launchSequence 1s
                     cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
                 pointer-events: none;
-                border-color: var(--accent-green);
+                border-color: var(--gold);
                 background: var(--gold);
             }
-
+            .rocket-btn.launching .rocket-icon {
+                animation: shake 0.1s linear infinite;
+            }
             @keyframes launchSequence {
                 0% {
                     transform: translateY(0) scale(0.9);
-                    box-shadow: 0 0 80px var(--gold);
                 }
                 30% {
-                    transform: translateY(40px) scale(0.7);
-                } /* Deep Recoil */
+                    transform: translateY(30px) scale(0.8);
+                }
                 100% {
                     transform: translateY(-150vh) scale(1.5);
                     opacity: 0;
+                }
+            }
+            @keyframes shake {
+                0% {
+                    transform: translate(2px, 2px);
+                }
+                100% {
+                    transform: translate(-2px, -2px);
                 }
             }
 
@@ -262,7 +251,7 @@
                 }
             }
 
-            /* --- GOKU LOADING OVERLAY --- */
+            /* GOKU OVERLAY */
             #loading-overlay {
                 position: fixed;
                 top: 0;
@@ -283,7 +272,6 @@
                 display: flex;
                 opacity: 1;
             }
-
             .goku-container {
                 position: relative;
                 width: 100%;
@@ -293,7 +281,6 @@
                 align-items: center;
                 justify-content: flex-start;
             }
-
             .goku-img {
                 height: 100%;
                 width: auto;
@@ -303,7 +290,6 @@
                 margin-left: -5vw;
                 transition: filter 0.2s;
             }
-
             .goku-img.charging {
                 animation: violentShake 0.1s infinite;
                 filter: brightness(1.3)
@@ -385,21 +371,10 @@
                 0% {
                     transform: translate(2px, 2px);
                 }
-                25% {
-                    transform: translate(-2px, -2px);
-                }
-                50% {
-                    transform: translate(2px, -2px);
-                }
-                75% {
-                    transform: translate(-2px, 2px);
-                }
                 100% {
                     transform: translate(0, 0);
                 }
             }
-
-            /* MIXED BLAST PARTICLES */
             .blast-particle {
                 position: absolute;
                 font-size: 2.5rem;
@@ -909,15 +884,6 @@
                         d="M149.3 429.3c15.2-14.1 27.6-35.4 34-58.6 3.9-14.2 3.1-28.8 6.4-43 4.2-18.3 11.2-35.8 22.3-51.1 11.1-15.3 25.5-27.4 42-35.5 16.5-8.1 34.6-11.6 52.6-10.4 18 1.2 35.8 7.2 51.3 17.5 30.9 20.6 55.6 51 72.5 86.8 4.2 8.9 7.7 18.2 10.3 27.8 2.6 9.6 4.3 19.5 4.9 29.5 0.6 10-0.2 20.1-2.4 30-2.2 9.9-5.7 19.4-10.4 28.3-9.3 17.8-23.7 32.2-41.2 41.5-17.5 9.3-37.4 12.9-56.9 10.5-9.7-1.2-19.1-4.2-27.7-8.9-8.6-4.7-16.5-10.9-23.2-18.4l-38.3 38.3c-6.2 6.2-16.4 6.2-22.6 0l-73.4-73.4c-6.3-6.2-6.3-16.4-0.2-22.5zM454 134c-11.2-25.1-30.8-45.6-54.7-57.2-23.9-11.6-51.5-14.1-77.1-7.1-12.8 3.5-24.8 9.5-35.4 17.6-10.6 8.1-19.5 18.3-26.2 29.9-13.4 23.2-17.7 50.8-12.2 77 2.8 13.1 8.3 25.4 16.1 36.1 7.8 10.7 17.9 19.4 29.5 25.2 23.2 11.6 50.8 11.6 74 0 11.6-5.8 21.7-14.5 29.5-25.2 7.8-10.7 13.3-23 16.1-36.1 5.5-26.2 1.2-53.8-12.2-77-6.7-11.6-15.6-21.8-26.2-29.9-10.6-8.1-22.6-14.1-35.4-17.6-25.6-7-53.2-4.5-77.1 7.1-23.9 11.6-43.5 32.1-54.7 57.2-5.6 12.5-8.4 26.2-8.4 40 0 55.2 44.8 100 100 100s100-44.8 100-100c0-13.8-2.8-27.5-8.4-40z"
                     />
                 </svg>
-                <svg
-                    class="battle-icon bear-icon"
-                    viewBox="0 0 512 512"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <path
-                        d="M128.6 170.7c-9.1 0-17.5 5.5-21 13.8L64.2 288c-4.4 10.5 3.3 22.3 14.7 22.3h29.8l-15.8 88.5c-2.6 14.5 8.5 27.9 23.2 27.9 10.6 0 20-7.1 22.5-17.5l24.6-102.6h85.6l24.6 102.6c2.5 10.4 11.9 17.5 22.5 17.5 14.7 0 25.8-13.4 23.2-27.9l-15.8-88.5h29.8c11.4 0 19.1-11.8 14.7-22.3l-43.4-103.5c-3.5-8.3-11.9-13.8-21-13.8H128.6z M256 32c-55.2 0-100 44.8-100 100 0 55.2 44.8 100 100 100s100-44.8 100-100c0-55.2-44.8-100-100-100z m-50 125c-8.3 0-15-6.7-15-15s6.7-15 15-15 15 6.7 15 15-6.7 15-15 15z m100 0c-8.3 0-15-6.7-15-15s6.7-15 15-15 15 6.7 15 15-6.7 15-15 15z"
-                    />
-                </svg>
             </div>
             {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
             <div class="oracle-container">
@@ -1040,15 +1006,14 @@
                     this.elements = [];
                     this.isRunning = true;
                     this.dpr = window.devicePixelRatio || 1;
+                    this.resizeTimeout = null; // Debounce Optimization
 
-                    // LOAD ASSETS
                     this.shrek = new Image();
                     this.shrek.src = "/static/shrek.png";
                     this.hellboy = new Image();
                     this.hellboy.src = "/static/hellboy.png";
                     this.assetsLoaded = false;
 
-                    // Wait for both to load
                     let loadedCount = 0;
                     const onAssetLoad = () => {
                         loadedCount++;
@@ -1061,8 +1026,17 @@
                     };
                     this.shrek.onload = onAssetLoad;
                     this.hellboy.onload = onAssetLoad;
+                    // Fallback if images fail
+                    this.shrek.onerror = onAssetLoad;
+                    this.hellboy.onerror = onAssetLoad;
 
-                    window.addEventListener("resize", () => this.resize());
+                    window.addEventListener("resize", () => {
+                        clearTimeout(this.resizeTimeout);
+                        this.resizeTimeout = setTimeout(
+                            () => this.resize(),
+                            200,
+                        );
+                    });
                     document.addEventListener("visibilitychange", () =>
                         this.handleVisibility(),
                     );
@@ -1085,7 +1059,7 @@
 
                 initElements() {
                     this.elements = [];
-                    const count = Math.floor(window.innerWidth / 40); // Spacing
+                    const count = Math.floor(window.innerWidth / 40);
                     for (let i = 0; i < count; i++) {
                         this.elements.push(this.createParticle());
                     }
@@ -1095,16 +1069,15 @@
                     return {
                         x: Math.random() * window.innerWidth,
                         y: Math.random() * window.innerHeight,
-                        size: 20 + Math.random() * 30, // Random Size for Depth
+                        size: 20 + Math.random() * 30,
                         speed: 0.5 + Math.random() * 1.5,
-                        img: null, // Assigned in animate loop
+                        img: null,
                         wobble: Math.random() * Math.PI * 2,
                         assigned: false,
                     };
                 }
 
                 getVixStats(vix) {
-                    // [Shrek Prob, Speed Mult]
                     if (vix < 15) return [0.85, 0.8];
                     if (vix < 25) return [0.5, 1.2];
                     return [0.15, 2.0];
@@ -1123,7 +1096,6 @@
                     );
 
                     this.elements.forEach((p) => {
-                        // Logic: Assign Image if not set
                         if (!p.assigned) {
                             p.img =
                                 Math.random() < shrekProb
@@ -1132,19 +1104,18 @@
                             p.assigned = true;
                         }
 
-                        // Physics
                         const depthSpeed = (p.size / 30) * p.speed * speedMult;
-                        p.wobble += 0.05; // Bobbing motion
+                        p.wobble += 0.05;
 
                         if (p.img === this.shrek) {
-                            p.y -= depthSpeed; // Shrek Floats Up
+                            p.y -= depthSpeed;
                             if (p.y < -50) {
                                 p.y = window.innerHeight + 50;
                                 p.x = Math.random() * window.innerWidth;
                                 p.assigned = false;
                             }
                         } else {
-                            p.y += depthSpeed; // Hellboy Falls Down
+                            p.y += depthSpeed;
                             if (p.y > window.innerHeight + 50) {
                                 p.y = -50;
                                 p.x = Math.random() * window.innerWidth;
@@ -1152,18 +1123,18 @@
                             }
                         }
 
-                        // Render Image
-                        // Pulse size slightly
-                        const pulse = Math.sin(p.wobble) * 2;
-                        this.ctx.globalAlpha = (p.size / 50) * 0.7; // Depth Opacity
-                        this.ctx.drawImage(
-                            p.img,
-                            p.x,
-                            p.y,
-                            p.size + pulse,
-                            p.size + pulse,
-                        );
-                        this.ctx.globalAlpha = 1.0;
+                        if (p.img.complete) {
+                            const pulse = Math.sin(p.wobble) * 2;
+                            this.ctx.globalAlpha = (p.size / 50) * 0.7;
+                            this.ctx.drawImage(
+                                p.img,
+                                p.x,
+                                p.y,
+                                p.size + pulse,
+                                p.size + pulse,
+                            );
+                            this.ctx.globalAlpha = 1.0;
+                        }
                     });
 
                     requestAnimationFrame(() => this.animate());
@@ -1202,7 +1173,6 @@
 
             new MarketPulse();
 
-            // ROCKET LAUNCH
             function launchRocket() {
                 const btn = document.querySelector(".rocket-btn");
                 const overlay = document.getElementById("loading-overlay");

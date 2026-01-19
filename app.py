@@ -81,29 +81,31 @@ def get_current_time():
 def get_market_status_color():
     tz = pytz.timezone("US/Eastern")
     now = datetime.now(tz)
-    # Weekends = Red
     if now.weekday() >= 5:
-        return "#f28b82"
+        return "#f28b82"  # Weekend Red
 
-    # Weekdays 9:30 - 4:00 = Green
     current_time = now.time()
+    # Market Open 9:30 AM - 4:00 PM EST
     if time(9, 30) <= current_time <= time(16, 0):
-        return "#00e676"
+        return "#00e676"  # Open Green
 
-    # After Hours = Red
-    return "#f28b82"
+    return "#f28b82"  # Closed Red
 
 
 def get_market_data(ticker):
     try:
+        # Optimization: Fetch minimal data required
         df = yf.download(ticker, period="5d", interval="5m", progress=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
+
+        # Robustness Check: Ensure Data is valid
         if df.empty or len(df) < 20:
             return None
+
         return df
     except Exception as e:
-        logger.error(f"Data fetch error: {e}")
+        logger.error(f"Data fetch error for {ticker}: {e}")
         return None
 
 
@@ -234,37 +236,33 @@ def get_social_sentiment(rsi, vol_ratio):
 def get_vix_data():
     global VIX_CACHE
 
-    # Check Cache (1 min)
+    # Cache for 60 seconds to prevent Rate Limiting
     if t_module.time() - VIX_CACHE["last_updated"] < 60:
         return VIX_CACHE["data"]
 
     try:
-        # Get Market Status Color Live
         status_color = get_market_status_color()
-
         df = get_market_data("^VIX")
+
         if df is None:
-            # Preserve old data if fetch fails
             if VIX_CACHE["last_updated"] > 0:
                 return VIX_CACHE["data"]
             return {"price": "ERR", "color": "grey", "market_status": status_color}
 
         price = df.iloc[-1]["Close"]
-        color = "#00e676"  # Green
+        color = "#00e676"
         if 15 <= price < 20:
-            color = "#ffea00"  # Gold
+            color = "#ffea00"
         elif price >= 20:
-            color = "#ff1744"  # Red
+            color = "#ff1744"
 
         new_data = {
             "price": round(price, 2),
             "color": color,
             "market_status": status_color,
         }
-
         VIX_CACHE["data"] = new_data
         VIX_CACHE["last_updated"] = t_module.time()
-
         return new_data
     except Exception:
         return VIX_CACHE["data"]
@@ -373,16 +371,21 @@ def suggest():
         return jsonify([])
 
 
+# --- SMART CACHE CONTROL ---
 @app.after_request
 def add_header(response):
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
+    # Performance Fix: Cache Static Images (Shrek, Goku, Icon) for 1 Year
+    if request.path.startswith("/static"):
+        response.headers["Cache-Control"] = "public, max-age=31536000"
+    else:
+        # Don't cache dynamic stock data
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
     return response
 
 
 @app.route("/")
 def index():
-    # Pass initial status color to template
     return render_template(
         "index.html",
         vix=get_vix_data(),
