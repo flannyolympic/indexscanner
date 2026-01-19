@@ -9,14 +9,20 @@
         <title>TheMatrix</title>
 
         <link
+            rel="preload"
+            as="image"
+            href="{{ url_for('static', filename='goku.png') }}"
+        />
+        <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=21"
+            href="{{ url_for('static', filename='icon.png') }}?v=22"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=21"
+            href="{{ url_for('static', filename='icon.png') }}?v=22"
         />
+
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
             name="apple-mobile-web-app-status-bar-style"
@@ -50,6 +56,7 @@
                 color: var(--text-main);
                 margin: 0;
                 padding: 20px;
+                /* Safe area padding for notched phones/TVs */
                 padding-bottom: calc(
                     var(--dock-height) + 50px + env(safe-area-inset-bottom)
                 );
@@ -88,8 +95,6 @@
                 display: flex;
                 flex-direction: column;
             }
-
-            /* MATRIX LOGO SPAN FOR LIVE COLOR UPDATE */
             .brand {
                 font-weight: 900;
                 font-size: 1.5rem;
@@ -111,7 +116,7 @@
                 min-width: 65px;
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-                transition: border-color 0.5s ease;
+                transition: all 0.5s ease;
             }
             .vix-label {
                 font-size: 0.6rem;
@@ -125,7 +130,7 @@
                 transition: color 0.5s ease;
             }
 
-            /* ROCKET */
+            /* ROCKET LAUNCHER */
             .launcher-container {
                 display: flex;
                 justify-content: center;
@@ -135,6 +140,7 @@
                 height: 140px;
                 align-items: center;
             }
+
             .rocket-btn {
                 width: 90px;
                 height: 90px;
@@ -150,16 +156,51 @@
                 justify-content: center;
                 font-size: 3.5rem;
                 cursor: pointer;
-                position: relative;
-                z-index: 5;
                 box-shadow:
                     0 15px 40px rgba(0, 0, 0, 0.6),
                     inset 0 0 20px rgba(255, 255, 255, 0.05);
                 transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                position: relative;
+                z-index: 5;
+                touch-action: manipulation; /* Removes tap delay on mobile */
             }
             .rocket-btn:active {
                 transform: scale(0.9);
             }
+
+            /* MONEY AURA PARTICLES */
+            .money-particle {
+                position: absolute;
+                font-size: 1.8rem;
+                font-weight: 900;
+                pointer-events: none;
+                opacity: 0;
+                z-index: 1;
+                text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            }
+
+            .m-up {
+                animation: floatUp 2.5s infinite ease-out;
+            }
+            .m-up-delayed {
+                animation: floatUp 2.5s infinite ease-out 1.25s;
+            }
+
+            @keyframes floatUp {
+                0% {
+                    transform: translate(-50%, -20%) scale(0.5);
+                    opacity: 0;
+                }
+                20% {
+                    opacity: 1;
+                }
+                100% {
+                    transform: translate(-50%, -250%) scale(1.5);
+                    opacity: 0;
+                }
+            }
+
+            /* LAUNCH ANIMATION */
             .rocket-btn.launching {
                 animation: launchSequence 1s
                     cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
@@ -186,44 +227,14 @@
             }
             @keyframes shake {
                 0% {
-                    transform: translate(2px, 2px);
+                    transform: translate(2px, 2px) rotate(0deg);
                 }
                 100% {
-                    transform: translate(-2px, -2px);
+                    transform: translate(-2px, -2px) rotate(-2deg);
                 }
             }
 
-            /* MONEY AURA */
-            .money-particle {
-                position: absolute;
-                font-size: 1.8rem;
-                font-weight: 900;
-                pointer-events: none;
-                opacity: 0;
-                z-index: 1;
-                text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
-            }
-            .m-up {
-                animation: floatUp 2.5s infinite ease-out;
-            }
-            .m-up-delayed {
-                animation: floatUp 2.5s infinite ease-out 1.25s;
-            }
-            @keyframes floatUp {
-                0% {
-                    transform: translate(-50%, -20%) scale(0.5);
-                    opacity: 0;
-                }
-                20% {
-                    opacity: 1;
-                }
-                100% {
-                    transform: translate(-50%, -250%) scale(1.5);
-                    opacity: 0;
-                }
-            }
-
-            /* LOADING */
+            /* --- GOKU LOADING OVERLAY --- */
             #loading-overlay {
                 position: fixed;
                 top: 0;
@@ -238,30 +249,34 @@
                 justify-content: center;
                 opacity: 0;
                 transition: opacity 0.2s ease;
+                overflow: hidden;
             }
             #loading-overlay.active {
                 display: flex;
                 opacity: 1;
             }
+
             .goku-container {
                 position: relative;
                 width: 100%;
-                max-width: 600px;
-                height: 400px;
+                max-width: 800px; /* Wider for TVs */
+                height: 50vh;
                 display: flex;
                 align-items: center;
                 justify-content: flex-start;
             }
+
             .goku-img {
-                height: 80%;
+                height: 100%;
                 width: auto;
                 object-fit: contain;
                 filter: drop-shadow(0 0 25px rgba(0, 230, 255, 0.5));
                 position: relative;
                 z-index: 10;
                 animation: gokuShake 0.1s infinite;
-                margin-left: -50px;
+                margin-left: -5vw;
             }
+
             @keyframes gokuShake {
                 0% {
                     transform: translate(0, 0);
@@ -273,13 +288,14 @@
                     transform: translate(2px, -2px);
                 }
             }
+
             .energy-blast {
                 position: absolute;
-                left: 200px;
+                left: 25%;
                 top: 55%;
                 transform: translateY(-50%);
                 width: 300%;
-                height: 200px;
+                height: 300px;
                 background: linear-gradient(
                     90deg,
                     rgba(255, 255, 255, 1) 0%,
@@ -287,7 +303,7 @@
                     rgba(0, 230, 255, 0) 100%
                 );
                 z-index: 5;
-                filter: blur(8px);
+                filter: blur(15px);
                 opacity: 0;
                 mix-blend-mode: screen;
             }
@@ -295,10 +311,11 @@
                 opacity: 1;
                 transition: opacity 0.1s;
             }
+
             .blast-particle {
                 position: absolute;
-                font-size: 2.5rem;
-                animation: blastMove 0.5s linear forwards;
+                font-size: 3rem;
+                animation: blastMove 0.6s linear forwards;
                 z-index: 20;
                 text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
             }
@@ -334,12 +351,17 @@
                 background: var(--input-bg);
                 backdrop-filter: blur(25px);
                 border: 1px solid rgba(255, 255, 255, 0.1);
+                border-top: 1px solid rgba(255, 255, 255, 0.2);
                 border-radius: 40px;
                 padding: 0 10px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+            }
+            .search-dock:focus-within {
+                transform: translateY(-5px);
+                border-color: var(--gold);
             }
             .search-icon {
                 width: 45px;
@@ -354,6 +376,7 @@
                 cursor: pointer;
                 box-shadow: 0 0 15px rgba(0, 230, 118, 0.4);
                 flex-shrink: 0;
+                touch-action: manipulation;
             }
             .search-input {
                 flex-grow: 1;
@@ -380,9 +403,105 @@
                 animation: pulseOrb 3s infinite ease-in-out;
                 flex-shrink: 0;
                 background: rgba(0, 0, 0, 0.3);
+                touch-action: manipulation;
+            }
+            @keyframes pulseOrb {
+                0% {
+                    box-shadow: 0 0 5px rgba(255, 215, 0, 0.2);
+                }
+                50% {
+                    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+                }
+                100% {
+                    box-shadow: 0 0 5px rgba(255, 215, 0, 0.2);
+                }
             }
 
-            /* BATTLE ARENA GLOW */
+            #search-results {
+                position: absolute;
+                bottom: 80px;
+                left: 0;
+                width: 100%;
+                background: rgba(10, 10, 10, 0.95);
+                backdrop-filter: blur(20px);
+                border: 1px solid #333;
+                border-radius: 20px;
+                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
+                display: none;
+                overflow: hidden;
+                max-height: 40vh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .result-item {
+                padding: 16px 20px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .result-item:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            .item-symbol {
+                font-weight: 800;
+                color: #fff;
+            }
+            .item-name {
+                font-size: 0.8rem;
+                color: #9aa0a6;
+            }
+
+            .info-bubble {
+                position: absolute;
+                bottom: 80px;
+                right: 0;
+                width: 280px;
+                background: rgba(10, 10, 10, 0.95);
+                backdrop-filter: blur(20px);
+                border: 1px solid var(--gold);
+                border-radius: 16px;
+                border-bottom-right-radius: 4px;
+                padding: 20px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+                opacity: 0;
+                visibility: hidden;
+                transform: translateY(15px) scale(0.95);
+                transition: all 0.3s;
+                z-index: 1001;
+            }
+            .info-bubble.active {
+                opacity: 1;
+                visibility: visible;
+                transform: translateY(0) scale(1);
+            }
+            .bubble-title {
+                color: var(--gold);
+                font-weight: 900;
+                font-size: 0.85rem;
+                margin-bottom: 8px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                letter-spacing: 0.5px;
+            }
+            .bubble-text {
+                font-size: 0.85rem;
+                color: #e8eaed;
+                line-height: 1.5;
+            }
+
+            .macro-container {
+                margin-bottom: 25px;
+                border-radius: 16px;
+                overflow: hidden;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                background: var(--card-bg);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            }
+
             .battle-arena {
                 display: flex;
                 justify-content: center;
@@ -398,18 +517,75 @@
                 opacity: 0.3;
                 transition: all 0.5s;
             }
-            /* GLOW EFFECT FOR WINNING SIDE */
             .bull-active .bull-icon {
                 fill: var(--accent-green);
                 opacity: 1;
-                filter: drop-shadow(0 0 30px rgba(0, 230, 118, 0.8));
-                transform: scale(1.3);
+                filter: drop-shadow(0 0 20px rgba(0, 230, 118, 0.4));
+                transform: scale(1.2);
             }
             .bear-active .bear-icon {
                 fill: var(--accent-red);
                 opacity: 1;
-                filter: drop-shadow(0 0 30px rgba(255, 23, 68, 0.8));
-                transform: scale(1.3);
+                filter: drop-shadow(0 0 20px rgba(255, 23, 68, 0.4));
+                transform: scale(1.2);
+            }
+
+            .oracle-card {
+                background: linear-gradient(
+                    145deg,
+                    rgba(30, 30, 30, 0.9) 0%,
+                    rgba(10, 10, 10, 0.95) 100%
+                );
+                backdrop-filter: blur(15px);
+                border: 1px solid var(--gold);
+                border-radius: 24px;
+                padding: 30px;
+                position: relative;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            }
+            .oracle-badge {
+                position: absolute;
+                top: -14px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--gold);
+                color: black;
+                font-weight: 900;
+                font-size: 0.75rem;
+                padding: 6px 16px;
+                border-radius: 20px;
+                letter-spacing: 1.5px;
+                box-shadow: 0 0 15px var(--gold);
+            }
+            .oracle-header {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: flex-end;
+                margin-bottom: 20px;
+            }
+            .oracle-ticker {
+                font-size: clamp(2.5rem, 6vw, 4rem);
+                font-weight: 900;
+                color: white;
+                letter-spacing: -2px;
+                line-height: 1;
+            }
+            .pop-value {
+                font-size: 2rem;
+                font-weight: 900;
+                color: var(--gold);
+            }
+            .social-box {
+                background: rgba(255, 255, 255, 0.05);
+                padding: 15px;
+                border-radius: 12px;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 0.95rem;
+                border-left: 3px solid var(--gold);
             }
 
             .results-grid {
@@ -515,7 +691,7 @@
                     <a href="/" class="brand"
                         >The<span
                             id="matrix-logo"
-                            style="color: {{ status_color }};"
+                            style="color: {{ status_color }}; transition: color 0.5s ease;"
                             >Matrix</span
                         ></a
                     >
@@ -781,6 +957,7 @@
                     this.vix = 18;
                     this.elements = [];
                     this.isRunning = true;
+                    this.dpr = window.devicePixelRatio || 1; // 4K/Retina Support
                     this.resize();
                     this.initElements();
 
@@ -799,14 +976,17 @@
                 }
 
                 resize() {
-                    this.canvas.width = window.innerWidth;
-                    this.canvas.height = window.innerHeight;
+                    // High-DPI Scaling for TVs and Retina Phones
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.canvas.width = rect.width * this.dpr;
+                    this.canvas.height = rect.height * this.dpr;
+                    this.ctx.scale(this.dpr, this.dpr);
                     this.initElements();
                 }
 
                 initElements() {
                     this.elements = [];
-                    const count = Math.floor(this.canvas.width / 30);
+                    const count = Math.floor(window.innerWidth / 30);
                     for (let i = 0; i < count; i++) {
                         this.elements.push(this.createParticle());
                     }
@@ -814,8 +994,8 @@
 
                 createParticle() {
                     return {
-                        x: Math.random() * this.canvas.width,
-                        y: Math.random() * this.canvas.height,
+                        x: Math.random() * window.innerWidth,
+                        y: Math.random() * window.innerHeight,
                         size: 14 + Math.random() * 24,
                         speed: 0.5 + Math.random() * 1.5,
                         icon: "🐂",
@@ -856,15 +1036,15 @@
                         if (p.icon === "🐂") {
                             p.y -= depthSpeed;
                             if (p.y < -40) {
-                                p.y = this.canvas.height + 40;
-                                p.x = Math.random() * this.canvas.width;
+                                p.y = window.innerHeight + 40;
+                                p.x = Math.random() * window.innerWidth;
                                 p.assigned = false;
                             }
                         } else {
                             p.y += depthSpeed;
-                            if (p.y > this.canvas.height + 40) {
+                            if (p.y > window.innerHeight + 40) {
                                 p.y = -40;
-                                p.x = Math.random() * this.canvas.width;
+                                p.x = Math.random() * window.innerWidth;
                                 p.assigned = false;
                             }
                         }
@@ -886,8 +1066,6 @@
                                 const data = await res.json();
                                 if (data.price !== "ERR") {
                                     this.vix = parseFloat(data.price);
-
-                                    // UPDATE VIX WIDGET
                                     const widget =
                                         document.getElementById("vix-display");
                                     if (widget) {
@@ -900,7 +1078,7 @@
                                         ).textContent = data.price;
                                     }
 
-                                    // UPDATE MATRIX LOGO COLOR
+                                    // Matrix Logo Sync
                                     const logo =
                                         document.getElementById("matrix-logo");
                                     if (logo && data.market_status) {
