@@ -11,11 +11,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=17"
+            href="{{ url_for('static', filename='icon.png') }}?v=18"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=17"
+            href="{{ url_for('static', filename='icon.png') }}?v=18"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -35,9 +35,9 @@
                 --accent-green: #00e676;
                 --accent-red: #ff1744;
                 --gold: #ffd700;
-                --card-bg: rgba(15, 15, 15, 0.6);
+                --card-bg: rgba(12, 12, 12, 0.7);
                 --input-bg: rgba(5, 5, 5, 0.85);
-                --setup-bg: rgba(25, 25, 25, 0.6);
+                --setup-bg: rgba(20, 20, 20, 0.6);
                 --max-width: 1400px;
                 --dock-height: 75px;
             }
@@ -129,7 +129,7 @@
                 position: relative;
                 z-index: 10;
                 height: 120px;
-                align-items: center; /* Space for particles */
+                align-items: center;
             }
 
             .rocket-btn {
@@ -140,7 +140,7 @@
                     rgba(40, 40, 40, 0.9),
                     rgba(15, 15, 15, 1)
                 );
-                border: 2px solid rgba(255, 255, 255, 0.1);
+                border: 2px solid rgba(255, 255, 255, 0.15);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
@@ -158,38 +158,99 @@
                 transform: scale(0.9);
             }
 
-            /* MONEY PULSE PARTICLES (CSS) */
-            .money-particle {
+            /* THE MONEY AURA */
+            .money-aura {
                 position: absolute;
                 top: 50%;
                 left: 50%;
-                font-size: 1.2rem;
-                font-weight: 900;
+                transform: translate(-50%, -50%);
+                width: 100px;
+                height: 100px;
                 pointer-events: none;
-                opacity: 0;
                 z-index: 1;
             }
-            /* Green Money Animation */
-            .money-green {
-                color: var(--accent-green);
-                animation: moneyPulse 2.5s infinite ease-out;
-            }
-            .money-gold {
-                color: var(--gold);
-                animation: moneyPulse 2.5s infinite ease-out;
-                animation-delay: 1.25s;
+            .money-icon {
+                position: absolute;
+                font-size: 1.2rem;
+                font-weight: 900;
+                opacity: 0;
             }
 
-            @keyframes moneyPulse {
+            /* 4-Directional Money Float */
+            .m1 {
+                color: var(--accent-green);
+                top: 50%;
+                left: 50%;
+                animation: floatOut1 3s infinite ease-out;
+            }
+            .m2 {
+                color: var(--gold);
+                top: 50%;
+                left: 50%;
+                animation: floatOut2 3s infinite ease-out 0.8s;
+            }
+            .m3 {
+                color: var(--accent-green);
+                top: 50%;
+                left: 50%;
+                animation: floatOut3 3s infinite ease-out 1.6s;
+            }
+            .m4 {
+                color: var(--gold);
+                top: 50%;
+                left: 50%;
+                animation: floatOut4 3s infinite ease-out 2.4s;
+            }
+
+            @keyframes floatOut1 {
                 0% {
                     transform: translate(-50%, -50%) scale(0.5);
                     opacity: 0;
                 }
-                20% {
-                    opacity: 0.8;
+                50% {
+                    opacity: 0.6;
                 }
                 100% {
-                    transform: translate(-50%, -50%) scale(2.5);
+                    transform: translate(-150%, -150%) scale(1.5);
+                    opacity: 0;
+                }
+            }
+            @keyframes floatOut2 {
+                0% {
+                    transform: translate(-50%, -50%) scale(0.5);
+                    opacity: 0;
+                }
+                50% {
+                    opacity: 0.6;
+                }
+                100% {
+                    transform: translate(50%, -150%) scale(1.5);
+                    opacity: 0;
+                }
+            }
+            @keyframes floatOut3 {
+                0% {
+                    transform: translate(-50%, -50%) scale(0.5);
+                    opacity: 0;
+                }
+                50% {
+                    opacity: 0.6;
+                }
+                100% {
+                    transform: translate(-150%, 50%) scale(1.5);
+                    opacity: 0;
+                }
+            }
+            @keyframes floatOut4 {
+                0% {
+                    transform: translate(-50%, -50%) scale(0.5);
+                    opacity: 0;
+                }
+                50% {
+                    opacity: 0.6;
+                }
+                100% {
+                    transform: translate(50%, 50%) scale(1.5);
                     opacity: 0;
                 }
             }
@@ -231,22 +292,22 @@
                 }
             }
 
-            /* --- LOADING OVERLAY (Fiery Money) --- */
+            /* --- FIERY LOADING OVERLAY --- */
             #loading-overlay {
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.92);
-                backdrop-filter: blur(25px);
+                background: rgba(0, 0, 0, 0.95);
+                backdrop-filter: blur(20px);
                 z-index: 9999;
                 display: none;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 opacity: 0;
-                transition: opacity 0.4s ease;
+                transition: opacity 0.3s ease;
             }
             #loading-overlay.active {
                 display: flex;
@@ -261,7 +322,7 @@
                 border-radius: 50%;
                 animation: spin 0.8s linear infinite;
                 margin-bottom: 25px;
-                box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
             }
             @keyframes spin {
                 100% {
@@ -269,34 +330,35 @@
                 }
             }
 
+            /* THE MAGMA TEXT SHADER */
             .loading-text {
-                font-size: 1.5rem;
+                font-size: 1.8rem;
                 font-weight: 900;
-                letter-spacing: 2px;
-                background: linear-gradient(45deg, #ffd700, #ff8c00, #ffd700);
-                background-size: 200% auto;
-                color: transparent;
+                letter-spacing: 3px;
+                background: linear-gradient(
+                    to top,
+                    #ff0000 0%,
+                    #ff8c00 50%,
+                    #ffd700 100%
+                );
                 -webkit-background-clip: text;
                 background-clip: text;
-                animation: fieryText 2s linear infinite;
-                text-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
+                color: transparent;
+                animation: magmaFlow 1.5s infinite alternate;
+                text-shadow: 0 0 20px rgba(255, 69, 0, 0.4);
             }
-            @keyframes fieryText {
+            @keyframes magmaFlow {
                 0% {
-                    background-position: 0% 50%;
-                    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.3));
-                }
-                50% {
-                    background-position: 100% 50%;
-                    filter: drop-shadow(0 0 15px rgba(255, 69, 0, 0.6));
+                    text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+                    filter: brightness(100%);
                 }
                 100% {
-                    background-position: 0% 50%;
-                    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.3));
+                    text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+                    filter: brightness(150%);
                 }
             }
 
-            /* --- FLOATING DOCK --- */
+            /* FLOATING DOCK */
             .search-dock-container {
                 position: fixed;
                 bottom: calc(20px + env(safe-area-inset-bottom));
@@ -726,8 +788,12 @@
             </div>
 
             <div class="launcher-container">
-                <div class="money-particle money-green">$</div>
-                <div class="money-particle money-gold">$</div>
+                <div class="money-aura">
+                    <div class="money-icon m1">$</div>
+                    <div class="money-icon m2">$</div>
+                    <div class="money-icon m3">$</div>
+                    <div class="money-icon m4">$</div>
+                </div>
                 <div class="rocket-btn" onclick="launchRocket()">
                     <div class="rocket-icon">🚀</div>
                 </div>
@@ -882,7 +948,6 @@
         </div>
 
         <script>
-            // --- PARALLAX BULL & BEAR ENGINE ---
             class MarketPulse {
                 constructor() {
                     this.canvas = document.getElementById("market-canvas");
