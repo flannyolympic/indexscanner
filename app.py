@@ -23,15 +23,14 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.1.3 THREAD LOCK ---
-APP_VERSION = "v1.1.3 Stable"
+# --- VERSION 1.2.0 SELF HEALING ---
+APP_VERSION = "v1.2.0 Core"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
 
-# Robust Cache & Lock
-VIX_LOCK = threading.Lock()
+# Robust Cache
 VIX_CACHE = {
     "data": {
         "price": "...",
@@ -120,17 +119,29 @@ def get_market_data(ticker, retries=3):
 
 
 def get_ticker_news(ticker):
+    """Fetches and parses top 3 news items with fallback logic."""
     try:
         t_module.sleep(random.uniform(0.1, 0.3))
         stock = yf.Ticker(ticker)
         news = stock.news
         clean_news = []
+
         if news:
             for item in news[:3]:
+                # Deep parsing for publisher to avoid "Unknown"
+                publisher = "Market Wire"
+                if "publisher" in item:
+                    # Sometimes publisher is a dict, sometimes a string
+                    pub_data = item["publisher"]
+                    if isinstance(pub_data, dict):
+                        publisher = pub_data.get("title", "Market Wire")
+                    elif isinstance(pub_data, str):
+                        publisher = pub_data
+
                 clean_news.append(
                     {
-                        "title": item.get("title", "No Title"),
-                        "publisher": item.get("publisher", "Unknown"),
+                        "title": item.get("title", "Market Movement Detected"),
+                        "publisher": publisher,
                         "link": item.get("link", "#"),
                     }
                 )
@@ -140,65 +151,55 @@ def get_ticker_news(ticker):
         return []
 
 
-# --- VIX SPECTRUM LOGIC (THREAD SAFE) ---
+# --- VIX SPECTRUM LOGIC ---
 def get_vix_data(force_update=False):
     global VIX_CACHE
-
-    # 1. Fast Path: Return Cache if fresh
     if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
         return VIX_CACHE["data"]
 
-    # 2. Locked Path: Ensure only one thread updates
-    with VIX_LOCK:
-        # Double-check cache inside lock (race condition fix)
-        if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
-            return VIX_CACHE["data"]
-
-        try:
-            status_color = get_market_status_color()
-            df = get_market_data("^VIX", retries=3)
-
-            if df is None:
-                if VIX_CACHE["last_updated"] > 0:
-                    return VIX_CACHE["data"]
-                return {
-                    "price": "...",
-                    "color": "grey",
-                    "label": "OFFLINE",
-                    "market_status": status_color,
-                }
-
-            price = df.iloc[-1]["Close"]
-
-            if price < 12:
-                color, label = "#00E676", "COMPLACENCY"
-            elif 12 <= price < 15:
-                color, label = "#66BB6A", "CALM"
-            elif 15 <= price < 20:
-                color, label = "#FFD600", "MILD"
-            elif 20 <= price < 30:
-                color, label = "#FF9100", "ELEVATED"
-            elif 30 <= price < 40:
-                color, label = "#FF3D00", "ANXIETY"
-            elif 40 <= price < 50:
-                color, label = "#D50000", "CRISIS"
-            else:
-                color, label = "#880E4F", "SHOCK"
-
-            new_data = {
-                "price": round(price, 2),
-                "color": color,
-                "label": label,
+    try:
+        status_color = get_market_status_color()
+        df = get_market_data("^VIX", retries=3)
+        if df is None:
+            if VIX_CACHE["last_updated"] > 0:
+                return VIX_CACHE["data"]
+            return {
+                "price": "...",
+                "color": "grey",
+                "label": "OFFLINE",
                 "market_status": status_color,
             }
-            VIX_CACHE["data"] = new_data
-            VIX_CACHE["last_updated"] = t_module.time()
-            return new_data
-        except Exception:
-            return VIX_CACHE["data"]
+
+        price = df.iloc[-1]["Close"]
+        if price < 12:
+            color, label = "#00E676", "COMPLACENCY"
+        elif 12 <= price < 15:
+            color, label = "#66BB6A", "CALM"
+        elif 15 <= price < 20:
+            color, label = "#FFD600", "MILD"
+        elif 20 <= price < 30:
+            color, label = "#FF9100", "ELEVATED"
+        elif 30 <= price < 40:
+            color, label = "#FF3D00", "ANXIETY"
+        elif 40 <= price < 50:
+            color, label = "#D50000", "CRISIS"
+        else:
+            color, label = "#880E4F", "SHOCK"
+
+        new_data = {
+            "price": round(price, 2),
+            "color": color,
+            "label": label,
+            "market_status": status_color,
+        }
+        VIX_CACHE["data"] = new_data
+        VIX_CACHE["last_updated"] = t_module.time()
+        return new_data
+    except Exception:
+        return VIX_CACHE["data"]
 
 
-# --- CORE LOGIC ---
+# --- CORE ANALYSIS ---
 def calculate_probability(price, target, std_dev, rsi, trend):
     safe_vol = max(std_dev, price * 0.005)
     z_score = abs(target - price) / (safe_vol * np.sqrt(3))
@@ -515,13 +516,14 @@ def api_vix():
 
 
 def background_vix_updater():
-    """Fetches VIX data in the background to prevent startup lag/errors"""
-    t_module.sleep(5)  # Increased initial delay to 5s
+    """Self-healing background thread for VIX data."""
+    t_module.sleep(3)
     while True:
         try:
             get_vix_data(force_update=True)
         except Exception as e:
-            logger.error(f"VIX BG Error: {e}")
+            logger.error(f"VIX BG Error: {e} - Restarting Watchdog")
+            t_module.sleep(5)  # Short pause on error
         t_module.sleep(60)
 
 
