@@ -23,15 +23,14 @@
             as="image"
             href="{{ url_for('static', filename='hellboy.png') }}"
         />
-
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=37"
+            href="{{ url_for('static', filename='icon.png') }}?v=38"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=37"
+            href="{{ url_for('static', filename='icon.png') }}?v=38"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -52,7 +51,7 @@
                 --accent-green: #00e676;
                 --accent-red: #ff1744;
                 --gold: #ffd700;
-                --card-bg: rgba(15, 15, 15, 0.8);
+                --card-bg: rgba(15, 15, 15, 0.85);
                 --input-bg: rgba(5, 5, 5, 0.85);
                 --setup-bg: rgba(25, 25, 25, 0.6);
                 --max-width: 1400px;
@@ -770,7 +769,24 @@
                 border-radius: 12px;
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 padding: 15px;
+                transition: border-color 0.3s;
             }
+            .ai-setup.kill-switch-active {
+                border: 2px solid var(--accent-red);
+                animation: pulseKillSwitch 1.5s infinite;
+            }
+            @keyframes pulseKillSwitch {
+                0% {
+                    box-shadow: 0 0 5px var(--accent-red);
+                }
+                50% {
+                    box-shadow: 0 0 20px var(--accent-red);
+                }
+                100% {
+                    box-shadow: 0 0 5px var(--accent-red);
+                }
+            }
+
             .ai-title::before {
                 content: "⚡";
                 color: #ffd700;
@@ -788,21 +804,29 @@
                 color: white;
                 text-align: right;
             }
+
+            /* DYNAMIC STOP LOSS BOX */
             .stop-loss-box {
                 margin-top: 10px;
                 padding: 8px;
-                background: rgba(255, 23, 68, 0.15);
-                border: 1px solid var(--accent-red);
                 border-radius: 8px;
                 font-size: 0.75rem;
-                color: #ff8a80;
                 text-align: center;
                 font-weight: 700;
                 letter-spacing: 0.5px;
             }
-            .kill-switch-active {
-                border-color: var(--accent-red) !important;
-                animation: borderPulse 1s infinite;
+            /* Default Green (Safe) */
+            .stop-green {
+                background: rgba(0, 230, 118, 0.15);
+                border: 1px solid var(--accent-green);
+                color: var(--accent-green);
+            }
+            /* Danger Red (Volatile) */
+            .stop-red {
+                background: rgba(255, 23, 68, 0.15);
+                border: 1px solid var(--accent-red);
+                color: var(--accent-red);
+                animation: borderPulse 2s infinite;
             }
         </style>
     </head>
@@ -812,7 +836,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='goku.png') }}?v=37"
+                    src="{{ url_for('static', filename='goku.png') }}?v=38"
                     class="goku-img"
                     alt="Charge"
                 />
@@ -961,7 +985,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=37"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=38"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -969,7 +993,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=37"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=38"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -1006,6 +1030,7 @@
                             >"{{ chosen_one.social.comment }}"</span
                         >
                     </div>
+
                     <div
                         class="ai-setup {{ 'kill-switch-active' if 'KILL SWITCH' in chosen_one.setup.type else '' }}"
                     >
@@ -1023,7 +1048,10 @@
                             <span>Target</span>
                             <span>{{ chosen_one.setup.target }}</span>
                         </div>
-                        <div class="stop-loss-box">
+
+                        <div
+                            class="stop-loss-box {{ 'stop-red' if vix.price|float > 20 else 'stop-green' }}"
+                        >
                             STOP: {{ chosen_one.setup.stop }}
                         </div>
                     </div>
