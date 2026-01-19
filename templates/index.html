@@ -11,11 +11,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=16"
+            href="{{ url_for('static', filename='icon.png') }}?v=17"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=16"
+            href="{{ url_for('static', filename='icon.png') }}?v=17"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -121,14 +121,17 @@
                 font-weight: 800;
             }
 
-            /* ROCKET LAUNCHER */
+            /* --- ROCKET LAUNCHER & MONEY PULSE --- */
             .launcher-container {
                 display: flex;
                 justify-content: center;
                 margin-bottom: 40px;
                 position: relative;
                 z-index: 10;
+                height: 120px;
+                align-items: center; /* Space for particles */
             }
+
             .rocket-btn {
                 width: 90px;
                 height: 90px;
@@ -149,31 +152,46 @@
                     inset 0 0 20px rgba(255, 255, 255, 0.05);
                 transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 position: relative;
-            }
-            .rocket-btn::after {
-                content: "";
-                position: absolute;
-                top: -10px;
-                left: -10px;
-                right: -10px;
-                bottom: -10px;
-                border-radius: 50%;
-                border: 2px solid var(--accent-green);
-                opacity: 0;
-                animation: sonarPulse 2s infinite;
-            }
-            @keyframes sonarPulse {
-                0% {
-                    transform: scale(1);
-                    opacity: 0.4;
-                }
-                100% {
-                    transform: scale(1.4);
-                    opacity: 0;
-                }
+                z-index: 2;
             }
             .rocket-btn:active {
                 transform: scale(0.9);
+            }
+
+            /* MONEY PULSE PARTICLES (CSS) */
+            .money-particle {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                font-size: 1.2rem;
+                font-weight: 900;
+                pointer-events: none;
+                opacity: 0;
+                z-index: 1;
+            }
+            /* Green Money Animation */
+            .money-green {
+                color: var(--accent-green);
+                animation: moneyPulse 2.5s infinite ease-out;
+            }
+            .money-gold {
+                color: var(--gold);
+                animation: moneyPulse 2.5s infinite ease-out;
+                animation-delay: 1.25s;
+            }
+
+            @keyframes moneyPulse {
+                0% {
+                    transform: translate(-50%, -50%) scale(0.5);
+                    opacity: 0;
+                }
+                20% {
+                    opacity: 0.8;
+                }
+                100% {
+                    transform: translate(-50%, -50%) scale(2.5);
+                    opacity: 0;
+                }
             }
 
             /* LAUNCH ANIMATION */
@@ -195,11 +213,11 @@
                 }
                 30% {
                     transform: translateY(30px) scale(0.8);
-                } /* Coils down */
+                }
                 100% {
                     transform: translateY(-150vh) scale(1.5);
                     opacity: 0;
-                } /* Blast off */
+                }
             }
             @keyframes shake {
                 0% {
@@ -213,7 +231,72 @@
                 }
             }
 
-            /* FLOATING DOCK */
+            /* --- LOADING OVERLAY (Fiery Money) --- */
+            #loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.92);
+                backdrop-filter: blur(25px);
+                z-index: 9999;
+                display: none;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                transition: opacity 0.4s ease;
+            }
+            #loading-overlay.active {
+                display: flex;
+                opacity: 1;
+            }
+
+            .spinner {
+                width: 60px;
+                height: 60px;
+                border: 4px solid rgba(255, 215, 0, 0.1);
+                border-top: 4px solid var(--gold);
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+                margin-bottom: 25px;
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+            }
+            @keyframes spin {
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .loading-text {
+                font-size: 1.5rem;
+                font-weight: 900;
+                letter-spacing: 2px;
+                background: linear-gradient(45deg, #ffd700, #ff8c00, #ffd700);
+                background-size: 200% auto;
+                color: transparent;
+                -webkit-background-clip: text;
+                background-clip: text;
+                animation: fieryText 2s linear infinite;
+                text-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
+            }
+            @keyframes fieryText {
+                0% {
+                    background-position: 0% 50%;
+                    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.3));
+                }
+                50% {
+                    background-position: 100% 50%;
+                    filter: drop-shadow(0 0 15px rgba(255, 69, 0, 0.6));
+                }
+                100% {
+                    background-position: 0% 50%;
+                    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.3));
+                }
+            }
+
+            /* --- FLOATING DOCK --- */
             .search-dock-container {
                 position: fixed;
                 bottom: calc(20px + env(safe-area-inset-bottom));
@@ -297,7 +380,6 @@
                 }
             }
 
-            /* POPUPS */
             #search-results {
                 position: absolute;
                 bottom: 80px;
@@ -550,41 +632,6 @@
                 color: white;
                 text-align: right;
             }
-
-            #loading-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.9);
-                backdrop-filter: blur(20px);
-                z-index: 9999;
-                display: none;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-            }
-            #loading-overlay.active {
-                display: flex;
-                opacity: 1;
-            }
-            .spinner {
-                width: 50px;
-                height: 50px;
-                border: 4px solid rgba(255, 215, 0, 0.1);
-                border-top: 4px solid var(--gold);
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin-bottom: 20px;
-            }
-            @keyframes spin {
-                100% {
-                    transform: rotate(360deg);
-                }
-            }
         </style>
     </head>
     <body>
@@ -592,15 +639,7 @@
 
         <div id="loading-overlay">
             <div class="spinner"></div>
-            <div
-                style="
-                    color: var(--gold);
-                    font-weight: 900;
-                    letter-spacing: 2px;
-                "
-            >
-                MATRIX SCAN...
-            </div>
+            <div class="loading-text">MARKET SCAN</div>
         </div>
 
         <div class="app-wrapper">
@@ -687,6 +726,8 @@
             </div>
 
             <div class="launcher-container">
+                <div class="money-particle money-green">$</div>
+                <div class="money-particle money-gold">$</div>
                 <div class="rocket-btn" onclick="launchRocket()">
                     <div class="rocket-icon">🚀</div>
                 </div>
@@ -841,6 +882,7 @@
         </div>
 
         <script>
+            // --- PARALLAX BULL & BEAR ENGINE ---
             class MarketPulse {
                 constructor() {
                     this.canvas = document.getElementById("market-canvas");
@@ -978,19 +1020,17 @@
                 const btn = document.querySelector(".rocket-btn");
                 const overlay = document.getElementById("loading-overlay");
 
-                // HAPTIC FEEDBACK (Mobile Only)
                 if (navigator.vibrate) navigator.vibrate(50);
 
                 btn.classList.add("launching");
 
-                // TIMING SYNCED TO CSS ANIMATION
                 setTimeout(() => {
                     overlay.classList.add("active");
-                }, 500); // Overlay fades in as rocket leaves
+                }, 500);
 
                 setTimeout(() => {
                     window.location.href = "/scan";
-                }, 1100); // Redirect after rocket is fully gone
+                }, 1100);
             }
 
             function updateClock() {
