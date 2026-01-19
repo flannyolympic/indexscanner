@@ -23,8 +23,7 @@ app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
 # --- DYNAMIC VERSIONING ---
-# This reflects the ongoing development status
-APP_VERSION = "BETA v0.9.8"
+APP_VERSION = "BETA v0.9.9"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -98,17 +97,28 @@ def get_market_status_color():
     return "#ff5252"
 
 
-def get_market_data(ticker):
-    try:
-        df = yf.download(ticker, period="5d", interval="5m", progress=False)
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
-        if df.empty or len(df) < 20:
-            return None
-        return df
-    except Exception as e:
-        logger.error(f"Data fetch error for {ticker}: {e}")
-        return None
+# --- ROBUST DATA FETCHING (WITH RETRY) ---
+def get_market_data(ticker, retries=2):
+    attempt = 0
+    while attempt <= retries:
+        try:
+            # Add tiny jitter to prevent worker collisions
+            t_module.sleep(random.uniform(0.1, 0.5))
+
+            df = yf.download(ticker, period="5d", interval="5m", progress=False)
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
+
+            if not df.empty and len(df) >= 20:
+                return df
+
+        except Exception as e:
+            logger.warning(f"Attempt {attempt + 1} failed for {ticker}: {e}")
+            t_module.sleep(2**attempt)  # Exponential backoff: 1s, 2s, 4s...
+
+        attempt += 1
+
+    return None
 
 
 # --- CORE LOGIC ---
@@ -242,13 +252,13 @@ def get_vix_data():
 
     try:
         status_color = get_market_status_color()
-        df = get_market_data("^VIX")
+        df = get_market_data("^VIX", retries=3)  # Higher retries for VIX
 
         if df is None:
             if VIX_CACHE["last_updated"] > 0:
                 return VIX_CACHE["data"]
             return {
-                "price": "ERR",
+                "price": "N/A",
                 "color": "grey",
                 "label": "OFFLINE",
                 "market_status": status_color,
@@ -399,7 +409,6 @@ def add_header(response):
 
 @app.route("/")
 def index():
-    # Pass version to template for footer
     return render_template(
         "index.html",
         vix=get_vix_data(),
