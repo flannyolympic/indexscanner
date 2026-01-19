@@ -23,14 +23,15 @@
             as="image"
             href="{{ url_for('static', filename='hellboy.png') }}"
         />
+
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=36"
+            href="{{ url_for('static', filename='icon.png') }}?v=37"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=36"
+            href="{{ url_for('static', filename='icon.png') }}?v=37"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -763,7 +764,6 @@
                 background: rgba(255, 23, 68, 0.1);
             }
 
-            /* NEW: RISK MANAGEMENT DISPLAY */
             .ai-setup {
                 margin-top: auto;
                 background: var(--setup-bg);
@@ -788,8 +788,6 @@
                 color: white;
                 text-align: right;
             }
-
-            /* Stop Loss Highlight Box */
             .stop-loss-box {
                 margin-top: 10px;
                 padding: 8px;
@@ -802,8 +800,6 @@
                 font-weight: 700;
                 letter-spacing: 0.5px;
             }
-
-            /* Time Kill Switch Warning */
             .kill-switch-active {
                 border-color: var(--accent-red) !important;
                 animation: borderPulse 1s infinite;
@@ -816,7 +812,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='goku.png') }}"
+                    src="{{ url_for('static', filename='goku.png') }}?v=37"
                     class="goku-img"
                     alt="Charge"
                 />
@@ -965,7 +961,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=37"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -973,7 +969,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=37"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -1235,7 +1231,6 @@
 
             new MarketPulse();
 
-            // ROCKET LAUNCH
             function launchRocket() {
                 const btn = document.querySelector(".rocket-btn");
                 const overlay = document.getElementById("loading-overlay");
