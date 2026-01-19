@@ -11,11 +11,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=9"
+            href="{{ url_for('static', filename='icon.png') }}?v=10"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=9"
+            href="{{ url_for('static', filename='icon.png') }}?v=10"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -61,7 +61,6 @@
                 overflow-x: hidden;
             }
 
-            /* LIVE CHART BACKGROUND */
             #market-canvas {
                 position: fixed;
                 top: 0;
@@ -79,7 +78,6 @@
                 position: relative;
             }
 
-            /* HEADER */
             .header-container {
                 display: flex;
                 align-items: center;
@@ -123,7 +121,7 @@
                 font-weight: 800;
             }
 
-            /* FLOATING DOCK */
+            /* FLOATING COMMAND DOCK */
             .search-dock-container {
                 position: fixed;
                 bottom: calc(20px + env(safe-area-inset-bottom));
@@ -208,7 +206,6 @@
                 }
             }
 
-            /* POPUPS */
             #search-results {
                 position: absolute;
                 bottom: 80px;
@@ -284,7 +281,6 @@
                 line-height: 1.5;
             }
 
-            /* CONTENT */
             .macro-container {
                 margin-bottom: 25px;
                 border-radius: 16px;
@@ -794,9 +790,9 @@
                     this.points = [];
                     this.maxPoints = 0;
                     this.lastTick = 0;
+                    this.isRunning = true; // Battery Optimization Flag
                     this.resize();
 
-                    // Initial Seed
                     let price = this.canvas.height / 2;
                     for (let i = 0; i < this.maxPoints; i++) {
                         price += (Math.random() - 0.5) * 5;
@@ -804,8 +800,23 @@
                     }
 
                     window.addEventListener("resize", () => this.resize());
+                    document.addEventListener("visibilitychange", () =>
+                        this.handleVisibility(),
+                    ); // OPTIMIZATION
+
                     requestAnimationFrame((ts) => this.animate(ts));
                     this.startHeartbeat();
+                }
+
+                // OPTIMIZATION: Pause when tab is hidden to save battery
+                handleVisibility() {
+                    if (document.hidden) {
+                        this.isRunning = false;
+                    } else {
+                        this.isRunning = true;
+                        this.lastTick = performance.now(); // Reset tick to prevent jump
+                        requestAnimationFrame((ts) => this.animate(ts));
+                    }
                 }
 
                 resize() {
@@ -817,21 +828,19 @@
                 }
 
                 getVixColor(vix) {
-                    if (vix < 15) return "0, 230, 118"; // Green
-                    if (vix < 20) return "255, 215, 0"; // Gold
-                    return "255, 23, 68"; // Red
+                    if (vix < 15) return "0, 230, 118";
+                    if (vix < 20) return "255, 215, 0";
+                    return "255, 23, 68";
                 }
 
                 update() {
                     this.points.shift();
-                    // Higher volatility for high VIX, but kept smooth
                     const volatility = (this.vix / 15) * 6;
                     const lastPrice = this.points[this.points.length - 1];
 
                     let change = (Math.random() - 0.5) * volatility;
                     let newPrice = lastPrice + change;
 
-                    // Keep graph centered
                     const center = this.canvas.height / 2;
                     newPrice += (center - newPrice) * 0.02;
 
@@ -843,20 +852,17 @@
                 }
 
                 animate(timestamp) {
-                    // DYNAMIC SPEED CONTROL
-                    // Low VIX (12) -> Wait 120ms between updates (Slow)
-                    // High VIX (30) -> Wait 40ms between updates (Fast)
+                    if (!this.isRunning) return; // Stop if backgrounded
+
                     const speedDelay = Math.max(40, 180 - this.vix * 6);
 
                     if (!this.lastTick) this.lastTick = timestamp;
 
-                    // Only update data if enough time has passed
                     if (timestamp - this.lastTick > speedDelay) {
                         this.update();
                         this.lastTick = timestamp;
                     }
 
-                    // Draw every frame for smooth gradients
                     this.ctx.clearRect(
                         0,
                         0,
@@ -865,7 +871,6 @@
                     );
                     const rgb = this.getVixColor(this.vix);
 
-                    // Fill
                     this.ctx.beginPath();
                     this.ctx.moveTo(0, this.canvas.height);
                     this.points.forEach((y, i) => this.ctx.lineTo(i * 5, y));
@@ -886,7 +891,6 @@
                     this.ctx.fillStyle = gradient;
                     this.ctx.fill();
 
-                    // Line
                     this.ctx.beginPath();
                     this.points.forEach((y, i) => {
                         if (i === 0) this.ctx.moveTo(i * 5, y);
@@ -901,31 +905,36 @@
 
                 startHeartbeat() {
                     setInterval(() => {
-                        fetch("/api/vix")
-                            .then((r) => r.json())
-                            .then((data) => {
-                                if (data.price !== "ERR") {
-                                    this.vix = parseFloat(data.price);
-                                    const widget =
-                                        document.getElementById("vix-display");
-                                    if (widget) {
-                                        widget.style.borderColor = data.color;
-                                        widget.querySelector(
-                                            ".vix-price",
-                                        ).style.color = data.color;
-                                        widget.querySelector(
-                                            ".vix-price",
-                                        ).textContent = data.price;
+                        // Only poll if visible to save data
+                        if (!document.hidden) {
+                            fetch("/api/vix")
+                                .then((r) => r.json())
+                                .then((data) => {
+                                    if (data.price !== "ERR") {
+                                        this.vix = parseFloat(data.price);
+                                        const widget =
+                                            document.getElementById(
+                                                "vix-display",
+                                            );
+                                        if (widget) {
+                                            widget.style.borderColor =
+                                                data.color;
+                                            widget.querySelector(
+                                                ".vix-price",
+                                            ).style.color = data.color;
+                                            widget.querySelector(
+                                                ".vix-price",
+                                            ).textContent = data.price;
+                                        }
                                     }
-                                }
-                            });
+                                });
+                        }
                     }, 10000);
                 }
             }
 
             new MarketPulse();
 
-            // Standard UI Logic
             function updateClock() {
                 const now = new Date();
                 const options = {
