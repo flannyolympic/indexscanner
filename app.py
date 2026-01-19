@@ -26,12 +26,12 @@ DB_NAME = "watchlist.db"
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
 
-# VIX Cache (Now stores range label)
+# VIX Cache with "Ghost" Data Persistence
 VIX_CACHE = {
     "data": {
         "price": "WAIT",
         "color": "grey",
-        "label": "LOADING",
+        "label": "INITIALIZING",
         "market_status": "grey",
     },
     "last_updated": 0,
@@ -87,15 +87,16 @@ def get_market_status_color():
     tz = pytz.timezone("US/Eastern")
     now = datetime.now(tz)
     if now.weekday() >= 5:
-        return "#f28b82"
+        return "#ff5252"  # Closed (Weekend) - Red
     current_time = now.time()
     if time(9, 30) <= current_time <= time(16, 0):
-        return "#00e676"
-    return "#f28b82"
+        return "#00e676"  # Open - Green
+    return "#ff5252"  # Closed - Red
 
 
 def get_market_data(ticker):
     try:
+        # Fetch tiny amount of data for speed
         df = yf.download(ticker, period="5d", interval="5m", progress=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
@@ -230,9 +231,11 @@ def get_social_sentiment(rsi, vol_ratio):
     return {"score": "QUIET", "comment": "Consolidation", "icon": "💤"}
 
 
-# --- VIX SPECTRUM API ---
+# --- VIX SPECTRUM LOGIC (MATCHING UPLOADED CHART) ---
 def get_vix_data():
     global VIX_CACHE
+
+    # 60 Second Cache Rule
     if t_module.time() - VIX_CACHE["last_updated"] < 60:
         return VIX_CACHE["data"]
 
@@ -241,6 +244,7 @@ def get_vix_data():
         df = get_market_data("^VIX")
 
         if df is None:
+            # Ghost Protocol: Serve old data if new fetch fails
             if VIX_CACHE["last_updated"] > 0:
                 return VIX_CACHE["data"]
             return {
@@ -252,27 +256,27 @@ def get_vix_data():
 
         price = df.iloc[-1]["Close"]
 
-        # --- THE VIX SPECTRUM LOGIC ---
+        # PRECISE CHART MATCHING
         if price < 12:
             color = "#00E676"  # Bright Green
             label = "COMPLACENCY"
         elif 12 <= price < 15:
-            color = "#81C784"  # Calm/Healthy Green
+            color = "#66BB6A"  # Calm/Healthy Green
             label = "CALM"
         elif 15 <= price < 20:
-            color = "#FFD600"  # Gold
+            color = "#FFD600"  # Mild/Yellow
             label = "MILD"
         elif 20 <= price < 30:
-            color = "#FF9100"  # Orange
+            color = "#FF9100"  # Elevated/Orange
             label = "ELEVATED"
         elif 30 <= price < 40:
-            color = "#FF3D00"  # Deep Orange
+            color = "#FF3D00"  # Anxiety/Dark Orange
             label = "ANXIETY"
         elif 40 <= price < 50:
-            color = "#D50000"  # Red
+            color = "#D50000"  # Crisis/Red
             label = "CRISIS"
         else:  # 50+
-            color = "#880E4F"  # Deep Maroon
+            color = "#880E4F"  # Shock/Maroon
             label = "SHOCK"
 
         new_data = {
@@ -286,6 +290,7 @@ def get_vix_data():
         VIX_CACHE["last_updated"] = t_module.time()
         return new_data
     except Exception:
+        # Fallback to cache on any crash
         return VIX_CACHE["data"]
 
 
