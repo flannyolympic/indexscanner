@@ -23,14 +23,15 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.1.2 MARKET INTEL ---
-APP_VERSION = "v1.1.2 Intel"
+# --- VERSION 1.1.3 THREAD LOCK ---
+APP_VERSION = "v1.1.3 Stable"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
 
-# Robust Cache
+# Robust Cache & Lock
+VIX_LOCK = threading.Lock()
 VIX_CACHE = {
     "data": {
         "price": "...",
@@ -119,14 +120,13 @@ def get_market_data(ticker, retries=3):
 
 
 def get_ticker_news(ticker):
-    """Fetches top 3 news items for a specific ticker."""
     try:
-        t_module.sleep(random.uniform(0.1, 0.3))  # Rate limit protection
+        t_module.sleep(random.uniform(0.1, 0.3))
         stock = yf.Ticker(ticker)
         news = stock.news
         clean_news = []
         if news:
-            for item in news[:3]:  # Top 3 only
+            for item in news[:3]:
                 clean_news.append(
                     {
                         "title": item.get("title", "No Title"),
@@ -140,54 +140,65 @@ def get_ticker_news(ticker):
         return []
 
 
-# --- VIX LOGIC ---
+# --- VIX SPECTRUM LOGIC (THREAD SAFE) ---
 def get_vix_data(force_update=False):
     global VIX_CACHE
+
+    # 1. Fast Path: Return Cache if fresh
     if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
         return VIX_CACHE["data"]
-    try:
-        status_color = get_market_status_color()
-        df = get_market_data("^VIX", retries=3)
-        if df is None:
-            if VIX_CACHE["last_updated"] > 0:
-                return VIX_CACHE["data"]
-            return {
-                "price": "...",
-                "color": "grey",
-                "label": "OFFLINE",
+
+    # 2. Locked Path: Ensure only one thread updates
+    with VIX_LOCK:
+        # Double-check cache inside lock (race condition fix)
+        if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
+            return VIX_CACHE["data"]
+
+        try:
+            status_color = get_market_status_color()
+            df = get_market_data("^VIX", retries=3)
+
+            if df is None:
+                if VIX_CACHE["last_updated"] > 0:
+                    return VIX_CACHE["data"]
+                return {
+                    "price": "...",
+                    "color": "grey",
+                    "label": "OFFLINE",
+                    "market_status": status_color,
+                }
+
+            price = df.iloc[-1]["Close"]
+
+            if price < 12:
+                color, label = "#00E676", "COMPLACENCY"
+            elif 12 <= price < 15:
+                color, label = "#66BB6A", "CALM"
+            elif 15 <= price < 20:
+                color, label = "#FFD600", "MILD"
+            elif 20 <= price < 30:
+                color, label = "#FF9100", "ELEVATED"
+            elif 30 <= price < 40:
+                color, label = "#FF3D00", "ANXIETY"
+            elif 40 <= price < 50:
+                color, label = "#D50000", "CRISIS"
+            else:
+                color, label = "#880E4F", "SHOCK"
+
+            new_data = {
+                "price": round(price, 2),
+                "color": color,
+                "label": label,
                 "market_status": status_color,
             }
-
-        price = df.iloc[-1]["Close"]
-        if price < 12:
-            color, label = "#00E676", "COMPLACENCY"
-        elif 12 <= price < 15:
-            color, label = "#66BB6A", "CALM"
-        elif 15 <= price < 20:
-            color, label = "#FFD600", "MILD"
-        elif 20 <= price < 30:
-            color, label = "#FF9100", "ELEVATED"
-        elif 30 <= price < 40:
-            color, label = "#FF3D00", "ANXIETY"
-        elif 40 <= price < 50:
-            color, label = "#D50000", "CRISIS"
-        else:
-            color, label = "#880E4F", "SHOCK"
-
-        new_data = {
-            "price": round(price, 2),
-            "color": color,
-            "label": label,
-            "market_status": status_color,
-        }
-        VIX_CACHE["data"] = new_data
-        VIX_CACHE["last_updated"] = t_module.time()
-        return new_data
-    except Exception:
-        return VIX_CACHE["data"]
+            VIX_CACHE["data"] = new_data
+            VIX_CACHE["last_updated"] = t_module.time()
+            return new_data
+        except Exception:
+            return VIX_CACHE["data"]
 
 
-# --- CORE ANALYSIS ---
+# --- CORE LOGIC ---
 def calculate_probability(price, target, std_dev, rsi, trend):
     safe_vol = max(std_dev, price * 0.005)
     z_score = abs(target - price) / (safe_vol * np.sqrt(3))
@@ -331,8 +342,8 @@ def analyze_ticker(ticker_input):
 
     latest = df.iloc[-1]
     price = latest["Close"]
-    current_width = latest["BB_Width"]
     avg_width = df["BB_Width"].rolling(window=20).mean().iloc[-1]
+    current_width = latest["BB_Width"]
     avg_vol = df["Volume"].rolling(window=20).mean().iloc[-1] or 1
     vol_spike = latest["Volume"] > (avg_vol * 1.5)
 
@@ -435,28 +446,21 @@ def scan():
     scan_list = random.sample(UNIVERSE, 8)
     if "BTC-USD" not in scan_list:
         scan_list.append("BTC-USD")
-
     raw_results = [analyze_ticker(t) for t in scan_list]
     results = [r for r in raw_results if r]
-
     active_setups = [r for r in results if r["signal"] != "NEUTRAL"]
     chosen_one = (
         sorted(active_setups, key=lambda x: x["probability"], reverse=True)[0]
         if active_setups
         else (results[0] if results else None)
     )
-
-    # FETCH NEWS ONLY FOR THE CHOSEN ONE (Optimized)
     if chosen_one:
         chosen_one["news"] = get_ticker_news(chosen_one["ticker"])
-
     bulls = sum(1 for r in results if "BULLISH" in r["signal"])
     bears = sum(1 for r in results if "BEARISH" in r["signal"])
     mood = "BULL" if bulls > bears else "BEAR"
-
     elapsed = round(t_module.time() - start_time, 2)
     logger.info(f"Scan complete in {elapsed}s")
-
     return render_template(
         "index.html",
         results=results,
@@ -475,7 +479,6 @@ def search():
     if not query:
         return redirect(url_for("index"))
     result = analyze_ticker(query)
-
     if result is None:
         return render_template(
             "index.html",
@@ -486,10 +489,7 @@ def search():
             timestamp=get_current_time(),
             version=APP_VERSION,
         )
-
-    # FETCH NEWS FOR SEARCH RESULT
     result["news"] = get_ticker_news(result["ticker"])
-
     mood = (
         "BULL"
         if "BULLISH" in result["signal"]
@@ -515,8 +515,8 @@ def api_vix():
 
 
 def background_vix_updater():
-    """Fetches VIX data in the background"""
-    t_module.sleep(3)
+    """Fetches VIX data in the background to prevent startup lag/errors"""
+    t_module.sleep(5)  # Increased initial delay to 5s
     while True:
         try:
             get_vix_data(force_update=True)
