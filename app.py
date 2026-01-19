@@ -23,8 +23,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.1.0 NEBULA CORE ---
-APP_VERSION = "v1.1.0 Nebula"
+# --- VERSION 1.1.1 FINAL RENDER OPTIMIZATION ---
+APP_VERSION = "v1.1.1 Stable"
 
 # Logging
 logging.basicConfig(level=logging.INFO)

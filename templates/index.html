@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=48"
+            href="{{ url_for('static', filename='icon.png') }}?v=49"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=48"
+            href="{{ url_for('static', filename='icon.png') }}?v=49"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -211,7 +211,7 @@
                     rgba(255, 215, 0, 0.3) 0%,
                     rgba(255, 215, 0, 0) 70%
                 );
-                animation: radiatePulse 4s ease-out infinite 1.5s; /* Staggered */
+                animation: radiatePulse 4s ease-out infinite 1.5s;
             }
 
             @keyframes radiatePulse {
@@ -232,7 +232,7 @@
             .rocket-btn {
                 width: 90px;
                 height: 90px;
-                background: rgba(30, 30, 30, 0.4); /* Translucent */
+                background: rgba(30, 30, 30, 0.4);
                 backdrop-filter: blur(8px);
                 -webkit-backdrop-filter: blur(8px);
                 border: 1px solid rgba(255, 255, 255, 0.15);
@@ -328,8 +328,11 @@
                 position: relative;
                 z-index: 10;
                 transition: filter 0.2s;
-                opacity: 0.95;
+                opacity: 0; /* Hidden until loaded */
             }
+            .goku-img.visible {
+                opacity: 0.95;
+            } /* Fade in once loaded */
 
             .search-dock-container {
                 position: fixed;
@@ -780,8 +783,9 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=48"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=49"
                     class="goku-img"
+                    id="raiden-gif"
                     alt="Scanning..."
                 />
             </div>
@@ -905,7 +909,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=48"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=49"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -913,7 +917,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=48"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=49"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -1192,9 +1196,11 @@
 
             new MarketPulse();
 
+            // ROCKET LAUNCH
             function launchRocket() {
                 const btn = document.querySelector(".rocket-btn");
                 const overlay = document.getElementById("loading-overlay");
+                const gif = document.getElementById("raiden-gif");
 
                 if (navigator.vibrate) navigator.vibrate(50);
 
@@ -1202,6 +1208,15 @@
 
                 setTimeout(() => {
                     overlay.classList.add("active");
+
+                    // Wait for overlay fade, then reveal GIF
+                    setTimeout(() => {
+                        if (gif.complete) {
+                            gif.classList.add("visible");
+                        } else {
+                            gif.onload = () => gif.classList.add("visible");
+                        }
+                    }, 100);
 
                     setTimeout(() => {
                         window.location.href = "/scan";
