@@ -16,13 +16,12 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=22"
+            href="{{ url_for('static', filename='icon.png') }}?v=23"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=22"
+            href="{{ url_for('static', filename='icon.png') }}?v=23"
         />
-
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
             name="apple-mobile-web-app-status-bar-style"
@@ -56,7 +55,6 @@
                 color: var(--text-main);
                 margin: 0;
                 padding: 20px;
-                /* Safe area padding for notched phones/TVs */
                 padding-bottom: calc(
                     var(--dock-height) + 50px + env(safe-area-inset-bottom)
                 );
@@ -140,7 +138,6 @@
                 height: 140px;
                 align-items: center;
             }
-
             .rocket-btn {
                 width: 90px;
                 height: 90px;
@@ -156,51 +153,17 @@
                 justify-content: center;
                 font-size: 3.5rem;
                 cursor: pointer;
+                position: relative;
+                z-index: 5;
                 box-shadow:
                     0 15px 40px rgba(0, 0, 0, 0.6),
                     inset 0 0 20px rgba(255, 255, 255, 0.05);
                 transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                position: relative;
-                z-index: 5;
-                touch-action: manipulation; /* Removes tap delay on mobile */
+                touch-action: manipulation;
             }
             .rocket-btn:active {
                 transform: scale(0.9);
             }
-
-            /* MONEY AURA PARTICLES */
-            .money-particle {
-                position: absolute;
-                font-size: 1.8rem;
-                font-weight: 900;
-                pointer-events: none;
-                opacity: 0;
-                z-index: 1;
-                text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
-            }
-
-            .m-up {
-                animation: floatUp 2.5s infinite ease-out;
-            }
-            .m-up-delayed {
-                animation: floatUp 2.5s infinite ease-out 1.25s;
-            }
-
-            @keyframes floatUp {
-                0% {
-                    transform: translate(-50%, -20%) scale(0.5);
-                    opacity: 0;
-                }
-                20% {
-                    opacity: 1;
-                }
-                100% {
-                    transform: translate(-50%, -250%) scale(1.5);
-                    opacity: 0;
-                }
-            }
-
-            /* LAUNCH ANIMATION */
             .rocket-btn.launching {
                 animation: launchSequence 1s
                     cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
@@ -227,14 +190,44 @@
             }
             @keyframes shake {
                 0% {
-                    transform: translate(2px, 2px) rotate(0deg);
+                    transform: translate(2px, 2px);
                 }
                 100% {
-                    transform: translate(-2px, -2px) rotate(-2deg);
+                    transform: translate(-2px, -2px);
                 }
             }
 
-            /* --- GOKU LOADING OVERLAY --- */
+            /* MONEY AURA */
+            .money-particle {
+                position: absolute;
+                font-size: 1.8rem;
+                font-weight: 900;
+                pointer-events: none;
+                opacity: 0;
+                z-index: 1;
+                text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            }
+            .m-up {
+                animation: floatUp 2.5s infinite ease-out;
+            }
+            .m-up-delayed {
+                animation: floatUp 2.5s infinite ease-out 1.25s;
+            }
+            @keyframes floatUp {
+                0% {
+                    transform: translate(-50%, -20%) scale(0.5);
+                    opacity: 0;
+                }
+                20% {
+                    opacity: 1;
+                }
+                100% {
+                    transform: translate(-50%, -250%) scale(1.5);
+                    opacity: 0;
+                }
+            }
+
+            /* --- GOKU REALISM ENGINE --- */
             #loading-overlay {
                 position: fixed;
                 top: 0;
@@ -259,8 +252,8 @@
             .goku-container {
                 position: relative;
                 width: 100%;
-                max-width: 800px; /* Wider for TVs */
-                height: 50vh;
+                max-width: 800px;
+                height: 60vh;
                 display: flex;
                 align-items: center;
                 justify-content: flex-start;
@@ -270,54 +263,123 @@
                 height: 100%;
                 width: auto;
                 object-fit: contain;
-                filter: drop-shadow(0 0 25px rgba(0, 230, 255, 0.5));
                 position: relative;
                 z-index: 10;
-                animation: gokuShake 0.1s infinite;
                 margin-left: -5vw;
+                /* Lighting Effect */
+                transition: filter 0.2s;
             }
 
-            @keyframes gokuShake {
+            /* BUILD UP ANIMATION (Class added via JS) */
+            .goku-img.charging {
+                animation: violentShake 0.1s infinite;
+                filter: brightness(1.3)
+                    drop-shadow(0 0 30px rgba(0, 230, 255, 0.8));
+            }
+
+            /* THE ENERGY ORB (Charge) */
+            .energy-orb {
+                position: absolute;
+                left: 30%;
+                top: 50%;
+                transform: translate(-50%, -50%) scale(0);
+                width: 100px;
+                height: 100px;
+                border-radius: 50%;
+                background: radial-gradient(
+                    circle,
+                    #fff 10%,
+                    #00e6ff 40%,
+                    rgba(0, 230, 255, 0) 70%
+                );
+                box-shadow: 0 0 50px #00e6ff;
+                z-index: 11;
+                opacity: 0;
+            }
+            .energy-orb.active {
+                animation: chargeOrb 1.5s ease-in forwards;
+            }
+
+            @keyframes chargeOrb {
                 0% {
-                    transform: translate(0, 0);
+                    transform: translate(-50%, -50%) scale(0.1);
+                    opacity: 0.5;
                 }
                 50% {
-                    transform: translate(-2px, 2px);
+                    transform: translate(-50%, -50%) scale(0.8);
+                    opacity: 1;
+                    box-shadow: 0 0 80px #00e6ff;
                 }
+                95% {
+                    transform: translate(-50%, -50%) scale(0.2);
+                    opacity: 1;
+                } /* Condense before firing */
                 100% {
-                    transform: translate(2px, -2px);
+                    transform: translate(-50%, -50%) scale(0.1);
+                    opacity: 0;
                 }
             }
 
-            .energy-blast {
+            /* THE BEAM (Fire) */
+            .energy-beam {
                 position: absolute;
-                left: 25%;
-                top: 55%;
-                transform: translateY(-50%);
-                width: 300%;
-                height: 300px;
+                left: 30%;
+                top: 50%;
+                transform: translateY(-50%) scaleX(0);
+                transform-origin: left;
+                width: 200vw;
+                height: 250px;
                 background: linear-gradient(
                     90deg,
                     rgba(255, 255, 255, 1) 0%,
-                    rgba(0, 230, 255, 0.8) 15%,
+                    rgba(0, 230, 255, 0.9) 20%,
                     rgba(0, 230, 255, 0) 100%
                 );
-                z-index: 5;
-                filter: blur(15px);
+                z-index: 12;
+                filter: blur(8px);
                 opacity: 0;
                 mix-blend-mode: screen;
             }
-            #loading-overlay.active .energy-blast {
-                opacity: 1;
-                transition: opacity 0.1s;
+            .energy-beam.firing {
+                animation: fireBeam 0.4s ease-out forwards;
             }
 
+            @keyframes fireBeam {
+                0% {
+                    transform: translateY(-50%) scaleX(0);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(-50%) scaleX(1);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes violentShake {
+                0% {
+                    transform: translate(2px, 2px);
+                }
+                25% {
+                    transform: translate(-2px, -2px);
+                }
+                50% {
+                    transform: translate(2px, -2px);
+                }
+                75% {
+                    transform: translate(-2px, 2px);
+                }
+                100% {
+                    transform: translate(0, 0);
+                }
+            }
+
+            /* BLAST PARTICLES */
             .blast-particle {
                 position: absolute;
-                font-size: 3rem;
+                font-size: 2.5rem;
                 animation: blastMove 0.6s linear forwards;
                 z-index: 20;
-                text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
             }
             @keyframes blastMove {
                 0% {
@@ -417,91 +479,21 @@
                 }
             }
 
-            #search-results {
-                position: absolute;
-                bottom: 80px;
-                left: 0;
-                width: 100%;
-                background: rgba(10, 10, 10, 0.95);
-                backdrop-filter: blur(20px);
-                border: 1px solid #333;
-                border-radius: 20px;
-                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
-                display: none;
-                overflow: hidden;
-                max-height: 40vh;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
+            .results-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;
             }
-            .result-item {
-                padding: 16px 20px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                cursor: pointer;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .result-item:hover {
-                background: rgba(255, 255, 255, 0.1);
-            }
-            .item-symbol {
-                font-weight: 800;
-                color: #fff;
-            }
-            .item-name {
-                font-size: 0.8rem;
-                color: #9aa0a6;
-            }
-
-            .info-bubble {
-                position: absolute;
-                bottom: 80px;
-                right: 0;
-                width: 280px;
-                background: rgba(10, 10, 10, 0.95);
-                backdrop-filter: blur(20px);
-                border: 1px solid var(--gold);
-                border-radius: 16px;
-                border-bottom-right-radius: 4px;
-                padding: 20px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
-                opacity: 0;
-                visibility: hidden;
-                transform: translateY(15px) scale(0.95);
-                transition: all 0.3s;
-                z-index: 1001;
-            }
-            .info-bubble.active {
-                opacity: 1;
-                visibility: visible;
-                transform: translateY(0) scale(1);
-            }
-            .bubble-title {
-                color: var(--gold);
-                font-weight: 900;
-                font-size: 0.85rem;
-                margin-bottom: 8px;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                letter-spacing: 0.5px;
-            }
-            .bubble-text {
-                font-size: 0.85rem;
-                color: #e8eaed;
-                line-height: 1.5;
-            }
-
-            .macro-container {
-                margin-bottom: 25px;
-                border-radius: 16px;
-                overflow: hidden;
-                border: 1px solid rgba(255, 255, 255, 0.1);
+            .stock-card {
                 background: var(--card-bg);
                 backdrop-filter: blur(10px);
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+                border-radius: 16px;
+                padding: 20px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                transition: transform 0.2s;
+                display: flex;
+                flex-direction: column;
             }
-
             .battle-arena {
                 display: flex;
                 justify-content: center;
@@ -520,94 +512,14 @@
             .bull-active .bull-icon {
                 fill: var(--accent-green);
                 opacity: 1;
-                filter: drop-shadow(0 0 20px rgba(0, 230, 118, 0.4));
-                transform: scale(1.2);
+                filter: drop-shadow(0 0 30px rgba(0, 230, 118, 0.8));
+                transform: scale(1.3);
             }
             .bear-active .bear-icon {
                 fill: var(--accent-red);
                 opacity: 1;
-                filter: drop-shadow(0 0 20px rgba(255, 23, 68, 0.4));
-                transform: scale(1.2);
-            }
-
-            .oracle-card {
-                background: linear-gradient(
-                    145deg,
-                    rgba(30, 30, 30, 0.9) 0%,
-                    rgba(10, 10, 10, 0.95) 100%
-                );
-                backdrop-filter: blur(15px);
-                border: 1px solid var(--gold);
-                border-radius: 24px;
-                padding: 30px;
-                position: relative;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-            }
-            .oracle-badge {
-                position: absolute;
-                top: -14px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: var(--gold);
-                color: black;
-                font-weight: 900;
-                font-size: 0.75rem;
-                padding: 6px 16px;
-                border-radius: 20px;
-                letter-spacing: 1.5px;
-                box-shadow: 0 0 15px var(--gold);
-            }
-            .oracle-header {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: space-between;
-                align-items: flex-end;
-                margin-bottom: 20px;
-            }
-            .oracle-ticker {
-                font-size: clamp(2.5rem, 6vw, 4rem);
-                font-weight: 900;
-                color: white;
-                letter-spacing: -2px;
-                line-height: 1;
-            }
-            .pop-value {
-                font-size: 2rem;
-                font-weight: 900;
-                color: var(--gold);
-            }
-            .social-box {
-                background: rgba(255, 255, 255, 0.05);
-                padding: 15px;
-                border-radius: 12px;
-                margin-bottom: 15px;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                font-size: 0.95rem;
-                border-left: 3px solid var(--gold);
-            }
-
-            .results-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 20px;
-            }
-            .stock-card {
-                background: var(--card-bg);
-                backdrop-filter: blur(10px);
-                border-radius: 16px;
-                padding: 20px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                transition: transform 0.2s;
-                display: flex;
-                flex-direction: column;
-            }
-            @media (min-width: 768px) {
-                .stock-card:hover {
-                    transform: translateY(-5px);
-                    border-color: rgba(255, 255, 255, 0.3);
-                }
+                filter: drop-shadow(0 0 30px rgba(255, 23, 68, 0.8));
+                transform: scale(1.3);
             }
             .card-header {
                 display: flex;
@@ -679,9 +591,10 @@
                 <img
                     src="{{ url_for('static', filename='goku.png') }}"
                     class="goku-img"
-                    alt="Scan"
+                    alt="Charge"
                 />
-                <div class="energy-blast"></div>
+                <div class="energy-orb"></div>
+                <div class="energy-beam"></div>
             </div>
         </div>
 
@@ -838,67 +751,6 @@
                     />
                 </svg>
             </div>
-            {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
-            <div class="oracle-container">
-                <div class="oracle-card">
-                    <div class="oracle-badge">ORACLE PICK</div>
-                    <div class="oracle-header">
-                        <div>
-                            <div
-                                style="
-                                    font-size: 0.8rem;
-                                    color: var(--gold);
-                                    margin-bottom: 5px;
-                                "
-                            >
-                                {{ chosen_one.social.score }}
-                            </div>
-                            <div class="oracle-ticker">
-                                {{ chosen_one.ticker }}
-                            </div>
-                        </div>
-                        <div class="oracle-pop">
-                            <div class="pop-label">PROBABILITY</div>
-                            <div class="pop-value">
-                                {{ chosen_one.probability }}%
-                            </div>
-                        </div>
-                    </div>
-                    <div class="social-box">
-                        <span class="social-icon"
-                            >{{ chosen_one.social.icon }}</span
-                        ><span class="social-text"
-                            >"{{ chosen_one.social.comment }}"</span
-                        >
-                    </div>
-                    <div
-                        class="ai-setup"
-                        style="
-                            border-color: var(--gold);
-                            background: rgba(255, 215, 0, 0.05);
-                        "
-                    >
-                        <div class="ai-title" style="color: var(--gold)">
-                            WINNING SETUP
-                        </div>
-                        <div class="strategy-name">
-                            {{ chosen_one.setup.type }}
-                        </div>
-                        <div class="leg">
-                            <span>Action</span>
-                            <span>{{ chosen_one.setup.entry }}</span>
-                        </div>
-                        <div class="leg">
-                            <span>Target</span>
-                            <span>{{ chosen_one.setup.target }}</span>
-                        </div>
-                        <div class="leg">
-                            <span>Stop</span>
-                            <span>{{ chosen_one.setup.stop }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
             {% endif %} {% if results %}
             <div class="results-grid">
                 {% for row in results %} {% if not chosen_one or row.ticker !=
@@ -957,7 +809,7 @@
                     this.vix = 18;
                     this.elements = [];
                     this.isRunning = true;
-                    this.dpr = window.devicePixelRatio || 1; // 4K/Retina Support
+                    this.dpr = window.devicePixelRatio || 1;
                     this.resize();
                     this.initElements();
 
@@ -976,7 +828,6 @@
                 }
 
                 resize() {
-                    // High-DPI Scaling for TVs and Retina Phones
                     const rect = this.canvas.getBoundingClientRect();
                     this.canvas.width = rect.width * this.dpr;
                     this.canvas.height = rect.height * this.dpr;
@@ -1077,8 +928,6 @@
                                             ".vix-price",
                                         ).textContent = data.price;
                                     }
-
-                                    // Matrix Logo Sync
                                     const logo =
                                         document.getElementById("matrix-logo");
                                     if (logo && data.market_status) {
@@ -1098,35 +947,51 @@
                 const btn = document.querySelector(".rocket-btn");
                 const overlay = document.getElementById("loading-overlay");
                 const gokuContainer = document.querySelector(".goku-container");
+                const gokuImg = document.querySelector(".goku-img");
+                const energyOrb = document.querySelector(".energy-orb");
+                const energyBeam = document.querySelector(".energy-beam");
 
                 if (navigator.vibrate) navigator.vibrate(50);
 
                 btn.classList.add("launching");
 
+                // 1. Show Overlay
                 setTimeout(() => {
                     overlay.classList.add("active");
-                    fireBlast(gokuContainer);
-                }, 300);
 
-                setTimeout(() => {
-                    window.location.href = "/scan";
-                }, 1800);
+                    // 2. Start Charging (Orb grows, Goku shakes)
+                    gokuImg.classList.add("charging");
+                    energyOrb.classList.add("active");
+
+                    // 3. Fire Beam (after 1.5s charge)
+                    setTimeout(() => {
+                        energyBeam.classList.add("firing");
+                        fireBlast(gokuContainer); // Shoot icons
+                    }, 1500);
+
+                    // 4. Redirect
+                    setTimeout(() => {
+                        window.location.href = "/scan";
+                    }, 2500); // 2.5s total animation
+                }, 300);
             }
 
             function fireBlast(container) {
-                for (let i = 0; i < 30; i++) {
+                for (let i = 0; i < 40; i++) {
                     const p = document.createElement("div");
                     p.className = "blast-particle";
                     const type = Math.random();
                     p.textContent =
                         type < 0.33 ? "🚀" : type < 0.66 ? "💰" : "🪙";
 
-                    const yDir = (Math.random() - 0.5) * 200 + "px";
+                    // Scatter
+                    const yDir = (Math.random() - 0.5) * 150 + "px";
                     p.style.setProperty("--y-dir", yDir);
 
-                    p.style.left = "250px";
+                    // Origin (Near hands)
+                    p.style.left = "35%";
                     p.style.top = "50%";
-                    p.style.animationDelay = Math.random() * 0.5 + "s";
+                    p.style.animationDelay = Math.random() * 0.4 + "s";
 
                     container.appendChild(p);
                 }
@@ -1208,12 +1073,26 @@
                                     document
                                         .getElementById("loading-overlay")
                                         .classList.add("active");
-                                    fireBlast(
-                                        document.querySelector(
-                                            ".goku-container",
-                                        ),
-                                    );
-                                    form.submit();
+                                    // Trigger blast on search too!
+                                    document
+                                        .querySelector(".goku-img")
+                                        .classList.add("charging");
+                                    document
+                                        .querySelector(".energy-orb")
+                                        .classList.add("active");
+                                    setTimeout(() => {
+                                        document
+                                            .querySelector(".energy-beam")
+                                            .classList.add("firing");
+                                        fireBlast(
+                                            document.querySelector(
+                                                ".goku-container",
+                                            ),
+                                        );
+                                    }, 1500);
+                                    setTimeout(() => {
+                                        form.submit();
+                                    }, 2500);
                                 };
                                 resultsBox.appendChild(div);
                             });
