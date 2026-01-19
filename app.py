@@ -60,7 +60,8 @@ UNIVERSE = [
 
 
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
+    # FIX: Allow multi-thread access for high traffic stability
+    conn = sqlite3.connect(DB_NAME, check_same_thread=False)
     c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS watchlist
                  (id INTEGER PRIMARY KEY, ticker TEXT, signal TEXT,
@@ -82,27 +83,20 @@ def get_market_status_color():
     tz = pytz.timezone("US/Eastern")
     now = datetime.now(tz)
     if now.weekday() >= 5:
-        return "#f28b82"  # Weekend Red
-
+        return "#f28b82"
     current_time = now.time()
-    # Market Open 9:30 AM - 4:00 PM EST
     if time(9, 30) <= current_time <= time(16, 0):
-        return "#00e676"  # Open Green
-
-    return "#f28b82"  # Closed Red
+        return "#00e676"
+    return "#f28b82"
 
 
 def get_market_data(ticker):
     try:
-        # Optimization: Fetch minimal data required
         df = yf.download(ticker, period="5d", interval="5m", progress=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
-
-        # Robustness Check: Ensure Data is valid
         if df.empty or len(df) < 20:
             return None
-
         return df
     except Exception as e:
         logger.error(f"Data fetch error for {ticker}: {e}")
@@ -236,7 +230,6 @@ def get_social_sentiment(rsi, vol_ratio):
 def get_vix_data():
     global VIX_CACHE
 
-    # Cache for 60 seconds to prevent Rate Limiting
     if t_module.time() - VIX_CACHE["last_updated"] < 60:
         return VIX_CACHE["data"]
 
@@ -371,14 +364,11 @@ def suggest():
         return jsonify([])
 
 
-# --- SMART CACHE CONTROL ---
 @app.after_request
 def add_header(response):
-    # Performance Fix: Cache Static Images (Shrek, Goku, Icon) for 1 Year
     if request.path.startswith("/static"):
         response.headers["Cache-Control"] = "public, max-age=31536000"
     else:
-        # Don't cache dynamic stock data
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
     return response
