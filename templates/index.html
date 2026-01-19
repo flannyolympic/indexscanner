@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=44"
+            href="{{ url_for('static', filename='icon.png') }}?v=45"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=44"
+            href="{{ url_for('static', filename='icon.png') }}?v=45"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -170,7 +170,6 @@
                 white-space: nowrap;
             }
 
-            /* SOLAR FLARE ENGINE */
             .launcher-container {
                 display: flex;
                 justify-content: center;
@@ -303,15 +302,15 @@
                 }
             }
 
-            /* CLOAK MODE OVERLAY (Translucent) */
+            /* CLOAK MODE OVERLAY */
             #loading-overlay {
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.7); /* Translucent Black */
-                backdrop-filter: blur(12px); /* Frosted Glass Effect */
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(12px);
                 z-index: 9999;
                 display: none;
                 flex-direction: column;
@@ -333,116 +332,17 @@
                 height: 60vh;
                 display: flex;
                 align-items: center;
-                justify-content: flex-start;
+                justify-content: center;
             }
 
-            /* RAIDEN GIF STYLE */
             .goku-img {
                 height: 100%;
                 width: auto;
                 object-fit: contain;
                 position: relative;
                 z-index: 10;
-                margin-left: -5vw;
                 transition: filter 0.2s;
-                opacity: 0.9; /* Slightly ghostly */
-            }
-            .goku-img.charging {
-                filter: brightness(1.4)
-                    drop-shadow(0 0 40px rgba(0, 230, 255, 0.9));
-            }
-
-            .energy-orb {
-                position: absolute;
-                left: 30%;
-                top: 50%;
-                transform: translate(-50%, -50%) scale(0);
-                width: 100px;
-                height: 100px;
-                border-radius: 50%;
-                background: radial-gradient(
-                    circle,
-                    #fff 10%,
-                    #00e6ff 40%,
-                    rgba(0, 230, 255, 0) 70%
-                );
-                box-shadow: 0 0 50px #00e6ff;
-                z-index: 11;
-                opacity: 0;
-            }
-            .energy-orb.active {
-                animation: chargeOrb 1.5s ease-in forwards;
-            }
-            @keyframes chargeOrb {
-                0% {
-                    transform: translate(-50%, -50%) scale(0.1);
-                    opacity: 0.5;
-                }
-                50% {
-                    transform: translate(-50%, -50%) scale(0.8);
-                    opacity: 1;
-                    box-shadow: 0 0 80px #00e6ff;
-                }
-                95% {
-                    transform: translate(-50%, -50%) scale(0.2);
-                    opacity: 1;
-                }
-                100% {
-                    transform: translate(-50%, -50%) scale(0.1);
-                    opacity: 0;
-                }
-            }
-            .energy-beam {
-                position: absolute;
-                left: 30%;
-                top: 50%;
-                transform: translateY(-50%) scaleX(0);
-                transform-origin: left;
-                width: 200vw;
-                height: 250px;
-                background: linear-gradient(
-                    90deg,
-                    rgba(255, 255, 255, 1) 0%,
-                    rgba(0, 230, 255, 0.9) 20%,
-                    rgba(0, 230, 255, 0) 100%
-                );
-                z-index: 12;
-                filter: blur(8px);
-                opacity: 0;
-                mix-blend-mode: screen;
-            }
-            .energy-beam.firing {
-                animation: fireBeam 0.4s ease-out forwards;
-            }
-            @keyframes fireBeam {
-                0% {
-                    transform: translateY(-50%) scaleX(0);
-                    opacity: 1;
-                }
-                100% {
-                    transform: translateY(-50%) scaleX(1);
-                    opacity: 1;
-                }
-            }
-            .blast-particle {
-                position: absolute;
-                font-size: 2.5rem;
-                animation: blastMove 0.6s linear forwards;
-                z-index: 20;
-                text-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
-            }
-            @keyframes blastMove {
-                0% {
-                    transform: translate(0, 0) scale(0.2);
-                    opacity: 0;
-                }
-                10% {
-                    opacity: 1;
-                }
-                100% {
-                    transform: translate(120vw, var(--y-dir)) scale(1.5);
-                    opacity: 1;
-                }
+                opacity: 0.9;
             }
 
             .search-dock-container {
@@ -894,12 +794,10 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=44"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=45"
                     class="goku-img"
-                    alt="Charge"
+                    alt="Scanning..."
                 />
-                <div class="energy-orb"></div>
-                <div class="energy-beam"></div>
             </div>
         </div>
 
@@ -1021,7 +919,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=44"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=45"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -1029,7 +927,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=44"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=45"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -1311,10 +1209,6 @@
             function launchRocket() {
                 const btn = document.querySelector(".rocket-btn");
                 const overlay = document.getElementById("loading-overlay");
-                const gokuContainer = document.querySelector(".goku-container");
-                const gokuImg = document.querySelector(".goku-img");
-                const energyOrb = document.querySelector(".energy-orb");
-                const energyBeam = document.querySelector(".energy-beam");
 
                 if (navigator.vibrate) navigator.vibrate(50);
 
@@ -1322,13 +1216,6 @@
 
                 setTimeout(() => {
                     overlay.classList.add("active");
-                    gokuImg.classList.add("charging");
-                    energyOrb.classList.add("active");
-
-                    setTimeout(() => {
-                        energyBeam.classList.add("firing");
-                        // No coins, pure energy
-                    }, 1500);
 
                     setTimeout(() => {
                         window.location.href = "/scan";
@@ -1412,20 +1299,7 @@
                                     document
                                         .getElementById("loading-overlay")
                                         .classList.add("active");
-                                    document
-                                        .querySelector(".goku-img")
-                                        .classList.add("charging");
-                                    document
-                                        .querySelector(".energy-orb")
-                                        .classList.add("active");
-                                    setTimeout(() => {
-                                        document
-                                            .querySelector(".energy-beam")
-                                            .classList.add("firing");
-                                    }, 1500);
-                                    setTimeout(() => {
-                                        form.submit();
-                                    }, 2500);
+                                    form.submit();
                                 };
                                 resultsBox.appendChild(div);
                             });

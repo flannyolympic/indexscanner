@@ -23,8 +23,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.0.6 RAIDEN CLOAK ---
-APP_VERSION = "v1.0.6 Raiden Cloak"
+# --- VERSION 1.0.7 CLEAN PROTOCOL ---
+APP_VERSION = "v1.0.7 Clean"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -489,10 +489,8 @@ def api_vix():
     return jsonify(get_vix_data())
 
 
-# --- CRITICAL FIX: BACKGROUND THREAD STARTS AT END ---
 def background_vix_updater():
     """Fetches VIX data in the background to prevent startup lag/errors"""
-    # Wait 3 seconds on boot to let the server settle
     t_module.sleep(3)
     while True:
         try:
@@ -503,10 +501,8 @@ def background_vix_updater():
 
 
 if __name__ != "__main__":
-    # For Gunicorn/Production
     threading.Thread(target=background_vix_updater, daemon=True).start()
 
 if __name__ == "__main__":
-    # For Local Dev
     threading.Thread(target=background_vix_updater, daemon=True).start()
     app.run(debug=True)
