@@ -23,15 +23,14 @@
             as="image"
             href="{{ url_for('static', filename='hellboy.png') }}"
         />
-
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=39"
+            href="{{ url_for('static', filename='icon.png') }}?v=40"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=39"
+            href="{{ url_for('static', filename='icon.png') }}?v=40"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -67,7 +66,6 @@
                 color: var(--text-main);
                 margin: 0;
                 padding: 20px;
-                /* Space for Footer */
                 padding-bottom: 120px;
                 padding-left: max(20px, env(safe-area-inset-left));
                 padding-right: max(20px, env(safe-area-inset-right));
@@ -110,7 +108,6 @@
                 letter-spacing: -1px;
                 text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
             }
-
             .beta-pill {
                 display: inline-block;
                 font-size: 0.6rem;
@@ -173,6 +170,7 @@
                 white-space: nowrap;
             }
 
+            /* ROCKET LAUNCHER & SUN PARTICLES */
             .launcher-container {
                 display: flex;
                 justify-content: center;
@@ -239,32 +237,54 @@
                 }
             }
 
-            .money-particle {
+            /* NEW FLAME PULSE ANIMATION */
+            .sun-particle {
                 position: absolute;
-                font-size: 1.8rem;
-                font-weight: 900;
+                width: 15px;
+                height: 15px;
+                border-radius: 50%;
                 pointer-events: none;
                 opacity: 0;
                 z-index: 1;
-                text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
             }
-            .m-up {
-                animation: floatUp 2.5s infinite ease-out;
+            .sun-green {
+                background: radial-gradient(
+                    circle,
+                    #fff 10%,
+                    #00e676 50%,
+                    transparent 80%
+                );
+                box-shadow: 0 0 20px 5px rgba(0, 230, 118, 0.6);
+                animation: flameFloat 3s infinite ease-out;
             }
-            .m-up-delayed {
-                animation: floatUp 2.5s infinite ease-out 1.25s;
+            .sun-gold {
+                background: radial-gradient(
+                    circle,
+                    #fff 10%,
+                    #ffd700 50%,
+                    transparent 80%
+                );
+                box-shadow: 0 0 20px 5px rgba(255, 215, 0, 0.6);
+                animation: flameFloat 3s infinite ease-out 1.5s;
             }
-            @keyframes floatUp {
+
+            @keyframes flameFloat {
                 0% {
-                    transform: translate(-50%, -20%) scale(0.5);
+                    transform: translate(-50%, 0) scale(0.5);
                     opacity: 0;
                 }
                 20% {
                     opacity: 1;
+                    transform: translate(-50%, -40px) scale(1.2);
+                }
+                50% {
+                    transform: translate(-50%, -80px) scale(1.5);
+                    box-shadow: 0 0 40px 10px currentColor;
                 }
                 100% {
-                    transform: translate(-50%, -250%) scale(1.5);
+                    transform: translate(-50%, -200px) scale(0.5);
                     opacity: 0;
+                    filter: blur(4px);
                 }
             }
 
@@ -834,7 +854,6 @@
                 animation: borderPulse 1s infinite;
             }
 
-            /* FOOTER & ULA */
             .app-footer {
                 margin-top: 40px;
                 padding: 20px 0;
@@ -871,7 +890,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='goku.png') }}?v=38"
+                    src="{{ url_for('static', filename='goku.png') }}?v=40"
                     class="goku-img"
                     alt="Charge"
                 />
@@ -971,29 +990,21 @@
 
             <div class="launcher-container">
                 <div
-                    class="money-particle m-up"
-                    style="top: 50%; left: 20%; color: var(--accent-green)"
-                >
-                    $
-                </div>
+                    class="sun-particle sun-green"
+                    style="left: 20%; top: 60%"
+                ></div>
                 <div
-                    class="money-particle m-up-delayed"
-                    style="top: 60%; left: 80%; color: var(--gold)"
-                >
-                    $
-                </div>
+                    class="sun-particle sun-gold"
+                    style="left: 80%; top: 50%"
+                ></div>
                 <div
-                    class="money-particle m-up"
-                    style="top: 40%; left: 70%; color: var(--accent-green)"
-                >
-                    $$
-                </div>
+                    class="sun-particle sun-green"
+                    style="left: 70%; top: 70%"
+                ></div>
                 <div
-                    class="money-particle m-up-delayed"
-                    style="top: 55%; left: 30%; color: var(--gold)"
-                >
-                    $
-                </div>
+                    class="sun-particle sun-gold"
+                    style="left: 30%; top: 40%"
+                ></div>
 
                 <div class="rocket-btn" onclick="launchRocket()">
                     <div class="rocket-icon">🚀</div>
@@ -1020,7 +1031,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=38"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=40"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -1028,7 +1039,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=38"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=40"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />

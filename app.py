@@ -22,14 +22,14 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- DYNAMIC VERSIONING ---
-APP_VERSION = "BETA v0.9.9"
+# --- VERSION 1.0.0 RELEASE CANDIDATE ---
+APP_VERSION = "RC v1.0.0"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
 
-# Cache
+# Robust Cache
 VIX_CACHE = {
     "data": {
         "price": "WAIT",
@@ -97,27 +97,21 @@ def get_market_status_color():
     return "#ff5252"
 
 
-# --- ROBUST DATA FETCHING (WITH RETRY) ---
+# --- ROBUST DATA FETCHING ---
 def get_market_data(ticker, retries=2):
     attempt = 0
     while attempt <= retries:
         try:
-            # Add tiny jitter to prevent worker collisions
-            t_module.sleep(random.uniform(0.1, 0.5))
-
+            t_module.sleep(random.uniform(0.05, 0.2))  # Tiny jitter
             df = yf.download(ticker, period="5d", interval="5m", progress=False)
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
-
             if not df.empty and len(df) >= 20:
                 return df
-
         except Exception as e:
-            logger.warning(f"Attempt {attempt + 1} failed for {ticker}: {e}")
-            t_module.sleep(2**attempt)  # Exponential backoff: 1s, 2s, 4s...
-
+            logger.warning(f"Retry {attempt + 1} for {ticker}: {e}")
+            t_module.sleep(1.5**attempt)
         attempt += 1
-
     return None
 
 
@@ -135,9 +129,7 @@ def calculate_probability(price, target, std_dev, rsi, trend):
 
     final_pop = stat_prob + rsi_edge
     vol_percent = (std_dev / price) * 100
-    pulse_magnitude = min(vol_percent, 2.0)
-    pulse = random.uniform(-pulse_magnitude, pulse_magnitude)
-
+    pulse = random.uniform(-min(vol_percent, 2.0), min(vol_percent, 2.0))
     return round(min(max(final_pop + pulse, 35.5), 96.2), 1)
 
 
@@ -244,7 +236,7 @@ def get_social_sentiment(rsi, vol_ratio):
     return {"score": "QUIET", "comment": "Consolidation", "icon": "💤"}
 
 
-# --- VIX SPECTRUM LOGIC ---
+# --- VIX SPECTRUM ---
 def get_vix_data():
     global VIX_CACHE
     if t_module.time() - VIX_CACHE["last_updated"] < 60:
@@ -252,7 +244,7 @@ def get_vix_data():
 
     try:
         status_color = get_market_status_color()
-        df = get_market_data("^VIX", retries=3)  # Higher retries for VIX
+        df = get_market_data("^VIX", retries=3)
 
         if df is None:
             if VIX_CACHE["last_updated"] > 0:
