@@ -11,11 +11,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=8"
+            href="{{ url_for('static', filename='icon.png') }}?v=9"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=8"
+            href="{{ url_for('static', filename='icon.png') }}?v=9"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -61,7 +61,7 @@
                 overflow-x: hidden;
             }
 
-            /* --- THE LIVE CHART BACKGROUND --- */
+            /* LIVE CHART BACKGROUND */
             #market-canvas {
                 position: fixed;
                 top: 0;
@@ -69,7 +69,7 @@
                 width: 100%;
                 height: 100%;
                 z-index: -1;
-                background: #000; /* Pure black base */
+                background: #000;
             }
 
             .app-wrapper {
@@ -79,7 +79,7 @@
                 position: relative;
             }
 
-            /* --- HEADER --- */
+            /* HEADER */
             .header-container {
                 display: flex;
                 align-items: center;
@@ -123,7 +123,7 @@
                 font-weight: 800;
             }
 
-            /* --- FLOATING COMMAND DOCK --- */
+            /* FLOATING DOCK */
             .search-dock-container {
                 position: fixed;
                 bottom: calc(20px + env(safe-area-inset-bottom));
@@ -155,6 +155,7 @@
                 transform: translateY(-5px);
                 border-color: var(--gold);
             }
+
             .search-icon {
                 width: 45px;
                 height: 45px;
@@ -283,7 +284,7 @@
                 line-height: 1.5;
             }
 
-            /* --- CARDS --- */
+            /* CONTENT */
             .macro-container {
                 margin-bottom: 25px;
                 border-radius: 16px;
@@ -526,6 +527,7 @@
     </head>
     <body>
         <canvas id="market-canvas"></canvas>
+
         <div id="loading-overlay">
             <div class="spinner"></div>
             <div
@@ -784,17 +786,17 @@
         </div>
 
         <script>
-            // --- LIVE CHART ENGINE ---
             class MarketPulse {
                 constructor() {
                     this.canvas = document.getElementById("market-canvas");
                     this.ctx = this.canvas.getContext("2d");
-                    this.vix = 18; // Default
+                    this.vix = 18;
                     this.points = [];
                     this.maxPoints = 0;
+                    this.lastTick = 0;
                     this.resize();
 
-                    // Initial Random Walk
+                    // Initial Seed
                     let price = this.canvas.height / 2;
                     for (let i = 0; i < this.maxPoints; i++) {
                         price += (Math.random() - 0.5) * 5;
@@ -802,88 +804,89 @@
                     }
 
                     window.addEventListener("resize", () => this.resize());
-                    this.animate();
+                    requestAnimationFrame((ts) => this.animate(ts));
                     this.startHeartbeat();
                 }
 
                 resize() {
                     this.canvas.width = window.innerWidth;
                     this.canvas.height = window.innerHeight;
-                    this.maxPoints = Math.ceil(this.canvas.width / 5); // 1 point per 5px
-                    // Fill array if needed
-                    while (this.points.length < this.maxPoints) {
+                    this.maxPoints = Math.ceil(this.canvas.width / 5);
+                    while (this.points.length < this.maxPoints)
                         this.points.push(this.canvas.height / 2);
-                    }
                 }
 
                 getVixColor(vix) {
-                    if (vix < 15) return "0, 230, 118"; // Green RGB
-                    if (vix < 20) return "255, 215, 0"; // Gold RGB
-                    return "255, 23, 68"; // Red RGB
+                    if (vix < 15) return "0, 230, 118"; // Green
+                    if (vix < 20) return "255, 215, 0"; // Gold
+                    return "255, 23, 68"; // Red
                 }
 
                 update() {
-                    // Remove first point
                     this.points.shift();
-
-                    // Calculate volatility based on VIX
-                    const volatility = (this.vix / 10) * 4; // Higher VIX = Bigger jumps
+                    // Higher volatility for high VIX, but kept smooth
+                    const volatility = (this.vix / 15) * 6;
                     const lastPrice = this.points[this.points.length - 1];
 
-                    // Random Walk
                     let change = (Math.random() - 0.5) * volatility;
                     let newPrice = lastPrice + change;
 
-                    // Keep in bounds (mostly centered vertically)
+                    // Keep graph centered
                     const center = this.canvas.height / 2;
-                    if (newPrice < 0 || newPrice > this.canvas.height) {
-                        newPrice = center;
-                    }
+                    newPrice += (center - newPrice) * 0.02;
 
-                    // Mean Reversion (pull back to center slowly)
-                    newPrice += (center - newPrice) * 0.01;
+                    if (newPrice < 0) newPrice = 0;
+                    if (newPrice > this.canvas.height)
+                        newPrice = this.canvas.height;
 
                     this.points.push(newPrice);
                 }
 
-                animate() {
+                animate(timestamp) {
+                    // DYNAMIC SPEED CONTROL
+                    // Low VIX (12) -> Wait 120ms between updates (Slow)
+                    // High VIX (30) -> Wait 40ms between updates (Fast)
+                    const speedDelay = Math.max(40, 180 - this.vix * 6);
+
+                    if (!this.lastTick) this.lastTick = timestamp;
+
+                    // Only update data if enough time has passed
+                    if (timestamp - this.lastTick > speedDelay) {
+                        this.update();
+                        this.lastTick = timestamp;
+                    }
+
+                    // Draw every frame for smooth gradients
                     this.ctx.clearRect(
                         0,
                         0,
                         this.canvas.width,
                         this.canvas.height,
                     );
-                    this.update(); // Generate next point
-
                     const rgb = this.getVixColor(this.vix);
 
-                    // Draw Filled Area
+                    // Fill
                     this.ctx.beginPath();
-                    this.ctx.moveTo(0, this.canvas.height); // Bottom Left
-
-                    this.points.forEach((y, i) => {
-                        this.ctx.lineTo(i * 5, y);
-                    });
-
+                    this.ctx.moveTo(0, this.canvas.height);
+                    this.points.forEach((y, i) => this.ctx.lineTo(i * 5, y));
                     this.ctx.lineTo(
                         (this.points.length - 1) * 5,
                         this.canvas.height,
-                    ); // Bottom Right
+                    );
                     this.ctx.closePath();
 
-                    // Gradient Fill
                     const gradient = this.ctx.createLinearGradient(
                         0,
                         0,
                         0,
                         this.canvas.height,
                     );
-                    gradient.addColorStop(0, `rgba(${rgb}, 0.2)`); // Top (Color)
-                    gradient.addColorStop(1, `rgba(${rgb}, 0)`); // Bottom (Transparent)
+                    gradient.addColorStop(0, `rgba(${rgb}, 0.2)`);
+                    gradient.addColorStop(1, `rgba(${rgb}, 0)`);
                     this.ctx.fillStyle = gradient;
                     this.ctx.fill();
 
-                    // Draw Line on Top
+                    // Line
                     this.ctx.beginPath();
                     this.points.forEach((y, i) => {
                         if (i === 0) this.ctx.moveTo(i * 5, y);
@@ -893,7 +896,7 @@
                     this.ctx.strokeStyle = `rgba(${rgb}, 0.8)`;
                     this.ctx.stroke();
 
-                    requestAnimationFrame(() => this.animate());
+                    requestAnimationFrame((ts) => this.animate(ts));
                 }
 
                 startHeartbeat() {
@@ -922,7 +925,7 @@
 
             new MarketPulse();
 
-            // --- STANDARD UI LOGIC ---
+            // Standard UI Logic
             function updateClock() {
                 const now = new Date();
                 const options = {
