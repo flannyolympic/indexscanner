@@ -23,8 +23,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.0.5 STABILITY PATCH ---
-APP_VERSION = "v1.0.5 Live"
+# --- VERSION 1.0.6 RAIDEN CLOAK ---
+APP_VERSION = "v1.0.6 Raiden Cloak"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -103,7 +103,6 @@ def get_market_data(ticker, retries=3):
     attempt = 0
     while attempt <= retries:
         try:
-            # Jitter prevents rate limit collisions
             jitter = random.uniform(0.1, 0.5)
             t_module.sleep(jitter)
 
@@ -490,7 +489,7 @@ def api_vix():
     return jsonify(get_vix_data())
 
 
-# --- CRITICAL FIX: DEFINE FUNCTION BEFORE STARTING THREAD ---
+# --- CRITICAL FIX: BACKGROUND THREAD STARTS AT END ---
 def background_vix_updater():
     """Fetches VIX data in the background to prevent startup lag/errors"""
     # Wait 3 seconds on boot to let the server settle
@@ -503,7 +502,6 @@ def background_vix_updater():
         t_module.sleep(60)
 
 
-# START BACKGROUND THREAD (Placed safely at the end)
 if __name__ != "__main__":
     # For Gunicorn/Production
     threading.Thread(target=background_vix_updater, daemon=True).start()
