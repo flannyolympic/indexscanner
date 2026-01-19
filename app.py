@@ -23,8 +23,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.0.9 iOS COMPATIBILITY ---
-APP_VERSION = "v1.0.9 Stable"
+# --- VERSION 1.1.0 NEBULA CORE ---
+APP_VERSION = "v1.1.0 Nebula"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -496,7 +496,7 @@ def background_vix_updater():
         try:
             get_vix_data(force_update=True)
         except Exception as e:
-            logger.error(f"VIX BG Error: {e}")  # Log but don't crash
+            logger.error(f"VIX BG Error: {e}")
         t_module.sleep(60)
 
 

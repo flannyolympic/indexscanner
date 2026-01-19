@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=47"
+            href="{{ url_for('static', filename='icon.png') }}?v=48"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=47"
+            href="{{ url_for('static', filename='icon.png') }}?v=48"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -170,6 +170,7 @@
                 white-space: nowrap;
             }
 
+            /* NEBULA CORE ENGINE */
             .launcher-container {
                 display: flex;
                 justify-content: center;
@@ -180,80 +181,61 @@
                 align-items: center;
             }
 
-            .solar-aura {
+            .core-glow {
                 position: absolute;
-                width: 140px;
-                height: 140px;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
                 border-radius: 50%;
-                z-index: 1;
                 pointer-events: none;
-                opacity: 0.6;
-            }
-            .aura-green {
-                background: radial-gradient(
-                    circle,
-                    transparent 30%,
-                    rgba(0, 230, 118, 0.2) 60%,
-                    rgba(0, 230, 118, 0) 70%
-                );
-                border: 2px dashed rgba(0, 230, 118, 0.6);
-                animation:
-                    spinClockwise 10s linear infinite,
-                    pulseFlare 4s ease-in-out infinite;
-            }
-            .aura-gold {
-                width: 160px;
-                height: 160px;
-                background: radial-gradient(
-                    circle,
-                    transparent 30%,
-                    rgba(255, 215, 0, 0.2) 60%,
-                    rgba(255, 215, 0, 0) 70%
-                );
-                border: 2px dashed rgba(255, 215, 0, 0.6);
-                animation:
-                    spinCounter 12s linear infinite,
-                    pulseFlare 4s ease-in-out infinite 2s;
+                opacity: 0.7;
+                z-index: 1;
             }
 
-            @keyframes spinClockwise {
-                from {
-                    transform: rotate(0deg);
-                }
-                to {
-                    transform: rotate(360deg);
-                }
+            .glow-green {
+                width: 110px;
+                height: 110px;
+                background: radial-gradient(
+                    circle,
+                    rgba(0, 230, 118, 0.4) 0%,
+                    rgba(0, 230, 118, 0) 70%
+                );
+                animation: radiatePulse 3s ease-out infinite;
             }
-            @keyframes spinCounter {
-                from {
-                    transform: rotate(360deg);
-                }
-                to {
-                    transform: rotate(0deg);
-                }
+
+            .glow-gold {
+                width: 140px;
+                height: 140px;
+                background: radial-gradient(
+                    circle,
+                    rgba(255, 215, 0, 0.3) 0%,
+                    rgba(255, 215, 0, 0) 70%
+                );
+                animation: radiatePulse 4s ease-out infinite 1.5s; /* Staggered */
             }
-            @keyframes pulseFlare {
-                0%,
-                100% {
-                    opacity: 0.4;
-                    transform: scale(0.95) rotate(var(--rot));
+
+            @keyframes radiatePulse {
+                0% {
+                    transform: translate(-50%, -50%) scale(0.8);
+                    opacity: 0.8;
                 }
                 50% {
-                    opacity: 0.8;
-                    transform: scale(1.05) rotate(var(--rot));
-                    filter: drop-shadow(0 0 15px currentColor);
+                    transform: translate(-50%, -50%) scale(1.3);
+                    opacity: 0.4;
+                }
+                100% {
+                    transform: translate(-50%, -50%) scale(1.6);
+                    opacity: 0;
                 }
             }
 
             .rocket-btn {
                 width: 90px;
                 height: 90px;
-                background: linear-gradient(
-                    145deg,
-                    rgba(40, 40, 40, 0.9),
-                    rgba(15, 15, 15, 1)
-                );
-                border: 2px solid rgba(255, 255, 255, 0.2);
+                background: rgba(30, 30, 30, 0.4); /* Translucent */
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border: 1px solid rgba(255, 255, 255, 0.15);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
@@ -261,22 +243,23 @@
                 font-size: 3.5rem;
                 cursor: pointer;
                 position: relative;
-                z-index: 5;
+                z-index: 10;
                 box-shadow:
-                    0 15px 40px rgba(0, 0, 0, 0.6),
+                    0 0 30px rgba(0, 0, 0, 0.5),
                     inset 0 0 20px rgba(255, 255, 255, 0.05);
                 transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 touch-action: manipulation;
             }
             .rocket-btn:active {
                 transform: scale(0.9);
+                background: rgba(30, 30, 30, 0.6);
             }
             .rocket-btn.launching {
                 animation: launchSequence 1s
                     cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
                 pointer-events: none;
                 border-color: var(--gold);
-                background: var(--gold);
+                background: rgba(255, 215, 0, 0.3);
             }
             .rocket-btn.launching .rocket-icon {
                 animation: shake 0.1s linear infinite;
@@ -309,16 +292,16 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.7);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px); /* Safari Fix */
+                background: rgba(0, 0, 0, 0.75);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
                 z-index: 9999;
                 display: none;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 opacity: 0;
-                transition: opacity 0.3s ease-in-out;
+                transition: opacity 0.4s ease-in-out;
                 overflow: hidden;
             }
             #loading-overlay.active {
@@ -345,7 +328,7 @@
                 position: relative;
                 z-index: 10;
                 transition: filter 0.2s;
-                opacity: 0.9;
+                opacity: 0.95;
             }
 
             .search-dock-container {
@@ -797,7 +780,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=47"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=48"
                     class="goku-img"
                     alt="Scanning..."
                 />
@@ -894,8 +877,8 @@
             </div>
 
             <div class="launcher-container">
-                <div class="solar-aura aura-green"></div>
-                <div class="solar-aura aura-gold"></div>
+                <div class="core-glow glow-green"></div>
+                <div class="core-glow glow-gold"></div>
 
                 <div class="rocket-btn" onclick="launchRocket()">
                     <div class="rocket-icon">🚀</div>
@@ -922,7 +905,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=47"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=48"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -930,7 +913,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=47"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=48"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
