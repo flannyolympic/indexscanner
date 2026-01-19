@@ -22,8 +22,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.0.0 RELEASE CANDIDATE ---
-APP_VERSION = "RC v1.0.0"
+# --- VERSION 1.0.1 STABLE ---
+APP_VERSION = "v1.0.1 Stable"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -97,21 +97,35 @@ def get_market_status_color():
     return "#ff5252"
 
 
-# --- ROBUST DATA FETCHING ---
-def get_market_data(ticker, retries=2):
+# --- ROBUST DATA FETCHING (OPTIMIZED) ---
+def get_market_data(ticker, retries=3):
     attempt = 0
     while attempt <= retries:
         try:
-            t_module.sleep(random.uniform(0.05, 0.2))  # Tiny jitter
+            # Smart Jitter: Random delay to prevent concurrent worker collisions
+            # Higher jitter for VIX to avoid startup race condition
+            jitter = (
+                random.uniform(0.5, 2.0)
+                if ticker == "^VIX"
+                else random.uniform(0.1, 0.5)
+            )
+            t_module.sleep(jitter)
+
             df = yf.download(ticker, period="5d", interval="5m", progress=False)
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
+
             if not df.empty and len(df) >= 20:
                 return df
+
         except Exception as e:
-            logger.warning(f"Retry {attempt + 1} for {ticker}: {e}")
-            t_module.sleep(1.5**attempt)
+            # Silent fail on attempt 1, log on attempt 2+
+            if attempt > 0:
+                logger.warning(f"Retry {attempt}/{retries} for {ticker}: {e}")
+            t_module.sleep(2**attempt)  # Exponential backoff
+
         attempt += 1
+
     return None
 
 
