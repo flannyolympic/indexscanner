@@ -22,11 +22,11 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# Logging
+# Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
 
-# Cache
+# VIX & Status Cache
 VIX_CACHE = {
     "data": {"price": "WAIT", "color": "grey", "market_status": "grey"},
     "last_updated": 0,
@@ -60,7 +60,7 @@ UNIVERSE = [
 
 
 def init_db():
-    # FIX: Allow multi-thread access for high traffic stability
+    # check_same_thread=False prevents crashes under high traffic
     conn = sqlite3.connect(DB_NAME, check_same_thread=False)
     c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS watchlist
@@ -83,11 +83,11 @@ def get_market_status_color():
     tz = pytz.timezone("US/Eastern")
     now = datetime.now(tz)
     if now.weekday() >= 5:
-        return "#f28b82"
+        return "#f28b82"  # Closed (Weekend)
     current_time = now.time()
     if time(9, 30) <= current_time <= time(16, 0):
-        return "#00e676"
-    return "#f28b82"
+        return "#00e676"  # Open
+    return "#f28b82"  # Closed
 
 
 def get_market_data(ticker):
@@ -226,17 +226,15 @@ def get_social_sentiment(rsi, vol_ratio):
     return {"score": "QUIET", "comment": "Consolidation", "icon": "💤"}
 
 
-# --- VIX & STATUS API ---
+# --- API & CACHING ---
 def get_vix_data():
     global VIX_CACHE
-
     if t_module.time() - VIX_CACHE["last_updated"] < 60:
         return VIX_CACHE["data"]
 
     try:
         status_color = get_market_status_color()
         df = get_market_data("^VIX")
-
         if df is None:
             if VIX_CACHE["last_updated"] > 0:
                 return VIX_CACHE["data"]
