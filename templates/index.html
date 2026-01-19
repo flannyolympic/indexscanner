@@ -11,11 +11,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}"
+            href="{{ url_for('static', filename='icon.png') }}?v=2"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}"
+            href="{{ url_for('static', filename='icon.png') }}?v=2"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -50,7 +50,7 @@
                 color: var(--text-main);
                 margin: 0;
                 padding: 15px;
-                padding-bottom: 80px; /* Space for the floating orb */
+                padding-bottom: 80px;
                 -webkit-tap-highlight-color: transparent;
                 background: linear-gradient(180deg, #202124 0%, #1a1a1a 100%);
                 min-height: 100vh;
@@ -102,20 +102,17 @@
                 }
             }
 
-            /* The pop-up bubble (Opens Up & Left) */
             .info-bubble {
                 position: absolute;
-                bottom: 60px; /* Above the trigger */
+                bottom: 60px;
                 right: 0;
                 width: 280px;
                 background: var(--card-bg);
                 border: 1px solid var(--gold);
                 border-radius: 16px;
-                border-bottom-right-radius: 4px; /* Stylish corner */
+                border-bottom-right-radius: 4px;
                 padding: 20px;
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-
-                /* Animation State */
                 opacity: 0;
                 visibility: hidden;
                 transform: translateY(10px) scale(0.95);

@@ -1,5 +1,7 @@
+import logging
 import random
 import sqlite3
+import time as t_module  # Renamed to avoid conflict with datetime.time
 from datetime import datetime, time
 
 import numpy as np
@@ -11,6 +13,10 @@ from scipy.stats import norm
 
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
+
+# Set up logging to track HFT performance
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("HFT_Scanner")
 
 # --- THE MATRIX UNIVERSE ---
 UNIVERSE = [
@@ -73,22 +79,22 @@ def get_market_status_color():
 def get_market_data(ticker):
     try:
         # OPTIMIZATION: 5-minute intervals for High Frequency detection
-        # We perform a 5-day lookback which is sufficient for 5m candles
         df = yf.download(ticker, period="5d", interval="5m", progress=False)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
         if df.empty or len(df) < 20:
             return None
         return df
-    except Exception:
+    except Exception as e:
+        logger.error(f"Data fetch error for {ticker}: {e}")
         return None
 
 
 def calculate_probability(price, target, std_dev, rsi, trend):
     """
-    Live Probability with Micro-Jitter for 'Live' feel.
+    ALGORITHM UPGRADE: Volatility-Adaptive Probability
     """
-    # Safety Floor for weekend volatility
+    # Safety Floor
     safe_vol = max(std_dev, price * 0.005)
 
     # 3-Day Outlook
@@ -104,18 +110,18 @@ def calculate_probability(price, target, std_dev, rsi, trend):
 
     final_pop = stat_prob + rsi_edge
 
-    # PULSE JITTER: Adds small fluctuation to mimic order book noise
-    pulse = random.uniform(-0.5, 0.5)
+    # DYNAMIC PULSE: Jitter is now scaled by the asset's volatility percentage.
+    # Crypto will "pulse" more aggressively than stocks.
+    vol_percent = (std_dev / price) * 100
+    pulse_magnitude = min(vol_percent, 2.0)  # Cap at 2% swing
+    pulse = random.uniform(-pulse_magnitude, pulse_magnitude)
 
-    return round(min(max(final_pop + pulse, 35.5), 95.5), 1)
+    return round(min(max(final_pop + pulse, 35.5), 96.2), 1)
 
 
 def determine_strategy(
     price, bb_upper, bb_lower, current_width, avg_width, signal, is_crypto
 ):
-    """
-    Strategy Selection based on Band Width (Squeeze vs Expansion)
-    """
     vol_ratio = current_width / avg_width if avg_width > 0 else 1.0
     setup_text = {"type": "WAIT", "entry": "-", "target": "-", "stop": "-"}
 
@@ -135,8 +141,7 @@ def determine_strategy(
                 "target": f"${(price - (risk * 1.5)):,.2f}",
                 "stop": f"${(price + risk):,.2f}",
             }
-
-    else:  # STOCKS
+    else:
         if "BULLISH" in signal:
             if vol_ratio > 1.25:
                 setup_text = {
@@ -159,7 +164,6 @@ def determine_strategy(
                     "target": f"Target ${np.ceil(bb_upper)}",
                     "stop": "-40% Prem",
                 }
-
         elif "BEARISH" in signal:
             if vol_ratio > 1.25:
                 setup_text = {
@@ -182,8 +186,7 @@ def determine_strategy(
                     "target": f"Target ${np.floor(bb_lower)}",
                     "stop": "-40% Prem",
                 }
-
-        else:  # NEUTRAL
+        else:
             if vol_ratio > 1.1:
                 setup_text = {
                     "type": "IRON CONDOR",
@@ -198,7 +201,6 @@ def determine_strategy(
                     "target": "Vol Expansion",
                     "stop": "Price Runaway",
                 }
-
     return setup_text
 
 
@@ -217,7 +219,7 @@ def get_social_sentiment(rsi, vol_ratio):
         }
     if vol_ratio > 1.1:
         return {"score": "TRENDING", "comment": "High Volume", "icon": "👀"}
-    return {"score": "QUIET", "comment": "Low Vol", "icon": "💤"}
+    return {"score": "QUIET", "comment": "Consolidation", "icon": "💤"}
 
 
 def get_vix_data():
@@ -235,11 +237,9 @@ def get_vix_data():
         return {"price": round(price, 2), "color": "#ff1744"}
 
 
-# --- ANALYZER ---
 def analyze_ticker(ticker_input):
     ticker = ticker_input.upper().strip()
     df = get_market_data(ticker)
-
     if df is None:
         if not ticker.endswith("-USD"):
             df = get_market_data(f"{ticker}-USD")
@@ -248,7 +248,6 @@ def analyze_ticker(ticker_input):
     if df is None:
         return None
 
-    # Technicals (Using 5m candles, so 20 periods = 100 minutes)
     df["SMA_20"] = df["Close"].rolling(window=20).mean()
     df["Std_Dev"] = df["Close"].rolling(window=20).std()
     df["BB_Upper"] = df["SMA_20"] + (df["Std_Dev"] * 2)
@@ -265,15 +264,11 @@ def analyze_ticker(ticker_input):
     latest = df.iloc[-1]
     price = latest["Close"]
 
-    # Relative Volatility
     avg_width = df["BB_Width"].rolling(window=20).mean().iloc[-1]
     current_width = latest["BB_Width"]
-
-    # Volume Logic
     avg_vol = df["Volume"].rolling(window=20).mean().iloc[-1] or 1
     vol_spike = latest["Volume"] > (avg_vol * 1.5)
 
-    # Signal
     signal = "NEUTRAL"
     suggestion = "Neutral"
     trend = "FLAT"
@@ -301,7 +296,6 @@ def analyze_ticker(ticker_input):
         signal,
         is_crypto,
     )
-
     target_price = latest["BB_Upper"] if trend == "LONG" else latest["BB_Lower"]
     probability = calculate_probability(
         price, target_price, latest["Std_Dev"], latest["RSI"], trend
@@ -321,8 +315,6 @@ def analyze_ticker(ticker_input):
     }
 
 
-# --- ROUTES ---
-# Force No-Cache Headers on all routes
 @app.after_request
 def add_header(response):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -343,24 +335,24 @@ def index():
 
 @app.route("/scan")
 def scan():
+    start_time = t_module.time()  # Latency Timer
     scan_list = random.sample(UNIVERSE, 8)
     if "BTC-USD" not in scan_list:
         scan_list.append("BTC-USD")
-
     raw_results = [analyze_ticker(t) for t in scan_list]
     results = [r for r in raw_results if r]
-
     active_setups = [r for r in results if r["signal"] != "NEUTRAL"]
-    if active_setups:
-        chosen_one = sorted(
-            active_setups, key=lambda x: x["probability"], reverse=True
-        )[0]
-    else:
-        chosen_one = results[0] if results else None
-
+    chosen_one = (
+        sorted(active_setups, key=lambda x: x["probability"], reverse=True)[0]
+        if active_setups
+        else (results[0] if results else None)
+    )
     bulls = sum(1 for r in results if "BULLISH" in r["signal"])
     bears = sum(1 for r in results if "BEARISH" in r["signal"])
     mood = "BULL" if bulls > bears else "BEAR"
+
+    elapsed = round(t_module.time() - start_time, 2)
+    logger.info(f"Scan complete in {elapsed}s")
 
     return render_template(
         "index.html",
@@ -379,7 +371,6 @@ def search():
     if not query:
         return redirect(url_for("index"))
     result = analyze_ticker(query)
-
     if result is None:
         return render_template(
             "index.html",
@@ -389,13 +380,11 @@ def search():
             status_color=get_market_status_color(),
             timestamp=get_current_time(),
         )
-
     mood = "NEUTRAL"
     if "BULLISH" in result["signal"]:
         mood = "BULL"
     elif "BEARISH" in result["signal"]:
         mood = "BEAR"
-
     return render_template(
         "index.html",
         results=[result],
