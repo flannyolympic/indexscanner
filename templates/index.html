@@ -170,6 +170,7 @@
                 white-space: nowrap;
             }
 
+            /* SOLAR FLARE ENGINE */
             .launcher-container {
                 display: flex;
                 justify-content: center;
@@ -302,6 +303,7 @@
                 }
             }
 
+            /* CENTERED RAIDEN OVERLAY */
             #loading-overlay {
                 position: fixed;
                 top: 0;
@@ -314,7 +316,7 @@
                 display: none;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center;
+                justify-content: center; /* PERFECT CENTERING */
                 opacity: 0;
                 transition: opacity 0.3s ease-in-out;
                 overflow: hidden;
@@ -323,22 +325,24 @@
                 display: flex;
                 opacity: 1;
             }
+
             .goku-container {
                 position: relative;
                 width: 100%;
-                max-width: 800px;
-                height: 60vh;
+                height: 100%;
                 display: flex;
                 align-items: center;
-                justify-content: flex-start;
+                justify-content: center; /* ENSURES GIF IS DEAD CENTER */
             }
+
             .goku-img {
-                height: 100%;
+                height: auto;
+                max-height: 60vh; /* Limits height so it fits on screens */
                 width: auto;
+                max-width: 90vw; /* Prevents overflow */
                 object-fit: contain;
                 position: relative;
                 z-index: 10;
-                margin-left: -5vw;
                 transition: filter 0.2s;
                 opacity: 0.9;
             }
@@ -792,7 +796,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=45"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=46"
                     class="goku-img"
                     alt="Scanning..."
                 />
@@ -917,7 +921,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=45"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=46"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -925,7 +929,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=45"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=46"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
