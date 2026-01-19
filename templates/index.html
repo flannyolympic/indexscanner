@@ -11,7 +11,7 @@
         <link
             rel="preload"
             as="image"
-            href="{{ url_for('static', filename='goku.png') }}"
+            href="{{ url_for('static', filename='raiden.gif') }}"
         />
         <link
             rel="preload"
@@ -23,14 +23,15 @@
             as="image"
             href="{{ url_for('static', filename='hellboy.png') }}"
         />
+
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=41"
+            href="{{ url_for('static', filename='icon.png') }}?v=42"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=41"
+            href="{{ url_for('static', filename='icon.png') }}?v=42"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -181,7 +182,6 @@
                 align-items: center;
             }
 
-            /* The Rotating Sun Auras */
             .solar-aura {
                 position: absolute;
                 width: 140px;
@@ -191,7 +191,6 @@
                 pointer-events: none;
                 opacity: 0.6;
             }
-
             .aura-green {
                 background: radial-gradient(
                     circle,
@@ -204,10 +203,9 @@
                     spinClockwise 10s linear infinite,
                     pulseFlare 4s ease-in-out infinite;
             }
-
             .aura-gold {
                 width: 160px;
-                height: 160px; /* Slightly larger */
+                height: 160px;
                 background: radial-gradient(
                     circle,
                     transparent 30%,
@@ -217,7 +215,7 @@
                 border: 2px dashed rgba(255, 215, 0, 0.6);
                 animation:
                     spinCounter 12s linear infinite,
-                    pulseFlare 4s ease-in-out infinite 2s; /* Offset pulse */
+                    pulseFlare 4s ease-in-out infinite 2s;
             }
 
             @keyframes spinClockwise {
@@ -344,11 +342,12 @@
                 margin-left: -5vw;
                 transition: filter 0.2s;
             }
+            /* CSS SHAKE REMOVED FOR GIF COMPATIBILITY */
             .goku-img.charging {
-                animation: violentShake 0.1s infinite;
                 filter: brightness(1.3)
                     drop-shadow(0 0 30px rgba(0, 230, 255, 0.8));
             }
+
             .energy-orb {
                 position: absolute;
                 left: 30%;
@@ -419,23 +418,6 @@
                 100% {
                     transform: translateY(-50%) scaleX(1);
                     opacity: 1;
-                }
-            }
-            @keyframes violentShake {
-                0% {
-                    transform: translate(2px, 2px);
-                }
-                25% {
-                    transform: translate(-2px, -2px);
-                }
-                50% {
-                    transform: translate(2px, -2px);
-                }
-                75% {
-                    transform: translate(-2px, 2px);
-                }
-                100% {
-                    transform: translate(0, 0);
                 }
             }
             .blast-particle {
@@ -908,9 +890,9 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='goku.png') }}?v=41"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=42"
                     class="goku-img"
-                    alt="Charge"
+                    alt="Scanning..."
                 />
                 <div class="energy-orb"></div>
                 <div class="energy-beam"></div>
@@ -1035,7 +1017,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=41"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=42"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -1043,7 +1025,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=41"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=42"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />

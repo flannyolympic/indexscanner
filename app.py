@@ -23,8 +23,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.0.3 STABILITY ---
-APP_VERSION = "v1.0.3 Stable"
+# --- VERSION 1.0.4 RAIDEN PROTOCOL ---
+APP_VERSION = "v1.0.4 Raiden"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -89,10 +89,9 @@ def background_vix_updater():
             get_vix_data(force_update=True)
         except Exception as e:
             logger.warning(f"VIX BG Update Failed: {e}")
-        t_module.sleep(60)  # Update every 60 seconds
+        t_module.sleep(60)
 
 
-# Start background thread on launch
 threading.Thread(target=background_vix_updater, daemon=True).start()
 
 
