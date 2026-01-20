@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=65"
+            href="{{ url_for('static', filename='icon.png') }}?v=66"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=65"
+            href="{{ url_for('static', filename='icon.png') }}?v=66"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -266,22 +266,20 @@
                 flex-shrink: 0;
             }
 
-            /* TRANSLUCENT SCROLLING SEARCH RESULTS */
             #search-results {
                 position: absolute;
                 top: 60px;
                 left: 0;
                 width: 100%;
-                background: rgba(10, 10, 10, 0.85); /* Translucent */
-                backdrop-filter: blur(15px);
-                -webkit-backdrop-filter: blur(15px); /* Blur effect */
-                border: 1px solid rgba(255, 255, 255, 0.15);
+                background: rgba(10, 10, 10, 0.95);
+                backdrop-filter: blur(20px);
+                border: 1px solid #333;
                 border-radius: 12px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
                 display: none;
                 overflow: hidden;
                 max-height: 40vh;
-                overflow-y: auto; /* Scrollable */
+                overflow-y: auto;
                 z-index: 101;
             }
             .result-item {
@@ -490,7 +488,7 @@
                 }
             }
 
-            /* CLASSIC GLASS CARD (STABLE) */
+            /* CLASSIC GLASS CARD UI */
             .oracle-card {
                 background: linear-gradient(
                     135deg,
@@ -506,7 +504,6 @@
                 overflow: visible;
                 margin-bottom: 40px;
             }
-
             .oracle-mascot-container {
                 position: absolute;
                 right: -10px;
@@ -528,27 +525,7 @@
                 width: 100%;
                 height: 100%;
                 object-fit: contain;
-                opacity: 0;
-                animation:
-                    igniteReveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s
-                        forwards,
-                    mascotFloat 3s infinite ease-in-out 1.2s;
-            }
-            .mascot-shrek {
-                filter: drop-shadow(0 0 20px rgba(0, 230, 118, 0.8));
-            }
-            .mascot-hellboy {
-                filter: drop-shadow(0 0 20px rgba(255, 23, 68, 0.8));
-            }
-            @keyframes igniteReveal {
-                0% {
-                    transform: scale(0) translateY(50px) rotate(-20deg);
-                    opacity: 0;
-                }
-                100% {
-                    transform: scale(1) translateY(0) rotate(0deg);
-                    opacity: 1;
-                }
+                animation: mascotFloat 3s infinite ease-in-out;
             }
             @keyframes mascotFloat {
                 0%,
@@ -870,7 +847,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=65"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=66"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
@@ -1027,7 +1004,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=65"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=66"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -1035,7 +1012,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=65"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=66"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />

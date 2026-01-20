@@ -25,8 +25,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.7.0 CEREBRO ---
-APP_VERSION = "v1.7.0 Cerebro"
+# --- VERSION 1.7.1 CEREBRO PRIME ---
+APP_VERSION = "v1.7.1 Cerebro Prime"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -44,7 +44,7 @@ VIX_CACHE = {
     "last_updated": 0,
 }
 
-# EXPANDED UNIVERSE FOR INSTANT SEARCH
+# --- EXPANDED UNIVERSE FOR "GOOGLE-LIKE" INSTANT SEARCH ---
 STOCKS = [
     "AAPL",
     "MSFT",
@@ -74,6 +74,16 @@ STOCKS = [
     "MA",
     "WMT",
     "JNJ",
+    "PG",
+    "XOM",
+    "CVX",
+    "HD",
+    "KO",
+    "PEP",
+    "COST",
+    "AVGO",
+    "ORCL",
+    "IBM",
 ]
 
 CRYPTO = [
@@ -91,6 +101,13 @@ CRYPTO = [
     "MATIC-USD",
     "UNI-USD",
     "ATOM-USD",
+    "ETC-USD",
+    "XLM-USD",
+    "BCH-USD",
+    "ALGO-USD",
+    "VET-USD",
+    "ICP-USD",
+    "FIL-USD",
 ]
 
 
@@ -138,41 +155,60 @@ def get_market_status_color():
     return "#ff5252"
 
 
-# --- ROBUST DATA FETCHING ---
+# --- STEALTH CONNECTION HANDLER ---
 def get_market_data(ticker, retries=3):
+    """
+    Fetches market data with a custom session to prevent 403 Forbidden errors.
+    """
+    session = requests.Session()
+    session.headers.update(
+        {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+    )
+
     attempt = 0
     while attempt <= retries:
         try:
-            jitter = random.uniform(0.05, 0.2)
+            # Random jitter to avoid synchronized bursts
+            jitter = random.uniform(0.1, 0.3)
             t_module.sleep(jitter)
-            df = yf.download(
-                ticker, period="5d", interval="5m", prepost=True, progress=False
-            )
-            if isinstance(df.columns, pd.MultiIndex):
-                df.columns = df.columns.get_level_values(0)
-            if not df.empty and len(df) >= 20:
+
+            # Use the session for yfinance
+            ticker_obj = yf.Ticker(ticker, session=session)
+
+            # Fetch 5 days of 5m data (includes pre/post market)
+            df = ticker_obj.history(period="5d", interval="5m", prepost=True)
+
+            if not df.empty and len(df) >= 10:  # Relaxed constraint to 10 candles
                 return df
+
         except Exception as e:
             if attempt > 0:
                 logger.warning(f"Retry {attempt}/{retries} for {ticker}: {e}")
-            t_module.sleep(1.5**attempt)
+            t_module.sleep(1 + attempt)  # Exponential backoff
+
         attempt += 1
     return None
 
 
 def get_ticker_news(ticker):
+    """
+    Fetches news using Google RSS to avoid API keys and rate limits.
+    """
     try:
-        query = f"{ticker} stock news"
-        if "-USD" in ticker:
-            query = f"{ticker.replace('-USD', '')} crypto news"
+        clean_ticker = ticker.replace("-USD", "")
+        search_term = (
+            f"{clean_ticker} crypto" if "-USD" in ticker else f"{clean_ticker} stock"
+        )
 
-        url = f"https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
+        url = f"https://news.google.com/rss/search?q={search_term}&hl=en-US&gl=US&ceid=US:en"
 
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
 
-        response = requests.get(url, headers=headers, timeout=4)
+        response = requests.get(url, headers=headers, timeout=3)
         response.raise_for_status()
 
         root = ET.fromstring(response.content)
@@ -203,7 +239,7 @@ def get_ticker_news(ticker):
         return []
 
 
-# --- VIX SPECTRUM LOGIC ---
+# --- VIX LOGIC ---
 def get_vix_data(force_update=False):
     global VIX_CACHE
     if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
@@ -215,9 +251,10 @@ def get_vix_data(force_update=False):
 
         try:
             status_color = get_market_status_color()
-            df = get_market_data("^VIX", retries=3)
+            df = get_market_data("^VIX", retries=2)
 
             if df is None:
+                # If VIX fails, return cached data if available, else OFFLINE
                 if VIX_CACHE["last_updated"] > 0:
                     return VIX_CACHE["data"]
                 return {
@@ -261,61 +298,58 @@ def get_vix_data(force_update=False):
 class NeuralEngine:
     @staticmethod
     def calculate_technical_score(df):
-        """Generates a composite technical score (0-100) based on weighted factors."""
         latest = df.iloc[-1]
 
-        # 1. RSI Score (30%)
+        # RSI Score (30%)
         rsi = latest["RSI"]
-        rsi_score = 50 - abs(
-            50 - rsi
-        )  # Center is best for trending, extremes for mean rev
+        rsi_score = 50 - abs(50 - rsi)
         if rsi < 30:
-            rsi_score = 90  # Oversold bounce potential
+            rsi_score = 90
         elif rsi > 70:
-            rsi_score = 90  # Momentum breakout potential
+            rsi_score = 90
 
-        # 2. Volume Score (30%)
+        # Volume Score (30%)
+        # Handle cases where volume might be 0 (e.g. pre-market low liquidity)
         avg_vol = df["Volume"].rolling(20).mean().iloc[-1]
-        vol_score = min(100, (latest["Volume"] / avg_vol) * 50) if avg_vol > 0 else 50
+        if pd.isna(avg_vol) or avg_vol == 0:
+            vol_score = 50
+        else:
+            vol_score = min(100, (latest["Volume"] / avg_vol) * 50)
 
-        # 3. Trend Score (40%)
+        # Trend Score (40%)
         sma20 = latest["SMA_20"]
         price = latest["Close"]
         trend_score = 100 if price > sma20 else 0
 
-        # Composite
         final_score = (rsi_score * 0.3) + (vol_score * 0.3) + (trend_score * 0.4)
         return final_score
 
     @staticmethod
     def generate_narrative(signal, rsi, vol_spike, price, vwap):
-        """Constructs a natural language explanation."""
         dist_to_vwap = ((price - vwap) / vwap) * 100
 
         narrative = []
         if "BULLISH" in signal:
-            narrative.append("Bullish divergence detected")
+            narrative.append("Bullish momentum detected")
             if vol_spike:
-                narrative.append("driven by institutional volume")
+                narrative.append("with high institutional volume")
             if rsi < 35:
-                narrative.append("from deep oversold territory")
+                narrative.append("rebounding from oversold levels")
             elif rsi > 60:
-                narrative.append("riding strong momentum")
-            if dist_to_vwap > 0.5:
-                narrative.append(f"holding {dist_to_vwap:.1f}% above VWAP support")
+                narrative.append("confirming trend strength")
+            if dist_to_vwap > 0:
+                narrative.append(f"holding {dist_to_vwap:.2f}% above VWAP")
         elif "BEARISH" in signal:
-            narrative.append("Bearish rejection confirmed")
+            narrative.append("Bearish rejection detected")
             if vol_spike:
-                narrative.append("on heavy selling pressure")
+                narrative.append("on increasing sell volume")
             if rsi > 65:
-                narrative.append("at overbought extremes")
-            if dist_to_vwap < -0.5:
-                narrative.append(
-                    f"trading {abs(dist_to_vwap):.1f}% below VWAP resistance"
-                )
+                narrative.append("at overextended levels")
+            if dist_to_vwap < 0:
+                narrative.append(f"rejected {abs(dist_to_vwap):.2f}% below VWAP")
         else:
             narrative.append("Price is consolidating")
-            narrative.append("awaiting volatility expansion")
+            narrative.append("awaiting a volatility trigger")
 
         return f"{', '.join(narrative)}."
 
@@ -425,13 +459,16 @@ def get_social_sentiment(rsi, vol_ratio):
 def analyze_ticker(ticker_input):
     ticker = ticker_input.upper().strip()
     df = get_market_data(ticker)
+
     if df is None:
-        if not ticker.endswith("-USD"):
+        # Fallback: Try appending -USD if it failed and might be crypto (naive check)
+        if not ticker.endswith("-USD") and ticker in CRYPTO:
             df = get_market_data(f"{ticker}-USD")
             if df is not None:
                 ticker = f"{ticker}-USD"
-    if df is None:
-        return None
+
+        if df is None:
+            return None
 
     # Technical Calculations
     df["SMA_20"] = df["Close"].rolling(window=20).mean()
@@ -448,10 +485,18 @@ def analyze_ticker(ticker_input):
     df["RSI"] = 100 - (100 / (1 + rs))
 
     latest = df.iloc[-1]
+
+    # Handle NaN values safely
+    if pd.isna(latest["Close"]) or pd.isna(latest["RSI"]):
+        return None
+
     price = latest["Close"]
     avg_width = df["BB_Width"].rolling(window=20).mean().iloc[-1]
     current_width = latest["BB_Width"]
-    avg_vol = df["Volume"].rolling(window=20).mean().iloc[-1] or 1
+
+    # Handle Volume 0
+    avg_vol = df["Volume"].rolling(window=20).mean().iloc[-1]
+    avg_vol = avg_vol if (not pd.isna(avg_vol) and avg_vol > 0) else 1
     vol_spike = latest["Volume"] > (avg_vol * 1.5)
 
     # Signal Logic
@@ -483,15 +528,11 @@ def analyze_ticker(ticker_input):
         is_crypto,
     )
 
-    # NEURAL ENGINE EXECUTION
     tech_score = NeuralEngine.calculate_technical_score(df)
     rationale = NeuralEngine.generate_narrative(
         signal, latest["RSI"], vol_spike, price, latest["VWAP"]
     )
-
-    # Probability is influenced by the Neural Score
     probability = round(tech_score, 1)
-
     social = get_social_sentiment(latest["RSI"], vol_spike)
 
     return {
@@ -514,41 +555,22 @@ def suggest():
     if not query:
         return jsonify([])
 
-    # 1. INSTANT LOCAL SEARCH (Google-like Speed)
+    # 1. INSTANT LOCAL SEARCH (0 Latency)
     local_suggestions = []
     # Combine lists for search
     ALL_TICKERS = list(set(STOCKS + CRYPTO))
 
     for t in ALL_TICKERS:
         if t.startswith(query):
-            local_suggestions.append(
-                {"symbol": t, "name": "Popular Asset", "exch": "Global"}
-            )
+            # Format nicely for the dropdown
+            name = "Crypto Asset" if "-USD" in t else "Stock Asset"
+            local_suggestions.append({"symbol": t, "name": name, "exch": "Global"})
 
-    # If we found matches locally, return them INSTANTLY
+    # Return local matches immediately if found
     if local_suggestions:
         return jsonify(local_suggestions[:5])
 
-    # 2. Fallback to API if no local match
-    headers = {"User-Agent": "Mozilla/5.0"}
-    url = f"https://query2.finance.yahoo.com/v1/finance/search?q={query}&quotesCount=5&newsCount=0"
-    try:
-        response = requests.get(url, headers=headers, timeout=2)
-        data = response.json()
-        suggestions = []
-        if "quotes" in data:
-            for item in data["quotes"]:
-                if "symbol" in item:
-                    suggestions.append(
-                        {
-                            "symbol": item["symbol"],
-                            "name": item.get("shortname", item.get("longname", "")),
-                            "exch": item.get("exchDisp", item.get("exchange", "")),
-                        }
-                    )
-        return jsonify(suggestions)
-    except:
-        return jsonify([])
+    return jsonify([])  # Don't fallback to remote API if local has data, keeps it fast
 
 
 @app.after_request
@@ -579,13 +601,16 @@ def scan():
     mode = request.args.get("mode", "stock")
     scan_source = CRYPTO if mode == "crypto" else STOCKS
 
-    scan_list = random.sample(scan_source, 8)
+    # Increase sample size slightly to ensure at least some hits even if some fail
+    scan_list = random.sample(scan_source, min(len(scan_source), 8))
+
     leader = "BTC-USD" if mode == "crypto" else "SPY"
     if leader not in scan_list:
         scan_list.append(leader)
 
     results = []
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    # Use max_workers=6 to be gentler on rate limits
+    with ThreadPoolExecutor(max_workers=6) as executor:
         future_to_ticker = {executor.submit(analyze_ticker, t): t for t in scan_list}
         for future in as_completed(future_to_ticker):
             try:
