@@ -25,8 +25,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.6.1 VISUAL CLARITY ---
-APP_VERSION = "v1.6.1 Clear"
+# --- VERSION 1.4.2 SONIC NEBULA (RESTORED) ---
+APP_VERSION = "v1.4.2 Nebula"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -90,28 +90,14 @@ def get_current_time():
     return datetime.now(tz).strftime("%H:%M:%S EST")
 
 
-def get_market_status():
+def get_market_status_color():
     tz = pytz.timezone("US/Eastern")
     now = datetime.now(tz)
-    current_time = now.time()
-
     if now.weekday() >= 5:
-        return "WEEKEND"
-    if time(4, 0) <= current_time < time(9, 30):
-        return "PRE-MARKET"
+        return "#ff5252"
+    current_time = now.time()
     if time(9, 30) <= current_time <= time(16, 0):
-        return "OPEN"
-    if time(16, 0) < current_time <= time(20, 0):
-        return "AFTER-HOURS"
-    return "CLOSED"
-
-
-def get_market_status_color():
-    status = get_market_status()
-    if status == "OPEN":
         return "#00e676"
-    if status in ["PRE-MARKET", "AFTER-HOURS"]:
-        return "#ffd700"
     return "#ff5252"
 
 
@@ -233,33 +219,6 @@ def get_vix_data(force_update=False):
 
 
 # --- CORE LOGIC ---
-def generate_rationale(signal, rsi, vol_spike, vwap_dist):
-    reasons = []
-    if "BULLISH" in signal:
-        if rsi < 30:
-            reasons.append("RSI is deeply oversold (<30)")
-        elif rsi < 40:
-            reasons.append("RSI is showing bullish divergence")
-        if vol_spike:
-            reasons.append("volume breakout detected")
-        if vwap_dist > 0:
-            reasons.append("price holds above VWAP")
-        else:
-            reasons.append("reclaiming VWAP support")
-        return f"Long signal triggering because {', and '.join(reasons)}."
-    elif "BEARISH" in signal:
-        if rsi > 70:
-            reasons.append("RSI is overbought (>70)")
-        elif rsi > 60:
-            reasons.append("RSI momentum is fading")
-        if vol_spike:
-            reasons.append("selling volume is accelerating")
-        if vwap_dist < 0:
-            reasons.append("rejected at VWAP resistance")
-        return f"Short signal triggering because {', and '.join(reasons)}."
-    return "Market in consolidation. Awaiting clearer volatility expansion."
-
-
 def calculate_probability(price, target, std_dev, rsi, trend):
     safe_vol = max(std_dev, price * 0.005)
     z_score = abs(target - price) / (safe_vol * np.sqrt(3))
@@ -440,9 +399,6 @@ def analyze_ticker(ticker_input):
         price, target_price, latest["Std_Dev"], latest["RSI"], trend
     )
     social = get_social_sentiment(latest["RSI"], vol_spike)
-    rationale = generate_rationale(
-        signal, latest["RSI"], vol_spike, price - latest["VWAP"]
-    )
 
     return {
         "ticker": ticker,
@@ -454,7 +410,6 @@ def analyze_ticker(ticker_input):
         "probability": probability,
         "social": social,
         "setup": setup_text,
-        "rationale": rationale,
     }
 
 
@@ -502,7 +457,6 @@ def index():
         status_color=get_market_status_color(),
         timestamp=get_current_time(),
         version=APP_VERSION,
-        market_status=get_market_status(),
     )
 
 
@@ -513,6 +467,7 @@ def scan():
     if "BTC-USD" not in scan_list:
         scan_list.append("BTC-USD")
 
+    # PARALLEL PROCESSING PRESERVED FOR SPEED
     results = []
     with ThreadPoolExecutor(max_workers=8) as executor:
         future_to_ticker = {executor.submit(analyze_ticker, t): t for t in scan_list}
@@ -550,7 +505,6 @@ def scan():
         status_color=get_market_status_color(),
         timestamp=get_current_time(),
         version=APP_VERSION,
-        market_status=get_market_status(),
     )
 
 
@@ -587,7 +541,6 @@ def search():
         status_color=get_market_status_color(),
         timestamp=get_current_time(),
         version=APP_VERSION,
-        market_status=get_market_status(),
     )
 
 
