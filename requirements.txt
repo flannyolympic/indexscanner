@@ -31,11 +31,10 @@ urllib3==2.6.3
 websockets==16.0
 Werkzeug==3.1.5
 yfinance==1.0
-flask
-gunicorn
+Flask
 yfinance
 pandas
 numpy
-scipy
 requests
+gunicorn
 google-generativeai
