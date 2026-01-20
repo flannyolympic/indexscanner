@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=51"
+            href="{{ url_for('static', filename='icon.png') }}?v=52"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=51"
+            href="{{ url_for('static', filename='icon.png') }}?v=52"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -623,7 +623,6 @@
                 border-left: 3px solid var(--gold);
             }
 
-            /* NEWS MODULE */
             .news-container {
                 margin-top: 20px;
                 padding: 15px;
@@ -827,7 +826,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=51"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=52"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
@@ -952,7 +951,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=51"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=52"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -960,7 +959,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=51"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=52"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -997,6 +996,7 @@
                             >"{{ chosen_one.social.comment }}"</span
                         >
                     </div>
+
                     <div
                         class="ai-setup {{ 'kill-switch-active' if 'KILL SWITCH' in chosen_one.setup.type else '' }}"
                     >
@@ -1274,7 +1274,6 @@
                 setTimeout(() => {
                     overlay.classList.add("active");
 
-                    // Wait for overlay fade, then reveal GIF
                     setTimeout(() => {
                         if (gif.complete) {
                             gif.classList.add("visible");
@@ -1283,9 +1282,7 @@
                         }
                     }, 100);
 
-                    // Programmatic Submit or Redirect
                     setTimeout(() => {
-                        // If search input has value, submit form. Else, go to /scan
                         const searchVal = document
                             .getElementById("searchInput")
                             .value.trim();
@@ -1298,12 +1295,12 @@
                 }, 300);
             }
 
-            // SEARCH TRIGGER
+            // UNIVERSAL TRIGGER: HIT ENTER
             document
                 .getElementById("searchForm")
                 .addEventListener("submit", function (e) {
-                    e.preventDefault(); // Stop immediate submit
-                    launchRocket(); // Play animation -> redirects after 2.5s
+                    e.preventDefault(); // Stop normal submit
+                    launchRocket(); // Trigger animation which then submits
                 });
 
             function updateClock() {
@@ -1379,7 +1376,6 @@
                                 div.onclick = () => {
                                     input.value = item.symbol;
                                     resultsBox.style.display = "none";
-                                    // Trigger Animation Logic
                                     launchRocket();
                                 };
                                 resultsBox.appendChild(div);
