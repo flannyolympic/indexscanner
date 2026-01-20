@@ -4,6 +4,10 @@ import sqlite3
 import threading
 import time as t_module
 import xml.etree.ElementTree as ET
+from concurrent.futures import (  # NEW: Parallel Processing
+    ThreadPoolExecutor,
+    as_completed,
+)
 from datetime import datetime, time
 
 import numpy as np
@@ -24,8 +28,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.5.1 FINAL POLISH ---
-APP_VERSION = "v1.5.1 Final"
+# --- VERSION 1.5.2 HYPER SPEED ---
+APP_VERSION = "v1.5.2 Hyper"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -105,7 +109,7 @@ def get_market_data(ticker, retries=3):
     attempt = 0
     while attempt <= retries:
         try:
-            jitter = random.uniform(0.1, 0.5)
+            jitter = random.uniform(0.05, 0.2)  # Reduced jitter for speed
             t_module.sleep(jitter)
             df = yf.download(ticker, period="5d", interval="5m", progress=False)
             if isinstance(df.columns, pd.MultiIndex):
@@ -115,7 +119,7 @@ def get_market_data(ticker, retries=3):
         except Exception as e:
             if attempt > 0:
                 logger.warning(f"Retry {attempt}/{retries} for {ticker}: {e}")
-            t_module.sleep(2**attempt)
+            t_module.sleep(1.5**attempt)
         attempt += 1
     return None
 
@@ -132,7 +136,7 @@ def get_ticker_news(ticker):
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
 
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get(url, headers=headers, timeout=4)
         response.raise_for_status()
 
         root = ET.fromstring(response.content)
@@ -465,21 +469,39 @@ def scan():
     scan_list = random.sample(UNIVERSE, 8)
     if "BTC-USD" not in scan_list:
         scan_list.append("BTC-USD")
-    raw_results = [analyze_ticker(t) for t in scan_list]
-    results = [r for r in raw_results if r]
+
+    # --- PARALLEL PROCESSING UPDATE ---
+    # We use ThreadPoolExecutor to run analyze_ticker for all stocks at once
+    # Max workers = 8 (one for each ticker in the sample)
+    results = []
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        future_to_ticker = {executor.submit(analyze_ticker, t): t for t in scan_list}
+        for future in as_completed(future_to_ticker):
+            try:
+                data = future.result()
+                if data:
+                    results.append(data)
+            except Exception as e:
+                logger.error(f"Scan Error: {e}")
+
     active_setups = [r for r in results if r["signal"] != "NEUTRAL"]
     chosen_one = (
         sorted(active_setups, key=lambda x: x["probability"], reverse=True)[0]
         if active_setups
         else (results[0] if results else None)
     )
+
     if chosen_one:
+        # News fetch is still singular to respect Google rate limits
         chosen_one["news"] = get_ticker_news(chosen_one["ticker"])
+
     bulls = sum(1 for r in results if "BULLISH" in r["signal"])
     bears = sum(1 for r in results if "BEARISH" in r["signal"])
     mood = "BULL" if bulls > bears else "BEAR"
+
     elapsed = round(t_module.time() - start_time, 2)
     logger.info(f"Scan complete in {elapsed}s")
+
     return render_template(
         "index.html",
         results=results,
