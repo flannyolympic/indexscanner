@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=54"
+            href="{{ url_for('static', filename='icon.png') }}?v=55"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=54"
+            href="{{ url_for('static', filename='icon.png') }}?v=55"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -170,7 +170,7 @@
                 white-space: nowrap;
             }
 
-            /* NEBULA CORE ENGINE WITH LEVITATION */
+            /* NEBULA CORE ENGINE */
             .launcher-container {
                 display: flex;
                 justify-content: center;
@@ -190,7 +190,6 @@
                 justify-content: center;
                 animation: floatAround 6s ease-in-out infinite alternate;
             }
-
             @keyframes floatAround {
                 0% {
                     transform: translate(0, 0);
@@ -305,6 +304,52 @@
                 100% {
                     transform: translate(-2px, -2px);
                 }
+            }
+
+            /* MODAL STYLES */
+            #detail-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                z-index: 10000;
+                display: none;
+                opacity: 0;
+                transition: opacity 0.3s;
+                align-items: center;
+                justify-content: center;
+            }
+            #detail-modal.active {
+                display: flex;
+                opacity: 1;
+            }
+            .modal-content {
+                width: 90%;
+                max-width: 800px;
+                height: 70vh;
+                background: #111;
+                border: 1px solid var(--gold);
+                border-radius: 16px;
+                overflow: hidden;
+                position: relative;
+                display: flex;
+                flex-direction: column;
+            }
+            .close-modal {
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                color: #fff;
+                font-size: 1.5rem;
+                cursor: pointer;
+                z-index: 20;
+                background: rgba(0, 0, 0, 0.5);
+                padding: 5px 10px;
+                border-radius: 8px;
             }
 
             #loading-overlay {
@@ -714,6 +759,7 @@
                 display: flex;
                 flex-direction: column;
                 touch-action: manipulation;
+                cursor: pointer;
             }
             @media (min-width: 768px) {
                 .stock-card:hover {
@@ -847,16 +893,42 @@
         </style>
     </head>
     <body>
+        <audio
+            id="sound-hover"
+            src="https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3"
+            preload="auto"
+        ></audio>
+        <audio
+            id="sound-launch"
+            src="https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-plasma-gun-power-up-1679.mp3"
+            preload="auto"
+        ></audio>
+        <audio
+            id="sound-bell"
+            src="https://assets.mixkit.co/sfx/preview/mixkit-service-bell-ring-1461.mp3"
+            preload="auto"
+        ></audio>
+
         <canvas id="market-canvas"></canvas>
 
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=54"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=55"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
                 />
+            </div>
+        </div>
+
+        <div id="detail-modal">
+            <div class="modal-content">
+                <div class="close-modal" onclick="closeModal()">×</div>
+                <div
+                    id="tv-chart-container"
+                    style="width: 100%; height: 100%"
+                ></div>
             </div>
         </div>
 
@@ -983,7 +1055,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=54"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=55"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -991,7 +1063,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=54"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=55"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -1010,7 +1082,10 @@
                             >
                                 {{ chosen_one.social.score }}
                             </div>
-                            <div class="oracle-ticker">
+                            <div
+                                class="oracle-ticker"
+                                onclick="openModal('{{ chosen_one.ticker }}')"
+                            >
                                 {{ chosen_one.ticker }}
                             </div>
                         </div>
@@ -1078,7 +1153,7 @@
             <div class="results-grid">
                 {% for row in results %} {% if not chosen_one or row.ticker !=
                 chosen_one.ticker %}
-                <div class="stock-card">
+                <div class="stock-card" onclick="openModal('{{ row.ticker }}')">
                     <div class="card-header">
                         <span class="ticker">{{ row.ticker }}</span
                         ><span class="price">${{ row.price }}</span>
@@ -1141,6 +1216,10 @@
             </footer>
         </div>
 
+        <script
+            type="text/javascript"
+            src="https://s3.tradingview.com/tv.js"
+        ></script>
         <script>
             class MarketPulse {
                 constructor() {
@@ -1292,6 +1371,23 @@
 
             new MarketPulse();
 
+            // SOUND FX SYSTEM
+            const sounds = {
+                hover: document.getElementById("sound-hover"),
+                launch: document.getElementById("sound-launch"),
+                bell: document.getElementById("sound-bell"),
+            };
+
+            function playSound(type) {
+                if (sounds[type]) {
+                    sounds[type].currentTime = 0;
+                    sounds[type].volume = 0.4;
+                    sounds[type]
+                        .play()
+                        .catch((e) => console.log("Audio prevented"));
+                }
+            }
+
             // HOVER LAUNCH LOGIC
             const rocketBtn = document.getElementById("rocketBtn");
             let isLaunching = false;
@@ -1300,6 +1396,7 @@
                 if (isLaunching) return;
                 isLaunching = true;
 
+                playSound("launch"); // PLAY SOUND
                 rocketBtn.classList.add("launching");
                 const overlay = document.getElementById("loading-overlay");
                 const gif = document.getElementById("raiden-gif");
@@ -1332,6 +1429,7 @@
 
             // DESKTOP HOVER TRIGGER
             rocketBtn.addEventListener("mouseenter", function () {
+                playSound("hover");
                 launchRocket();
             });
 
@@ -1343,6 +1441,31 @@
                     launchRocket();
                 });
 
+            // MARKET BELL LOGIC (New York Time)
+            function checkMarketBell() {
+                const now = new Date();
+                const nyTime = now.toLocaleString("en-US", {
+                    timeZone: "America/New_York",
+                });
+                const nyDate = new Date(nyTime);
+                const day = nyDate.getDay();
+                const hour = nyDate.getHours();
+                const min = nyDate.getMinutes();
+                const sec = nyDate.getSeconds();
+
+                // Mon-Fri Only
+                if (day >= 1 && day <= 5) {
+                    // 9:30:00 AM or 16:00:00 PM
+                    if (
+                        (hour === 9 && min === 30 && sec === 0) ||
+                        (hour === 16 && min === 0 && sec === 0)
+                    ) {
+                        playSound("bell");
+                    }
+                }
+            }
+
+            // CLOCK & BELL LOOP
             function updateClock() {
                 const now = new Date();
                 const options = {
@@ -1358,9 +1481,44 @@
                 ).format(now);
                 document.getElementById("live-clock").textContent =
                     "LIVE: " + timeString + " EST";
+                checkMarketBell();
             }
             setInterval(updateClock, 1000);
             updateClock();
+
+            // MODAL LOGIC
+            function openModal(ticker) {
+                // Clean ticker for TradingView (remove -USD for crypto if needed, but TV usually smart)
+                let cleanTicker = ticker.replace("-USD", "USD");
+                const isCrypto = ticker.includes("-USD");
+                const exchange = isCrypto ? "COINBASE" : "NASDAQ";
+
+                const modal = document.getElementById("detail-modal");
+                modal.classList.add("active");
+
+                // Inject TradingView Widget
+                new TradingView.widget({
+                    width: "100%",
+                    height: "100%",
+                    symbol: `${exchange}:${cleanTicker}`,
+                    interval: "D",
+                    timezone: "America/New_York",
+                    theme: "dark",
+                    style: "1",
+                    locale: "en",
+                    toolbar_bg: "#f1f3f6",
+                    enable_publishing: false,
+                    hide_top_toolbar: false,
+                    container_id: "tv-chart-container",
+                });
+            }
+
+            function closeModal() {
+                document
+                    .getElementById("detail-modal")
+                    .classList.remove("active");
+                document.getElementById("tv-chart-container").innerHTML = ""; // Clear widget
+            }
 
             function toggleInfoBubble() {
                 document.getElementById("hft-info").classList.toggle("active");
@@ -1383,6 +1541,11 @@
                 ) {
                     document.getElementById("search-results").style.display =
                         "none";
+                }
+                // Close modal if clicked outside
+                const modal = document.getElementById("detail-modal");
+                if (event.target === modal) {
+                    closeModal();
                 }
             });
 
