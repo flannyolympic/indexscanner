@@ -38,3 +38,4 @@ pandas
 numpy
 scipy
 requests
+google-generativeai

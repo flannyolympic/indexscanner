@@ -4,776 +4,327 @@
         <meta charset="UTF-8" />
         <meta
             name="viewport"
-            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
-        <title>TheMatrix</title>
-
-        <link
-            rel="preload"
-            as="image"
-            href="{{ url_for('static', filename='raiden.gif') }}"
-        />
-        <link
-            rel="preload"
-            as="image"
-            href="{{ url_for('static', filename='shrek.png') }}"
-        />
-        <link
-            rel="preload"
-            as="image"
-            href="{{ url_for('static', filename='hellboy.png') }}"
-        />
+        <title>Cerebro | Market Scanner</title>
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=68"
+            href="{{ url_for('static', filename='icon.png') }}?v=70"
         />
         <link
-            rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=68"
-        />
-
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta
-            name="apple-mobile-web-app-status-bar-style"
-            content="black-translucent"
-        />
-        <meta name="theme-color" content="#000000" />
-
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap"
+            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap"
             rel="stylesheet"
         />
         <style>
             :root {
-                --text-main: #e8eaed;
-                --text-muted: #9aa0a6;
-                --accent-green: #00e676;
+                --bg-core: #0a0a0a;
+                --bg-card: #141414;
+                --border-color: #2a2a2a;
+                --text-main: #e0e0e0;
+                --text-muted: #888;
+                --accent-green: #00c853;
                 --accent-red: #ff1744;
+                --accent-blue: #2979ff;
                 --gold: #ffd700;
-                --card-bg: rgba(15, 15, 15, 0.85);
-                --input-bg: rgba(5, 5, 5, 0.85);
-                --setup-bg: rgba(25, 25, 25, 0.6);
-                --max-width: 1400px;
+                --font-mono: "JetBrains Mono", monospace;
+                --font-sans: "Inter", sans-serif;
             }
 
-            html {
-                scroll-behavior: smooth;
+            * {
+                box-sizing: border-box;
             }
+
             body {
-                font-family: "Inter", sans-serif;
+                background-color: var(--bg-core);
                 color: var(--text-main);
+                font-family: var(--font-sans);
                 margin: 0;
-                padding: 20px;
-                padding-bottom: 120px;
-                padding-left: max(20px, env(safe-area-inset-left));
-                padding-right: max(20px, env(safe-area-inset-right));
-                -webkit-tap-highlight-color: transparent;
-                background-color: #000;
-                min-height: 100dvh;
-                overflow-x: hidden;
+                padding: 0;
+                -webkit-font-smoothing: antialiased;
             }
 
-            #market-canvas {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                z-index: -1;
-                background: #050505;
-            }
-            .app-wrapper {
-                max-width: var(--max-width);
+            /* --- LAYOUT UTILS --- */
+            .container {
+                max-width: 1400px;
                 margin: 0 auto;
-                width: 100%;
-                position: relative;
+                padding: 20px;
             }
-            .header-container {
+
+            .flex-row {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                margin-bottom: 20px;
             }
-            .brand-box {
+            .flex-col {
                 display: flex;
                 flex-direction: column;
             }
-            .brand {
-                font-weight: 900;
-                font-size: 1.5rem;
-                color: white;
-                text-decoration: none;
-                letter-spacing: -1px;
-                text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-            }
-            .beta-pill {
-                display: inline-block;
-                font-size: 0.6rem;
-                font-weight: 800;
-                color: #000;
-                background: var(--gold);
-                padding: 2px 6px;
-                border-radius: 4px;
-                margin-left: 8px;
-                vertical-align: middle;
-                letter-spacing: 0.5px;
-            }
-            .market-status {
-                font-size: 0.6rem;
-                font-weight: 800;
-                text-transform: uppercase;
-                margin-left: 8px;
-                padding: 2px 6px;
-                border-radius: 4px;
-                background: rgba(255, 255, 255, 0.1);
-                color: var(--text-muted);
-            }
-
-            .vix-widget {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                background: rgba(10, 10, 10, 0.6);
-                backdrop-filter: blur(10px);
-                padding: 8px 12px;
-                border-radius: 12px;
-                min-width: 90px;
-                border: 2px solid rgba(255, 255, 255, 0.1);
-                box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-                transition: all 0.5s ease;
-                animation: borderPulse 3s infinite ease-in-out;
-            }
-            @keyframes borderPulse {
-                0% {
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-                }
-                50% {
-                    box-shadow: 0 0 20px currentColor;
-                }
-                100% {
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-                }
-            }
-            .vix-label {
-                font-size: 0.6rem;
-                font-weight: 700;
-                color: var(--text-muted);
-                letter-spacing: 1px;
-            }
-            .vix-price {
-                font-size: 1.2rem;
-                font-weight: 900;
-                transition: color 0.5s ease;
-                line-height: 1.1;
-            }
-            .vix-status {
-                font-size: 0.55rem;
-                font-weight: 800;
-                text-transform: uppercase;
-                margin-top: 2px;
-                letter-spacing: 0.5px;
-                opacity: 0.9;
-                transition: color 0.5s ease;
-                white-space: nowrap;
-            }
-
-            .mode-toggle-container {
-                display: flex;
-                justify-content: center;
-                margin-bottom: 20px;
-            }
-            .mode-toggle {
-                background: rgba(255, 255, 255, 0.1);
-                border-radius: 20px;
-                padding: 4px;
-                display: flex;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            .mode-btn {
-                padding: 6px 20px;
-                border-radius: 16px;
-                font-size: 0.75rem;
-                font-weight: 800;
-                color: var(--text-muted);
-                cursor: pointer;
-                transition: all 0.3s;
-            }
-            .mode-btn.active {
-                background: var(--gold);
-                color: #000;
-                box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
-            }
-
-            .search-dock-container {
-                position: relative;
-                width: 100%;
-                max-width: 600px;
-                margin: 0 auto 30px;
-                z-index: 100;
-            }
-            .search-dock {
-                width: 100%;
-                height: 50px;
-                background: var(--input-bg);
-                backdrop-filter: blur(25px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 40px;
-                padding: 0 10px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-            }
-            .search-icon {
-                width: 35px;
-                height: 35px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: var(--accent-green);
-                border-radius: 50%;
-                color: #000;
-                font-weight: 900;
-                cursor: pointer;
-                flex-shrink: 0;
-            }
-            .search-input {
-                flex-grow: 1;
-                background: transparent;
-                border: none;
-                color: white;
-                font-size: 1rem;
-                padding: 0 15px;
-                outline: none;
-                font-weight: 500;
-            }
-            .info-orb-embedded {
-                width: 30px;
-                height: 30px;
-                border: 2px solid var(--gold);
-                border-radius: 50%;
-                color: var(--gold);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 900;
-                font-size: 0.8rem;
-                cursor: pointer;
-                flex-shrink: 0;
-            }
-
-            #search-results {
-                position: absolute;
-                top: 60px;
-                left: 0;
-                width: 100%;
-                background: rgba(10, 10, 10, 0.95);
-                backdrop-filter: blur(20px);
-                border: 1px solid #333;
-                border-radius: 12px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-                display: none;
-                overflow: hidden;
-                max-height: 40vh;
-                overflow-y: auto;
-                z-index: 200;
-            }
-            .result-item {
-                padding: 12px 20px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                cursor: pointer;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                transition: background 0.2s;
-            }
-            .result-item:hover {
-                background: rgba(255, 255, 255, 0.1);
-            }
-            .item-symbol {
-                font-weight: 800;
-                color: #fff;
-            }
-            .item-name {
-                font-size: 0.8rem;
-                color: #9aa0a6;
-            }
-
-            .info-bubble {
-                position: absolute;
-                top: 60px;
-                right: 0;
-                width: 280px;
-                background: rgba(10, 10, 10, 0.95);
-                backdrop-filter: blur(20px);
-                border: 1px solid var(--gold);
-                border-radius: 12px;
-                padding: 15px;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-                display: none;
-                z-index: 202;
-            }
-            .info-bubble.active {
-                display: block;
-            }
-            .bubble-title {
-                color: var(--gold);
-                font-weight: 900;
-                font-size: 0.8rem;
-                margin-bottom: 5px;
-            }
-            .bubble-text {
-                font-size: 0.8rem;
-                color: #ccc;
-                line-height: 1.4;
-            }
-
-            .macro-container {
-                width: 100%;
-                margin-bottom: 40px;
-                border-radius: 16px;
-                overflow: hidden;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                background: rgba(10, 10, 10, 0.5);
-                max-height: 250px;
-                overflow-y: auto;
-                position: relative;
-                z-index: 5;
-            }
-
-            /* NEBULA CORE ENGINE */
-            .launcher-container {
-                display: flex;
-                justify-content: center;
-                margin-bottom: 40px;
-                position: relative;
-                z-index: 20;
-                height: 160px;
-                align-items: center;
-            }
-            .levitation-core {
-                position: relative;
-                width: 160px;
-                height: 160px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                animation: floatAround 6s ease-in-out infinite alternate;
-                transition: transform 0.3s ease;
-            }
-            .levitation-core.lock-on {
-                animation-play-state: paused;
-                transform: scale(1.1);
-            }
-            @keyframes floatAround {
-                0% {
-                    transform: translate(0, 0);
-                }
-                33% {
-                    transform: translate(10px, -10px);
-                }
-                66% {
-                    transform: translate(-10px, 5px);
-                }
-                100% {
-                    transform: translate(0, 0);
-                }
-            }
-            .core-glow {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                border-radius: 50%;
-                pointer-events: none;
-                opacity: 0.7;
-                z-index: 1;
-            }
-            .glow-green {
-                width: 110px;
-                height: 110px;
-                background: radial-gradient(
-                    circle,
-                    rgba(0, 230, 118, 0.4) 0%,
-                    rgba(0, 230, 118, 0) 70%
-                );
-                animation: radiatePulse 3s ease-out infinite;
-            }
-            .glow-gold {
-                width: 140px;
-                height: 140px;
-                background: radial-gradient(
-                    circle,
-                    rgba(255, 215, 0, 0.3) 0%,
-                    rgba(255, 215, 0, 0) 70%
-                );
-                animation: radiatePulse 4s ease-out infinite 1.5s;
-            }
-            @keyframes radiatePulse {
-                0% {
-                    transform: translate(-50%, -50%) scale(0.8);
-                    opacity: 0.8;
-                }
-                50% {
-                    transform: translate(-50%, -50%) scale(1.3);
-                    opacity: 0.4;
-                }
-                100% {
-                    transform: translate(-50%, -50%) scale(1.6);
-                    opacity: 0;
-                }
-            }
-
-            .rocket-btn {
-                width: 90px;
-                height: 90px;
-                background: rgba(30, 30, 30, 0.4);
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 3.5rem;
-                cursor: pointer;
-                position: relative;
-                z-index: 10;
-                box-shadow:
-                    0 0 30px rgba(0, 0, 0, 0.5),
-                    inset 0 0 20px rgba(255, 255, 255, 0.05);
-                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                touch-action: manipulation;
-            }
-            .rocket-btn.lock-active {
-                border-color: var(--gold);
-                box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
-            }
-            .rocket-btn:active {
-                transform: scale(0.9);
-                background: rgba(30, 30, 30, 0.6);
-            }
-            .rocket-btn.launching {
-                animation: launchSequence 1s
-                    cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
-                pointer-events: none;
-                border-color: var(--gold);
-                background: rgba(255, 215, 0, 0.3);
-            }
-            .rocket-btn.launching .rocket-icon {
-                animation: shake 0.1s linear infinite;
-            }
-            @keyframes launchSequence {
-                0% {
-                    transform: translateY(0) scale(0.9);
-                }
-                30% {
-                    transform: translateY(30px) scale(0.8);
-                }
-                100% {
-                    transform: translateY(-150vh) scale(1.5);
-                    opacity: 0;
-                }
-            }
-            @keyframes shake {
-                0% {
-                    transform: translate(2px, 2px);
-                }
-                100% {
-                    transform: translate(-2px, -2px);
-                }
-            }
-
-            /* STANDARD GLASS CARD (NO MANGA) */
-            .oracle-container {
-                position: relative;
-                z-index: 15;
-            }
-            .oracle-card {
-                background: linear-gradient(
-                    135deg,
-                    rgba(30, 30, 30, 0.9) 0%,
-                    rgba(10, 10, 10, 0.95) 100%
-                );
-                backdrop-filter: blur(15px);
-                border: 1px solid var(--gold);
-                border-radius: 24px;
-                padding: 30px;
-                position: relative;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-                overflow: visible;
-                margin-bottom: 40px;
-            }
-
-            .oracle-mascot-container {
-                position: absolute;
-                right: -10px;
-                top: -40px;
-                width: 85px;
-                height: 85px;
-                z-index: 20;
-                pointer-events: none;
-            }
-            .oracle-mascot-img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-                opacity: 0;
-                animation:
-                    igniteReveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s
-                        forwards,
-                    mascotFloat 3s infinite ease-in-out 1.2s;
-            }
-            @keyframes igniteReveal {
-                0% {
-                    transform: scale(0) translateY(50px) rotate(-20deg);
-                    opacity: 0;
-                }
-                100% {
-                    transform: scale(1) translateY(0) rotate(0deg);
-                    opacity: 1;
-                }
-            }
-            @keyframes mascotFloat {
-                0%,
-                100% {
-                    transform: translateY(0);
-                }
-                50% {
-                    transform: translateY(-8px);
-                }
-            }
-
-            .oracle-badge {
-                position: absolute;
-                top: -14px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: var(--gold);
-                color: black;
-                font-weight: 900;
-                font-size: 0.75rem;
-                padding: 6px 16px;
-                border-radius: 20px;
-                letter-spacing: 1.5px;
-                box-shadow: 0 0 15px var(--gold);
-            }
-            .oracle-header {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: space-between;
-                align-items: flex-end;
-                margin-bottom: 20px;
-            }
-            .oracle-ticker {
-                font-size: clamp(2.5rem, 6vw, 4rem);
-                font-weight: 900;
-                color: white;
-                letter-spacing: -2px;
-                line-height: 1;
-                cursor: pointer;
-                transition: color 0.2s;
-            }
-            .oracle-ticker:hover {
-                color: var(--gold);
-                text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-            }
-            .pop-value {
-                font-size: 2rem;
-                font-weight: 900;
-                color: var(--gold);
-            }
-            .social-box {
-                background: rgba(255, 255, 255, 0.05);
-                padding: 15px;
-                border-radius: 12px;
-                margin-bottom: 15px;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                font-size: 0.95rem;
-                border-left: 3px solid var(--gold);
-            }
-
-            /* CLEAN AI TEXT BOX */
-            .rationale-box {
-                background: rgba(255, 255, 255, 0.05);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                padding: 15px;
-                border-radius: 12px;
-                margin-bottom: 15px;
-                font-size: 0.85rem;
-                color: #aaa;
-                font-style: italic;
-                display: flex;
-                align-items: flex-start;
+            .gap-10 {
                 gap: 10px;
             }
-
-            .news-container {
-                margin-top: 20px;
-                padding: 15px;
-                border-radius: 12px;
-                background: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.1);
+            .gap-20 {
+                gap: 20px;
             }
-            .news-title {
-                font-size: 0.7rem;
+
+            .text-green {
+                color: var(--accent-green);
+            }
+            .text-red {
+                color: var(--accent-red);
+            }
+            .text-gold {
+                color: var(--gold);
+            }
+            .mono {
+                font-family: var(--font-mono);
+            }
+
+            /* --- HEADER --- */
+            header {
+                border-bottom: 1px solid var(--border-color);
+                padding: 15px 0;
+                margin-bottom: 30px;
+                background: rgba(10, 10, 10, 0.95);
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                backdrop-filter: blur(10px);
+            }
+
+            .brand {
+                font-size: 1.2rem;
                 font-weight: 800;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                margin-bottom: 10px;
+                letter-spacing: -0.5px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .brand span {
+                color: var(--accent-blue);
+            }
+
+            .system-status {
+                font-size: 0.75rem;
                 color: var(--text-muted);
                 display: flex;
                 align-items: center;
-                gap: 6px;
+                gap: 8px;
             }
-            .news-item {
-                display: block;
-                text-decoration: none;
-                padding: 10px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                transition: background 0.2s;
-            }
-            .news-item:last-child {
-                border-bottom: none;
-            }
-            .news-item:hover {
-                background: rgba(255, 255, 255, 0.05);
-                border-radius: 8px;
-            }
-            .headline {
-                font-size: 0.85rem;
-                font-weight: 600;
-                color: #fff;
-                margin-bottom: 4px;
-                line-height: 1.4;
-            }
-            .source {
-                font-size: 0.65rem;
-                color: #9aa0a6;
-            }
-            .bull-mode .news-title {
-                color: var(--accent-green);
-            }
-            .bear-mode .news-title {
-                color: var(--accent-red);
+            .status-dot {
+                width: 8px;
+                height: 8px;
+                background: var(--accent-green);
+                border-radius: 50%;
+                box-shadow: 0 0 8px var(--accent-green);
             }
 
-            .results-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 20px;
+            /* --- CONTROLS --- */
+            .control-deck {
+                display: flex;
+                gap: 15px;
+                margin-bottom: 30px;
+                background: var(--bg-card);
+                padding: 15px;
+                border-radius: 8px;
+                border: 1px solid var(--border-color);
             }
-            .stock-card {
-                background: var(--card-bg);
-                backdrop-filter: blur(10px);
-                border-radius: 16px;
-                padding: 20px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
+
+            .mode-switch {
+                display: flex;
+                background: #000;
+                border-radius: 6px;
+                padding: 4px;
+                border: 1px solid var(--border-color);
+            }
+            .mode-btn {
+                padding: 8px 20px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                cursor: pointer;
+                border-radius: 4px;
+                color: var(--text-muted);
+                transition: all 0.2s;
+            }
+            .mode-btn.active {
+                background: var(--accent-blue);
+                color: white;
+            }
+
+            .scan-btn {
+                flex-grow: 1;
+                background: var(--text-main);
+                color: black;
+                border: none;
+                border-radius: 6px;
+                font-weight: 700;
+                font-size: 0.9rem;
+                cursor: pointer;
+                transition: opacity 0.2s;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            .scan-btn:hover {
+                opacity: 0.9;
+            }
+
+            /* --- ORACLE / HIGH CONVICTION --- */
+            .oracle-panel {
+                background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
+                border: 1px solid var(--gold);
+                border-radius: 12px;
+                padding: 25px;
+                margin-bottom: 40px;
+                position: relative;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            }
+            .oracle-badge {
+                position: absolute;
+                top: -12px;
+                left: 20px;
+                background: var(--gold);
+                color: black;
+                font-size: 0.7rem;
+                font-weight: 800;
+                padding: 4px 12px;
+                border-radius: 20px;
+                text-transform: uppercase;
+            }
+
+            .oracle-grid {
+                display: grid;
+                grid-template-columns: 1fr 2fr 1fr;
+                gap: 30px;
+                align-items: start;
+            }
+
+            .ticker-display {
+                font-size: 3rem;
+                font-weight: 900;
+                line-height: 1;
+                margin-bottom: 5px;
                 cursor: pointer;
             }
-            .ai-setup {
-                margin-top: auto;
-                background: var(--setup-bg);
-                border-radius: 12px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                padding: 15px;
-                transition: border-color 0.3s;
+            .signal-tag {
+                display: inline-block;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                background: rgba(255, 255, 255, 0.1);
             }
-            .ai-setup.kill-switch-active {
-                border: 2px solid var(--accent-red);
-                animation: pulseKillSwitch 1.5s infinite;
+            .bullish {
+                color: var(--accent-green);
+                border: 1px solid var(--accent-green);
+                background: rgba(0, 200, 83, 0.1);
             }
-            @keyframes pulseKillSwitch {
-                0% {
-                    box-shadow: 0 0 5px var(--accent-red);
-                }
-                50% {
-                    box-shadow: 0 0 20px var(--accent-red);
-                }
-                100% {
-                    box-shadow: 0 0 5px var(--accent-red);
-                }
+            .bearish {
+                color: var(--accent-red);
+                border: 1px solid var(--accent-red);
+                background: rgba(255, 23, 68, 0.1);
             }
 
-            .ai-title::before {
-                content: "⚡";
-                color: #ffd700;
-                margin-right: 5px;
+            .rationale-text {
+                font-size: 0.9rem;
+                line-height: 1.5;
+                color: #ccc;
+                border-left: 2px solid var(--border-color);
+                padding-left: 15px;
             }
-            .leg {
+
+            .stats-box {
+                background: rgba(0, 0, 0, 0.3);
+                padding: 15px;
+                border-radius: 8px;
+                font-family: var(--font-mono);
+                font-size: 0.8rem;
+            }
+            .stat-row {
                 display: flex;
                 justify-content: space-between;
-                font-size: 0.85rem;
-                color: #ccc;
-                padding: 6px 0;
+                margin-bottom: 6px;
             }
-            .leg span:last-child {
-                font-family: monospace;
-                color: white;
-                text-align: right;
+            .stat-row:last-child {
+                margin-bottom: 0;
             }
-            .stop-loss-box {
-                margin-top: 10px;
-                padding: 8px;
-                background: rgba(255, 23, 68, 0.15);
-                border: 1px solid var(--accent-red);
-                border-radius: 8px;
-                font-size: 0.75rem;
-                color: #ff8a80;
-                text-align: center;
-                font-weight: 700;
-                letter-spacing: 0.5px;
-            }
-            .kill-switch-active {
-                border-color: var(--accent-red) !important;
-                animation: borderPulse 1s infinite;
+            .stat-label {
+                color: var(--text-muted);
             }
 
+            /* --- RESULTS TERMINAL --- */
+            .terminal-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 20px;
+            }
+
+            .market-card {
+                background: var(--bg-card);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                padding: 15px;
+                cursor: pointer;
+                transition:
+                    transform 0.2s,
+                    border-color 0.2s;
+            }
+            .market-card:hover {
+                transform: translateY(-2px);
+                border-color: var(--text-muted);
+            }
+
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 12px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                padding-bottom: 12px;
+            }
+            .card-ticker {
+                font-size: 1.2rem;
+                font-weight: 700;
+            }
+            .card-price {
+                font-family: var(--font-mono);
+                color: var(--text-muted);
+            }
+
+            .setup-info {
+                font-size: 0.8rem;
+                color: #aaa;
+                margin-top: 10px;
+                background: rgba(0, 0, 0, 0.2);
+                padding: 8px;
+                border-radius: 4px;
+            }
+
+            /* --- LOADING & MODALS --- */
             #loading-overlay {
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.85);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                z-index: 100000;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 999;
                 display: none;
+                justify-content: center;
+                align-items: center;
                 flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                opacity: 0;
-                transition: opacity 0.3s;
             }
-            #loading-overlay.active {
-                display: flex;
-                opacity: 1;
+            .spinner {
+                width: 50px;
+                height: 50px;
+                border: 3px solid rgba(255, 255, 255, 0.1);
+                border-top-color: var(--accent-blue);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
             }
-            .goku-container {
-                position: relative;
-                width: 100%;
-                max-width: 800px;
-                height: 60vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .goku-img {
-                height: auto;
-                width: auto;
-                max-height: 60vh;
-                max-width: 90vw;
-                object-fit: contain;
-                opacity: 0;
-                transition: opacity 0.2s;
-            }
-            .goku-img.visible {
-                opacity: 1;
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
             }
 
             #detail-modal {
@@ -783,73 +334,52 @@
                 width: 100%;
                 height: 100%;
                 background: rgba(0, 0, 0, 0.9);
-                z-index: 200000;
+                z-index: 1000;
                 display: none;
-                align-items: center;
                 justify-content: center;
-            }
-            #detail-modal.active {
-                display: flex;
+                align-items: center;
             }
             .modal-content {
                 width: 90%;
-                height: 70vh;
+                height: 80vh;
                 background: #000;
-                border: 1px solid #333;
+                border: 1px solid var(--border-color);
                 position: relative;
             }
-            .close-modal {
+            .close-btn {
                 position: absolute;
                 top: 10px;
-                right: 10px;
-                color: #fff;
-                font-size: 2rem;
+                right: 15px;
+                font-size: 1.5rem;
+                color: white;
                 cursor: pointer;
                 z-index: 10;
             }
-            .app-footer {
-                margin-top: 40px;
-                padding: 20px 0;
-                text-align: center;
-                font-size: 0.7rem;
-                color: #666;
-                position: relative;
-                z-index: 5;
+
+            @media (max-width: 768px) {
+                .oracle-grid {
+                    grid-template-columns: 1fr;
+                }
             }
         </style>
     </head>
     <body>
-        <audio
-            id="sound-hover"
-            src="https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3"
-            preload="auto"
-        ></audio>
-        <audio
-            id="sound-launch"
-            src="https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-plasma-gun-power-up-1679.mp3"
-            preload="auto"
-        ></audio>
-        <audio
-            id="sound-bell"
-            src="https://assets.mixkit.co/sfx/preview/mixkit-service-bell-ring-1461.mp3"
-            preload="auto"
-        ></audio>
-
-        <canvas id="market-canvas"></canvas>
-
         <div id="loading-overlay">
-            <div class="goku-container">
-                <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=68"
-                    class="goku-img"
-                    id="raiden-gif"
-                    alt="Scanning..."
-                />
+            <div class="spinner"></div>
+            <div
+                style="
+                    margin-top: 15px;
+                    font-family: var(--font-mono);
+                    font-size: 0.8rem;
+                "
+            >
+                SCANNING MARKET DATA...
             </div>
         </div>
+
         <div id="detail-modal">
             <div class="modal-content">
-                <div class="close-modal" onclick="closeModal()">×</div>
+                <div class="close-btn" onclick="closeModal()">&times;</div>
                 <div
                     id="tv-chart-container"
                     style="width: 100%; height: 100%"
@@ -857,492 +387,241 @@
             </div>
         </div>
 
-        <div class="app-wrapper">
-            <div class="header-container">
-                <div class="brand-box">
-                    <a href="/" class="brand"
-                        >The<span
-                            id="matrix-logo"
-                            style="color: {{ status_color }}; transition: color 0.5s ease;"
-                            >Matrix</span
-                        ><span class="beta-pill">BETA</span></a
-                    >
-                    <span
-                        id="live-clock"
-                        style="
-                            font-size: 0.65rem;
-                            color: #5f6368;
-                            letter-spacing: 1px;
-                            margin-top: 4px;
-                            font-weight: 600;
-                        "
-                        >LIVE FEED
-                        <span class="market-status"
-                            >{{ market_status }}</span
-                        ></span
-                    >
-                </div>
-                <div
-                    class="vix-widget"
-                    id="vix-display"
-                    style="border-color: {{ vix.color }}; color: {{ vix.color }};"
-                >
-                    <span class="vix-label">VIX</span>
-                    <span class="vix-price" style="color: {{ vix.color }};"
-                        >{{ vix.price }}</span
-                    >
-                    <span class="vix-status" style="color: {{ vix.color }};"
-                        >{{ vix.label }}</span
-                    >
+        <header>
+            <div class="container flex-row">
+                <div class="brand"><span>///</span> PROJECT CEREBRO</div>
+                <div class="system-status">
+                    <div class="status-dot"></div>
+                    <span id="live-clock">--:--:--</span>
+                    <span>{{ market_status }}</span>
                 </div>
             </div>
+        </header>
 
-            <div class="mode-toggle-container">
-                <div class="mode-toggle">
-                    <div
-                        class="mode-btn {{ 'active' if current_mode != 'crypto' else '' }}"
-                        onclick="switchMode('stock')"
-                    >
-                        STOCKS
+        <main class="container">
+            <form action="/scan" method="GET" id="scanForm">
+                <div class="control-deck">
+                    <div class="mode-switch">
+                        <div
+                            class="mode-btn {{ 'active' if current_mode != 'crypto' else '' }}"
+                            onclick="setMode('stock')"
+                        >
+                            STOCKS
+                        </div>
+                        <div
+                            class="mode-btn {{ 'active' if current_mode == 'crypto' else '' }}"
+                            onclick="setMode('crypto')"
+                        >
+                            CRYPTO
+                        </div>
                     </div>
-                    <div
-                        class="mode-btn {{ 'active' if current_mode == 'crypto' else '' }}"
-                        onclick="switchMode('crypto')"
+                    <input
+                        type="hidden"
+                        name="mode"
+                        id="modeInput"
+                        value="{{ current_mode }}"
+                    />
+                    <button
+                        type="submit"
+                        class="scan-btn"
+                        onclick="showLoading()"
                     >
-                        CRYPTO
-                    </div>
+                        INITIATE SCAN SEQUENCE
+                    </button>
                 </div>
-            </div>
-
-            <div class="search-dock-container">
-                <div class="info-bubble" id="hft-info">
-                    <div class="bubble-title">HFT LOGIC V3.0</div>
-                    <div class="bubble-text">
-                        System scans 5-minute volatility candles...
-                    </div>
-                </div>
-                <div id="search-results"></div>
-                <div class="search-dock">
-                    <div
-                        class="search-icon"
-                        onclick="document.getElementById('searchForm').submit()"
-                    >
-                        ➜
-                    </div>
-                    <form
-                        action="/search"
-                        method="POST"
-                        id="searchForm"
-                        style="flex-grow: 1; display: flex"
-                    >
-                        <input
-                            type="text"
-                            name="query"
-                            id="searchInput"
-                            class="search-input"
-                            placeholder="Ask the Matrix..."
-                            autocomplete="off"
-                        />
-                    </form>
-                    <div class="info-orb-embedded" onclick="toggleInfoBubble()">
-                        ?
-                    </div>
-                </div>
-            </div>
-
-            <div class="macro-container">
-                <div class="tradingview-widget-container">
-                    <div class="tradingview-widget-container__widget"></div>
-                    <script
-                        type="text/javascript"
-                        src="https://s3.tradingview.com/external-embedding/embed-widget-events.js"
-                        async
-                    >
-                        { "width": "100%", "height": "100%", "colorTheme": "dark", "isTransparent": true, "locale": "en", "importanceFilter": "0,1", "currencyFilter": "USD" }
-                    </script>
-                </div>
-            </div>
-
-            <div class="launcher-container">
-                <div class="levitation-core" id="levitationCore">
-                    <div class="core-glow glow-green"></div>
-                    <div class="core-glow glow-gold"></div>
-                    <div
-                        class="rocket-btn"
-                        id="rocketBtn"
-                        onclick="launchRocket(true)"
-                    >
-                        <div class="rocket-icon">🚀</div>
-                    </div>
-                </div>
-            </div>
+            </form>
 
             {% if error %}
             <div
                 style="
-                    text-align: center;
-                    color: var(--accent-red);
-                    margin-bottom: 20px;
-                    padding: 20px;
+                    padding: 15px;
+                    background: rgba(255, 23, 68, 0.1);
                     border: 1px solid var(--accent-red);
-                    border-radius: 12px;
-                    background: rgba(242, 139, 130, 0.1);
+                    color: var(--accent-red);
+                    border-radius: 8px;
+                    margin-bottom: 20px;
                 "
             >
-                {{ error }}
+                SYSTEM ERROR: {{ error }}
             </div>
             {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
-            <div class="oracle-container">
-                <div class="oracle-card">
-                    {% if 'BULLISH' in chosen_one.signal %}
-                    <div class="oracle-mascot-container">
-                        <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=68"
-                            class="oracle-mascot-img mascot-shrek"
-                            alt="Bullish"
-                        />
-                    </div>
-                    {% elif 'BEARISH' in chosen_one.signal %}
-                    <div class="oracle-mascot-container">
-                        <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=68"
-                            class="oracle-mascot-img mascot-hellboy"
-                            alt="Bearish"
-                        />
-                    </div>
-                    {% endif %}
-
-                    <div class="oracle-badge">ORACLE PICK</div>
-                    <div class="oracle-header">
-                        <div>
-                            <div
-                                style="
-                                    font-size: 0.8rem;
-                                    color: var(--gold);
-                                    margin-bottom: 5px;
-                                "
-                            >
-                                {{ chosen_one.social.score }}
-                            </div>
-                            <div
-                                class="oracle-ticker"
-                                onclick="openModal('{{ chosen_one.ticker }}')"
-                            >
-                                {{ chosen_one.ticker }}
-                            </div>
-                        </div>
-                        <div class="oracle-pop">
-                            <div class="pop-label">PROBABILITY</div>
-                            <div class="pop-value">
-                                {{ chosen_one.probability }}%
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="social-box">
-                        <span class="social-icon"
-                            >{{ chosen_one.social.icon }}</span
-                        ><span class="social-text"
-                            >"{{ chosen_one.social.comment }}"</span
+            <div class="oracle-panel">
+                <div class="oracle-badge">HIGHEST CONVICTION</div>
+                <div class="oracle-grid">
+                    <div>
+                        <div
+                            class="ticker-display {{ 'text-green' if 'BULLISH' in chosen_one.signal else 'text-red' }}"
+                            onclick="openModal('{{ chosen_one.ticker }}')"
                         >
-                    </div>
-
-                    <div class="rationale-box">
-                        <span class="rationale-icon">🧠</span>
-                        <span class="rationale-text"
-                            >{{ chosen_one.rationale }}</span
+                            {{ chosen_one.ticker }}
+                        </div>
+                        <span
+                            class="signal-tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}"
                         >
+                            {{ chosen_one.signal }}
+                        </span>
+                        <div
+                            style="
+                                margin-top: 10px;
+                                font-size: 0.8rem;
+                                color: var(--text-muted);
+                            "
+                        >
+                            Social Sentiment:
+                            <span style="color: white"
+                                >{{ chosen_one.social.score }}</span
+                            >
+                        </div>
                     </div>
 
-                    <div
-                        class="ai-setup {{ 'kill-switch-active' if 'KILL SWITCH' in chosen_one.setup.type else '' }}"
-                    >
-                        <div class="ai-title" style="color: var(--gold)">
-                            WINNING SETUP
+                    <div class="rationale-text">
+                        <div
+                            style="
+                                margin-bottom: 5px;
+                                color: var(--text-muted);
+                                font-size: 0.75rem;
+                                text-transform: uppercase;
+                            "
+                        >
+                            AI Analysis
                         </div>
-                        <div class="strategy-name">
-                            {{ chosen_one.setup.type }}
+                        {{ chosen_one.rationale }}
+                    </div>
+
+                    <div class="stats-box">
+                        <div class="stat-row">
+                            <span class="stat-label">Probability</span>
+                            <span class="text-gold"
+                                >{{ chosen_one.probability }}%</span
+                            >
                         </div>
-                        <div class="leg">
-                            <span>Action</span>
+                        <div class="stat-row">
+                            <span class="stat-label">Setup</span>
+                            <span>{{ chosen_one.setup.type }}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Entry</span>
                             <span>{{ chosen_one.setup.entry }}</span>
                         </div>
-                        <div class="leg">
-                            <span>Target</span>
-                            <span>{{ chosen_one.setup.target }}</span>
+                        <div class="stat-row">
+                            <span class="stat-label">Stop</span>
+                            <span class="text-red"
+                                >{{ chosen_one.setup.stop }}</span
+                            >
                         </div>
-                        <div class="stop-loss-box">
-                            STOP: {{ chosen_one.setup.stop }}
+                        <div class="stat-row">
+                            <span class="stat-label">Target</span>
+                            <span class="text-green"
+                                >{{ chosen_one.setup.target }}</span
+                            >
                         </div>
                     </div>
-
-                    {% if chosen_one.news %}
-                    <div
-                        class="news-container {{ 'bull-mode' if 'BULLISH' in chosen_one.signal else 'bear-mode' }}"
-                    >
-                        <div class="news-title">
-                            {{ '🔥 BULLISH CATALYSTS' if 'BULLISH' in
-                            chosen_one.signal else '🩸 RISK FACTORS & HEADLINES'
-                            }}
-                        </div>
-                        {% for item in chosen_one.news %}
-                        <a
-                            href="{{ item.link }}"
-                            target="_blank"
-                            class="news-item"
-                        >
-                            <div class="headline">{{ item.title }}</div>
-                            <div class="source">{{ item.publisher }}</div>
-                        </a>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
                 </div>
             </div>
             {% endif %} {% if results %}
-            <div class="battle-arena"></div>
-            <div class="results-grid">
+            <div
+                style="
+                    margin-bottom: 15px;
+                    font-size: 0.8rem;
+                    color: var(--text-muted);
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                "
+            >
+                Active Signals ({{ results|length }})
+            </div>
+            <div class="terminal-grid">
                 {% for row in results %} {% if not chosen_one or row.ticker !=
                 chosen_one.ticker %}
-                <div class="stock-card" onclick="openModal('{{ row.ticker }}')">
+                <div
+                    class="market-card"
+                    onclick="openModal('{{ row.ticker }}')"
+                >
                     <div class="card-header">
-                        <span class="ticker">{{ row.ticker }}</span
-                        ><span class="price">${{ row.price }}</span>
-                    </div>
-                    <div style="margin-bottom: 10px">
-                        <span
-                            class="signal-badge {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}"
-                            >{{ row.signal }}</span
-                        >
+                        <div class="card-ticker">{{ row.ticker }}</div>
+                        <div class="card-price">${{ row.price }}</div>
                     </div>
                     <div
                         style="
-                            font-size: 0.8rem;
-                            color: var(--text-muted);
-                            margin-bottom: 15px;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
                         "
                     >
-                        POP:
-                        <b style="color: white">{{ row.probability }}%</b> |
-                        VWAP: <b>${{ row.vwap }}</b>
+                        <span
+                            class="signal-tag {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}"
+                        >
+                            {{ row.signal }}
+                        </span>
+                        <span class="mono" style="font-size: 0.8rem"
+                            >{{ row.probability }}% PROB</span
+                        >
                     </div>
-                    <div class="ai-setup">
-                        <div class="ai-title">AI ARCHITECT</div>
-                        <div class="strategy-name">{{ row.setup.type }}</div>
-                        <div class="leg">
-                            <span>Action</span>
-                            <span>{{ row.setup.entry }}</span>
+
+                    <div class="setup-info">
+                        <div class="flex-row">
+                            <span>Type:</span>
+                            <span style="color: white"
+                                >{{ row.setup.type }}</span
+                            >
+                        </div>
+                        <div class="flex-row">
+                            <span>VWAP:</span> <span>{{ row.vwap }}</span>
                         </div>
                     </div>
                 </div>
                 {% endif %} {% endfor %}
             </div>
-            {% elif request.path == '/search' %}
+            {% elif request.path == '/scan' %}
             <div
-                class="no-results"
-                style="text-align: center; padding: 50px; color: #666"
+                style="
+                    text-align: center;
+                    padding: 40px;
+                    color: var(--text-muted);
+                "
             >
-                No signal in the matrix.<br /><small
-                    >Try adding "-USD" for crypto.</small
-                >
+                NO HIGH-PROBABILITY SETUPS FOUND IN CURRENT SESSION.
             </div>
             {% endif %}
-
-            <footer class="app-footer">
-                <div class="footer-content">
-                    <p class="ula-text">
-                        OPEN SOURCE INITIATIVE | {{ version }}
-                    </p>
-                </div>
-            </footer>
-        </div>
+        </main>
 
         <script
             type="text/javascript"
             src="https://s3.tradingview.com/tv.js"
         ></script>
         <script>
-            class MarketPulse {
-                constructor() {
-                    this.canvas = document.getElementById("market-canvas");
-                    this.ctx = this.canvas.getContext("2d");
-                    this.vix = 18;
-                    this.elements = [];
-                    this.isRunning = true;
-                    this.dpr = window.devicePixelRatio || 1;
-                    this.resize();
-                    this.initElements();
-                    window.addEventListener("resize", () => this.resize());
-                    requestAnimationFrame(() => this.animate());
-                    this.startHeartbeat();
-                }
-                resize() {
-                    const rect = this.canvas.getBoundingClientRect();
-                    this.canvas.width = rect.width * this.dpr;
-                    this.canvas.height = rect.height * this.dpr;
-                    this.ctx.scale(this.dpr, this.dpr);
-                    this.initElements();
-                }
-                initElements() {
-                    this.elements = [];
-                    const count = Math.min(
-                        Math.floor(window.innerWidth / 30),
-                        80,
-                    );
-                    for (let i = 0; i < count; i++)
-                        this.elements.push(this.createParticle());
-                }
-                createParticle() {
-                    return {
-                        x: Math.random() * window.innerWidth,
-                        y: Math.random() * window.innerHeight,
-                        size: 14 + Math.random() * 24,
-                        speed: 0.5 + Math.random() * 1.5,
-                        icon: "🐂",
-                        assigned: false,
-                    };
-                }
-                animate() {
-                    this.ctx.clearRect(
-                        0,
-                        0,
-                        this.canvas.width,
-                        this.canvas.height,
-                    );
-                    this.elements.forEach((p) => {
-                        if (!p.assigned) {
-                            p.icon = Math.random() < 0.5 ? "🐂" : "🐻";
-                            p.assigned = true;
-                        }
-                        p.y -= (p.icon === "🐂" ? 1 : -1) * p.speed;
-                        if (p.y < -40) {
-                            p.y = window.innerHeight + 40;
-                            p.x = Math.random() * window.innerWidth;
-                        }
-                        if (p.y > window.innerHeight + 40) {
-                            p.y = -40;
-                            p.x = Math.random() * window.innerWidth;
-                        }
-                        this.ctx.fillStyle = `rgba(255, 255, 255, 0.4)`;
-                        this.ctx.font = `${p.size}px serif`;
-                        this.ctx.fillText(p.icon, p.x, p.y);
-                    });
-                    requestAnimationFrame(() => this.animate());
-                }
-                async startHeartbeat() {
-                    setInterval(async () => {
-                        try {
-                            const res = await fetch("/api/vix");
-                            const data = await res.json();
-                            if (data.price !== "...") {
-                                document.querySelector(
-                                    ".vix-price",
-                                ).textContent = data.price;
-                                document.querySelector(
-                                    ".vix-status",
-                                ).textContent = data.label;
-                            }
-                        } catch (e) {}
-                    }, 10000);
-                }
+            function updateClock() {
+                const now = new Date();
+                document.getElementById("live-clock").innerText =
+                    now.toLocaleTimeString("en-US", { hour12: false }) + " EST";
             }
-            new MarketPulse();
+            setInterval(updateClock, 1000);
+            updateClock();
 
-            const rocketBtn = document.getElementById("rocketBtn");
-            const levitationCore = document.getElementById("levitationCore");
-            let isLaunching = false;
-            let hoverTimer;
-
-            function launchRocket(immediate = false) {
-                if (isLaunching) return;
-                isLaunching = true;
-                document
-                    .getElementById("sound-launch")
-                    .play()
-                    .catch((e) => {});
-                rocketBtn.classList.add("launching");
-                const overlay = document.getElementById("loading-overlay");
-                const gif = document.getElementById("raiden-gif");
-
-                if (navigator.vibrate) navigator.vibrate(50);
-
-                setTimeout(() => {
-                    overlay.classList.add("active");
-                    setTimeout(() => {
-                        if (gif.complete) {
-                            gif.classList.add("visible");
-                        } else {
-                            gif.onload = () => gif.classList.add("visible");
-                        }
-                    }, 100);
-
-                    const currentMode = document
-                        .querySelector(".mode-btn.active")
-                        .innerText.toLowerCase()
-                        .includes("crypto")
-                        ? "crypto"
-                        : "stock";
-
-                    setTimeout(() => {
-                        const searchVal = document
-                            .getElementById("searchInput")
-                            .value.trim();
-                        if (searchVal) {
-                            document.getElementById("searchForm").submit();
-                        } else {
-                            window.location.href = `/scan?mode=${currentMode}`;
-                        }
-                    }, 2500);
-                }, 300);
+            function setMode(mode) {
+                document.getElementById("modeInput").value = mode;
+                document.getElementById("scanForm").submit();
+                showLoading();
             }
 
-            function switchMode(mode) {
-                document
-                    .querySelectorAll(".mode-btn")
-                    .forEach((btn) => btn.classList.remove("active"));
-                const buttons = document.querySelectorAll(".mode-btn");
-                if (mode === "crypto") buttons[1].classList.add("active");
-                else buttons[0].classList.add("active");
+            function showLoading() {
+                document.getElementById("loading-overlay").style.display =
+                    "flex";
             }
-
-            rocketBtn.addEventListener("mouseenter", function () {
-                if (isLaunching) return;
-                levitationCore.classList.add("lock-on");
-                rocketBtn.classList.add("lock-active");
-                document
-                    .getElementById("sound-hover")
-                    .play()
-                    .catch((e) => {});
-                hoverTimer = setTimeout(() => {
-                    launchRocket();
-                }, 400);
-            });
-
-            rocketBtn.addEventListener("mouseleave", function () {
-                clearTimeout(hoverTimer);
-                if (!isLaunching) {
-                    levitationCore.classList.remove("lock-on");
-                    rocketBtn.classList.remove("lock-active");
-                }
-            });
-
-            document
-                .getElementById("searchForm")
-                .addEventListener("submit", function (e) {
-                    e.preventDefault();
-                    launchRocket(true);
-                });
 
             function openModal(ticker) {
+                // Fix crypto pairs for TradingView
                 let cleanTicker = ticker.replace("-USD", "USD");
                 const isCrypto = ticker.includes("-USD");
                 const exchange = isCrypto ? "COINBASE" : "NASDAQ";
-                document.getElementById("detail-modal").classList.add("active");
+
+                document.getElementById("detail-modal").style.display = "flex";
+
                 new TradingView.widget({
                     width: "100%",
                     height: "100%",
                     symbol: `${exchange}:${cleanTicker}`,
-                    interval: "D",
+                    interval: "15",
                     timezone: "America/New_York",
                     theme: "dark",
                     style: "1",
@@ -1354,33 +633,8 @@
             }
 
             function closeModal() {
-                document
-                    .getElementById("detail-modal")
-                    .classList.remove("active");
+                document.getElementById("detail-modal").style.display = "none";
                 document.getElementById("tv-chart-container").innerHTML = "";
-            }
-
-            function updateClock() {
-                const now = new Date();
-                const options = {
-                    timeZone: "America/New_York",
-                    hour12: false,
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                };
-                document.getElementById("live-clock").innerHTML =
-                    "LIVE: " +
-                    new Intl.DateTimeFormat("en-US", options).format(now) +
-                    " EST" +
-                    `<span class="market-status">${document.querySelector(".market-status") ? document.querySelector(".market-status").innerText : ""}</span>`;
-            }
-            setInterval(updateClock, 1000);
-            updateClock();
-
-            function toggleInfoBubble() {
-                const bubble = document.getElementById("hft-info");
-                bubble.classList.toggle("active");
             }
         </script>
     </body>
