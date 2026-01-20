@@ -25,8 +25,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 2.1.0 MARKET READY ---
-APP_VERSION = "v2.1.0 Market Ready" 
+# --- VERSION 2.2.0 THE BRAIN ---
+APP_VERSION = "v2.2.0 Trader Brain" 
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -87,7 +87,7 @@ def get_market_status_color():
     if status in ["PRE-MARKET", "AFTER-HOURS"]: return "#ffd700"
     return "#ff5252" 
 
-# --- CRITICAL DATA FIX ---
+# --- ROBUST DATA FETCHING ---
 def get_market_data(ticker, retries=3):
     attempt = 0
     while attempt <= retries:
@@ -95,14 +95,13 @@ def get_market_data(ticker, retries=3):
             jitter = random.uniform(0.05, 0.2)
             t_module.sleep(jitter)
             
-            # Download with auto_adjust to simplify columns
+            # Auto-adjust fixes the multi-column Close issue
             df = yf.download(ticker, period="5d", interval="5m", prepost=True, progress=False, auto_adjust=True)
             
-            # Flatten MultiIndex if it exists
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
             
-            # Deduplicate columns (The specific fix for the 'Multiple Columns' error)
+            # Deduplicate columns just in case
             df = df.loc[:, ~df.columns.duplicated()]
             
             if not df.empty and len(df) >= 10: 
@@ -171,18 +170,55 @@ def get_vix_data(force_update=False):
         except Exception:
             return VIX_CACHE["data"]
 
-# --- TRADER BRAIN LOGIC ---
-def calculate_probability(price, target, std_dev, rsi, trend):
-    safe_vol = max(std_dev, price * 0.005)
-    z_score = abs(target - price) / (safe_vol * np.sqrt(3))
-    stat_prob = 2 * norm.sf(z_score) * 100
-    rsi_edge = 0
-    if trend == "LONG" and rsi < 40: rsi_edge = 12
-    elif trend == "SHORT" and rsi > 60: rsi_edge = 12
-    final_pop = stat_prob + rsi_edge
-    vol_percent = (std_dev / price) * 100
-    pulse = random.uniform(-min(vol_percent, 2.0), min(vol_percent, 2.0))
-    return round(min(max(final_pop + pulse, 35.5), 96.2), 1)
+# --- THE TRADER BRAIN (NEURAL ENGINE) ---
+class NeuralEngine:
+    @staticmethod
+    def calculate_technical_score(df):
+        """Calculates a logic-based probability score."""
+        latest = df.iloc[-1]
+        
+        # RSI Score (30%)
+        rsi = latest["RSI"]
+        rsi_score = 50 - abs(50 - rsi)
+        if rsi < 30: rsi_score = 90
+        elif rsi > 70: rsi_score = 90
+        
+        # Volume Score (30%)
+        avg_vol = df["Volume"].rolling(20).mean().iloc[-1]
+        vol_score = 50
+        if not pd.isna(avg_vol) and avg_vol > 0:
+            vol_score = min(100, (latest["Volume"] / avg_vol) * 50)
+        
+        # Trend Score (40%)
+        sma20 = latest["SMA_20"]
+        price = latest["Close"]
+        trend_score = 100 if price > sma20 else 0
+        
+        final_score = (rsi_score * 0.3) + (vol_score * 0.3) + (trend_score * 0.4)
+        return round(final_score, 1)
+
+    @staticmethod
+    def generate_narrative(signal, rsi, vol_spike, price, vwap):
+        """Generates the plain English explanation."""
+        dist_to_vwap = ((price - vwap) / vwap) * 100
+        
+        narrative = []
+        if "BULLISH" in signal:
+            narrative.append("Bullish momentum detected")
+            if vol_spike: narrative.append("fueled by high volume")
+            if rsi < 35: narrative.append("rebounding from oversold conditions")
+            elif rsi > 60: narrative.append("confirming trend strength")
+            if dist_to_vwap > 0: narrative.append(f"holding {dist_to_vwap:.2f}% above VWAP")
+        elif "BEARISH" in signal:
+            narrative.append("Bearish rejection detected")
+            if vol_spike: narrative.append("on heavy selling pressure")
+            if rsi > 65: narrative.append("at overextended levels")
+            if dist_to_vwap < 0: narrative.append(f"rejected {abs(dist_to_vwap):.2f}% below VWAP")
+        else:
+            narrative.append("Price is consolidating")
+            narrative.append("awaiting a volatility trigger")
+            
+        return f"{', '.join(narrative)}."
 
 def determine_strategy(price, bb_upper, bb_lower, current_width, avg_width, signal, is_crypto):
     vol_ratio = current_width / avg_width if avg_width > 0 else 1.0
@@ -221,71 +257,69 @@ def analyze_ticker(ticker_input):
              if df is not None: ticker = f"{ticker}-USD"
         if df is None: return None
 
-    # Explicit column selection to prevent ambiguity
+    # Safe Column Extraction
     close_prices = df["Close"]
     volume_data = df["Volume"]
 
     # Technical Calculations
-    sma_20 = close_prices.rolling(window=20).mean()
-    std_dev = close_prices.rolling(window=20).std()
-    bb_upper = sma_20 + (std_dev * 2)
-    bb_lower = sma_20 - (std_dev * 2)
-    bb_width = bb_upper - bb_lower
-    
-    # VWAP Calculation
-    vwap = (close_prices * volume_data).cumsum() / volume_data.cumsum()
+    df["SMA_20"] = close_prices.rolling(window=20).mean()
+    df["Std_Dev"] = close_prices.rolling(window=20).std()
+    df["BB_Upper"] = df["SMA_20"] + (df["Std_Dev"] * 2)
+    df["BB_Lower"] = df["SMA_20"] - (df["Std_Dev"] * 2)
+    df["BB_Width"] = df["BB_Upper"] - df["BB_Lower"]
+    df["VWAP"] = (close_prices * volume_data).cumsum() / volume_data.cumsum()
 
     delta = close_prices.diff(1)
     gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
     rs = gain / loss
-    rsi = 100 - (100 / (1 + rs))
+    df["RSI"] = 100 - (100 / (1 + rs))
 
-    # Get latest scalar values safely
-    latest_price = close_prices.iloc[-1]
-    latest_rsi = rsi.iloc[-1]
-    latest_bb_lower = bb_lower.iloc[-1]
-    latest_bb_upper = bb_upper.iloc[-1]
-    latest_std_dev = std_dev.iloc[-1]
-    latest_width = bb_width.iloc[-1]
-    avg_width_val = bb_width.rolling(window=20).mean().iloc[-1]
-    latest_volume = volume_data.iloc[-1]
-    avg_vol = volume_data.rolling(window=20).mean().iloc[-1]
-    vol_spike = latest_volume > (avg_vol * 1.5)
-    latest_vwap = vwap.iloc[-1]
+    latest = df.iloc[-1]
+    if pd.isna(latest["Close"]) or pd.isna(latest["RSI"]): return None
 
-    if pd.isna(latest_price) or pd.isna(latest_rsi): return None
+    price = latest["Close"]
+    avg_width = df["BB_Width"].rolling(window=20).mean().iloc[-1]
+    current_width = latest["BB_Width"]
+    avg_vol = df["Volume"].rolling(window=20).mean().iloc[-1]
+    avg_vol = avg_vol if (not pd.isna(avg_vol) and avg_vol > 0) else 1
+    vol_spike = latest["Volume"] > (avg_vol * 1.5)
 
     signal = "NEUTRAL"
     suggestion = "Neutral"
     trend = "FLAT"
 
-    if latest_price < latest_bb_lower or latest_rsi < 30:
+    if price < latest["BB_Lower"] or latest["RSI"] < 30:
         signal = "BULLISH"
         suggestion = "Oversold Bounce"
         trend = "LONG"
-    elif latest_price > latest_bb_upper or latest_rsi > 70:
+    elif price > latest["BB_Upper"] or latest["RSI"] > 70:
         signal = "BEARISH"
         suggestion = "Overbought Reject"
         trend = "SHORT"
-    elif vol_spike and latest_price > latest_vwap:
+    elif vol_spike and price > latest["VWAP"]:
         signal = "BULLISH (VOL)"
         suggestion = "Mom. Breakout"
         trend = "LONG"
 
     is_crypto = "-USD" in ticker
-    setup_text = determine_strategy(latest_price, latest_bb_upper, latest_bb_lower, latest_width, avg_width_val, signal, is_crypto)
-    target_price = latest_bb_upper if trend == "LONG" else latest_bb_lower
-    probability = calculate_probability(latest_price, target_price, latest_std_dev, latest_rsi, trend)
-    social = get_social_sentiment(latest_rsi, vol_spike)
+    setup_text = determine_strategy(price, latest["BB_Upper"], latest["BB_Lower"], current_width, avg_width, signal, is_crypto)
+    
+    # NEURAL ENGINE EXECUTION
+    tech_score = NeuralEngine.calculate_technical_score(df)
+    rationale = NeuralEngine.generate_narrative(signal, latest["RSI"], vol_spike, price, latest["VWAP"])
+    probability = tech_score # Use the intelligent score
+    social = get_social_sentiment(latest["RSI"], vol_spike)
 
     return {
-        "ticker": ticker, "price": round(latest_price, 2), "rsi": round(latest_rsi, 2), "vwap": round(latest_vwap, 2),
-        "signal": signal, "suggestion": suggestion, "probability": probability, "social": social, "setup": setup_text
+        "ticker": ticker, "price": round(price, 2), "rsi": round(latest["RSI"], 2), "vwap": round(latest["VWAP"], 2),
+        "signal": signal, "suggestion": suggestion, "probability": probability, "social": social, "setup": setup_text,
+        "rationale": rationale
     }
 
 @app.route("/suggest")
 def suggest():
+    """Instant Local Search"""
     query = request.args.get("q", "").upper()
     if not query: return jsonify([])
     

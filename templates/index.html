@@ -6,8 +6,8 @@
     <title>TheMatrix</title>
     
     <link rel="preload" as="image" href="{{ url_for('static', filename='raiden.gif') }}">
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icon.png') }}?v=71">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}?v=71">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icon.png') }}?v=72">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}?v=72">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -33,7 +33,7 @@
             color: var(--text-main); 
             margin: 0; 
             padding: 20px; 
-            padding-bottom: 140px; /* Space for the dock */
+            padding-bottom: 140px; /* Space for dock */
             padding-left: max(20px, env(safe-area-inset-left));
             padding-right: max(20px, env(safe-area-inset-right));
             -webkit-tap-highlight-color: transparent; 
@@ -69,7 +69,7 @@
         .mode-btn { padding: 6px 20px; border-radius: 16px; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); cursor: pointer; transition: all 0.3s; }
         .mode-btn.active { background: var(--gold); color: #000; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
 
-        /* FLOATING SEARCH DOCK */
+        /* BOTTOM FLOATING DOCK */
         .search-dock-container { 
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 600px; z-index: 1000; 
@@ -88,7 +88,7 @@
         .search-input { flex-grow: 1; background: transparent; border: none; color: white; font-size: 1rem; padding: 0 15px; outline: none; font-weight: 500; }
         .info-orb-embedded { width: 35px; height: 35px; border: 2px solid var(--gold); border-radius: 50%; color: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.8rem; cursor: pointer; flex-shrink: 0; }
         
-        /* DROP-UP SEARCH RESULTS */
+        /* DROP-UP LIST */
         #search-results { 
             position: absolute; bottom: 75px; left: 0; width: 100%; 
             background: rgba(10, 10, 10, 0.95); 
@@ -114,7 +114,6 @@
 
         .macro-container { width: 100%; margin-bottom: 40px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: rgba(10,10,10,0.5); max-height: 250px; overflow-y: auto; position: relative; z-index: 5; }
 
-        /* NEBULA CORE ENGINE */
         .launcher-container { display: flex; justify-content: center; margin-bottom: 40px; position: relative; z-index: 20; height: 160px; align-items: center; }
         .levitation-core { position: relative; width: 160px; height: 160px; display: flex; align-items: center; justify-content: center; animation: floatAround 6s ease-in-out infinite alternate; transition: transform 0.3s ease; }
         .levitation-core.lock-on { animation-play-state: paused; transform: scale(1.1); }
@@ -145,6 +144,9 @@
         .oracle-ticker:hover { color: var(--gold); text-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
         .pop-value { font-size: 2rem; font-weight: 900; color: var(--gold); }
         .social-box { background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; font-size: 0.95rem; border-left: 3px solid var(--gold); }
+        
+        .rationale-box { background: rgba(0, 230, 118, 0.05); border: 1px solid rgba(0, 230, 118, 0.2); padding: 15px; border-radius: 12px; margin-bottom: 15px; font-size: 0.85rem; color: #e8eaed; font-style: italic; display: flex; align-items: flex-start; gap: 10px; }
+        .rationale-icon { font-size: 1.2rem; }
         
         .news-container { margin-top: 20px; padding: 15px; border-radius: 12px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); }
         .news-title { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
@@ -189,7 +191,7 @@
 
 <canvas id="market-canvas"></canvas>
 
-<div id="loading-overlay"><div class="goku-container"><img src="{{ url_for('static', filename='raiden.gif') }}?v=71" class="goku-img" id="raiden-gif" alt="Scanning..."></div></div>
+<div id="loading-overlay"><div class="goku-container"><img src="{{ url_for('static', filename='raiden.gif') }}?v=72" class="goku-img" id="raiden-gif" alt="Scanning..."></div></div>
 <div id="detail-modal"><div class="modal-content"><div class="close-modal" onclick="closeModal()">×</div><div id="tv-chart-container" style="width:100%; height:100%;"></div></div></div>
 
 <div class="app-wrapper">
@@ -239,9 +241,9 @@
     <div class="oracle-container">
         <div class="oracle-card">
             {% if 'BULLISH' in chosen_one.signal %}
-                <div class="oracle-mascot-container"><img src="{{ url_for('static', filename='shrek.png') }}?v=71" class="oracle-mascot-img mascot-shrek" alt="Bullish"></div>
+                <div class="oracle-mascot-container"><img src="{{ url_for('static', filename='shrek.png') }}?v=72" class="oracle-mascot-img mascot-shrek" alt="Bullish"></div>
             {% elif 'BEARISH' in chosen_one.signal %}
-                <div class="oracle-mascot-container"><img src="{{ url_for('static', filename='hellboy.png') }}?v=71" class="oracle-mascot-img mascot-hellboy" alt="Bearish"></div>
+                <div class="oracle-mascot-container"><img src="{{ url_for('static', filename='hellboy.png') }}?v=72" class="oracle-mascot-img mascot-hellboy" alt="Bearish"></div>
             {% endif %}
 
             <div class="oracle-badge">ORACLE PICK</div>
@@ -255,6 +257,11 @@
             
             <div class="social-box"><span class="social-icon">{{ chosen_one.social.icon }}</span><span class="social-text">"{{ chosen_one.social.comment }}"</span></div>
             
+            <div class="rationale-box">
+                <span class="rationale-icon">🧠</span>
+                <span class="rationale-text">{{ chosen_one.rationale }}</span>
+            </div>
+
             <div class="ai-setup {{ 'kill-switch-active' if 'KILL SWITCH' in chosen_one.setup.type else '' }}">
                 <div class="ai-title" style="color:var(--gold);">WINNING SETUP</div>
                 <div class="strategy-name">{{ chosen_one.setup.type }}</div>
@@ -309,7 +316,7 @@
 </div>
 
 <div class="search-dock-container">
-    <div class="info-bubble" id="hft-info"><div class="bubble-title">TRADER BRAIN V2.1</div><div class="bubble-text">System scans live volatility for momentum anomalies.</div></div>
+    <div class="info-bubble" id="hft-info"><div class="bubble-title">TRADER BRAIN V2.2</div><div class="bubble-text">System scans live volatility for momentum anomalies.</div></div>
     <div id="search-results"></div> 
     <div class="search-dock">
         <div class="search-icon" onclick="document.getElementById('searchForm').submit()">➜</div>
@@ -322,10 +329,10 @@
 
 <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 <script>
-    // AUTO-SEARCH LOGIC
     const searchInput = document.getElementById('searchInput');
     const resultsBox = document.getElementById('search-results');
 
+    // INSTANT LOCAL SEARCH
     searchInput.addEventListener('input', async function() {
         const query = this.value.trim();
         if (query.length < 1) {
@@ -358,7 +365,6 @@
         }
     });
 
-    // Close results when clicking outside
     document.addEventListener('click', function(e) {
         if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
             resultsBox.style.display = 'none';
