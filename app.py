@@ -25,8 +25,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 2.4.0 GOOGLE INTELLIGENCE ---
-APP_VERSION = "v2.4.0 Google Intelligence" 
+# --- VERSION 2.5.0 SENTIENT ---
+APP_VERSION = "v2.5.0 Sentient"
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
@@ -34,9 +34,32 @@ logger = logging.getLogger("HFT_Scanner")
 VIX_LOCK = threading.Lock()
 VIX_CACHE = {"data": {"price": "...", "color": "grey", "label": "LOADING", "market_status": "grey"}, "last_updated": 0}
 
-# --- ASSET LISTS ---
-STOCKS = ["AAPL", "MSFT", "NVDA", "TSLA", "AMD", "AMZN", "GOOGL", "META", "GME", "AMC", "PLTR", "COIN", "MSTR", "SMCI", "ARM", "SPY", "QQQ", "IWM", "NFLX", "INTC", "BA", "DIS", "JPM", "GS", "V", "MA", "WMT", "JNJ", "PG", "XOM", "CVX", "HD", "KO", "PEP", "COST", "AVGO", "ORCL", "IBM"]
-CRYPTO = ["BTC-USD", "ETH-USD", "SOL-USD", "DOGE-USD", "SHIB-USD", "XRP-USD", "ADA-USD", "AVAX-USD", "LINK-USD", "LTC-USD", "DOT-USD", "MATIC-USD", "UNI-USD", "ATOM-USD", "ETC-USD", "XLM-USD", "BCH-USD", "ALGO-USD", "VET-USD", "ICP-USD", "FIL-USD"]
+# --- THE "GOOGLE-LIKE" GLOBAL INDEX (Local Cache for 0ms Search) ---
+# This ensures common searches NEVER fail, even if the API is blocked.
+GLOBAL_INDEX = [
+    # TECH GIANTS
+    {"s": "AAPL", "n": "Apple Inc.", "e": "Stock"}, {"s": "MSFT", "n": "Microsoft Corp.", "e": "Stock"},
+    {"s": "NVDA", "n": "NVIDIA Corp.", "e": "Stock"}, {"s": "TSLA", "n": "Tesla Inc.", "e": "Stock"},
+    {"s": "GOOGL", "n": "Alphabet Inc.", "e": "Stock"}, {"s": "AMZN", "n": "Amazon.com", "e": "Stock"},
+    {"s": "META", "n": "Meta Platforms", "e": "Stock"}, {"s": "AMD", "n": "Advanced Micro Devices", "e": "Stock"},
+    # POPULAR / MEME
+    {"s": "GME", "n": "GameStop Corp.", "e": "Stock"}, {"s": "AMC", "n": "AMC Entertainment", "e": "Stock"},
+    {"s": "PLTR", "n": "Palantir Tech", "e": "Stock"}, {"s": "COIN", "n": "Coinbase Global", "e": "Stock"},
+    {"s": "CVNA", "n": "Carvana Co.", "e": "Stock"}, {"s": "MSTR", "n": "MicroStrategy", "e": "Stock"},
+    # CRYPTO
+    {"s": "BTC-USD", "n": "Bitcoin", "e": "Crypto"}, {"s": "ETH-USD", "n": "Ethereum", "e": "Crypto"},
+    {"s": "SOL-USD", "n": "Solana", "e": "Crypto"}, {"s": "DOGE-USD", "n": "Dogecoin", "e": "Crypto"},
+    {"s": "SHIB-USD", "n": "Shiba Inu", "e": "Crypto"}, {"s": "XRP-USD", "n": "XRP", "e": "Crypto"},
+    {"s": "PEPE-USD", "n": "Pepe", "e": "Crypto"},
+    # INDICES & FUTURES (The "Smart" Stuff)
+    {"s": "^GSPC", "n": "S&P 500", "e": "Index"}, {"s": "^IXIC", "n": "Nasdaq Composite", "e": "Index"},
+    {"s": "^VIX", "n": "Volatility Index", "e": "Index"}, {"s": "GC=F", "n": "Gold Futures", "e": "Future"},
+    {"s": "CL=F", "n": "Crude Oil", "e": "Future"}, {"s": "EURUSD=X", "n": "EUR/USD", "e": "Forex"}
+]
+
+# Simple lists for the random scanner
+STOCKS = [x["s"] for x in GLOBAL_INDEX if x["e"] == "Stock"]
+CRYPTO = [x["s"] for x in GLOBAL_INDEX if x["e"] == "Crypto"]
 
 def init_db():
     conn = sqlite3.connect(DB_NAME, check_same_thread=False)
@@ -46,8 +69,8 @@ def init_db():
     conn.close()
 init_db()
 
-def get_current_time():
-    return datetime.now(pytz.timezone("US/Eastern")).strftime("%H:%M:%S EST")
+# --- HELPERS ---
+def get_current_time(): return datetime.now(pytz.timezone("US/Eastern")).strftime("%H:%M:%S EST")
 
 def get_market_status():
     now = datetime.now(pytz.timezone("US/Eastern"))
@@ -64,18 +87,18 @@ def get_market_status_color():
     if status in ["PRE-MARKET", "AFTER-HOURS"]: return "#ffd700"
     return "#ff5252" 
 
-def get_market_data(ticker, retries=3):
+# --- ROBUST DATA FETCHING ---
+def get_market_data(ticker, retries=2):
     attempt = 0
     while attempt <= retries:
         try:
-            t_module.sleep(random.uniform(0.05, 0.2))
+            # Native yfinance with auto_adjust to prevent multi-column errors
             df = yf.download(ticker, period="5d", interval="5m", prepost=True, progress=False, auto_adjust=True)
             if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.get_level_values(0)
-            df = df.loc[:, ~df.columns.duplicated()]
+            df = df.loc[:, ~df.columns.duplicated()] # Safety deduplication
             if not df.empty and len(df) >= 10: return df
-        except Exception as e:
-            if attempt > 0: logger.warning(f"Retry {attempt}/{retries} for {ticker}: {e}")
-            t_module.sleep(1 + attempt)
+        except Exception:
+            t_module.sleep(0.5)
         attempt += 1
     return None
 
@@ -84,7 +107,7 @@ def get_ticker_news(ticker):
         clean_ticker = ticker.replace("-USD", "")
         search_term = f"{clean_ticker} crypto" if "-USD" in ticker else f"{clean_ticker} stock"
         url = f"https://news.google.com/rss/search?q={search_term}&hl=en-US&gl=US&ceid=US:en"
-        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=3)
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=2)
         root = ET.fromstring(response.content)
         items = root.findall("./channel/item")
         news_data = []
@@ -104,7 +127,7 @@ def get_vix_data(force_update=False):
         if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60: return VIX_CACHE["data"]
         try:
             status_color = get_market_status_color()
-            df = get_market_data("^VIX", retries=2)
+            df = get_market_data("^VIX", retries=1)
             if df is None: return {"price": "...", "color": "grey", "label": "OFFLINE", "market_status": status_color}
             price = df.iloc[-1]["Close"]
             if price < 12: color, label = "#00E676", "COMPLACENCY"
@@ -112,7 +135,6 @@ def get_vix_data(force_update=False):
             elif 15 <= price < 20: color, label = "#FFD600", "MILD"
             elif 20 <= price < 30: color, label = "#FF9100", "ELEVATED"
             elif 30 <= price < 40: color, label = "#FF3D00", "ANXIETY"
-            elif 40 <= price < 50: color, label = "#D50000", "CRISIS"
             else: color, label = "#880E4F", "SHOCK"
             new_data = {"price": round(price, 2), "color": color, "label": label, "market_status": status_color}
             VIX_CACHE["data"] = new_data
@@ -120,6 +142,7 @@ def get_vix_data(force_update=False):
             return new_data
         except: return VIX_CACHE["data"]
 
+# --- TRADER BRAIN (AI ENGINE) ---
 class NeuralEngine:
     @staticmethod
     def calculate_technical_score(df):
@@ -138,19 +161,18 @@ class NeuralEngine:
         dist_to_vwap = ((price - vwap) / vwap) * 100
         narrative = []
         if "BULLISH" in signal:
-            narrative.append("Bullish momentum detected")
-            if vol_spike: narrative.append("fueled by high volume")
-            if rsi < 35: narrative.append("rebounding from oversold conditions")
-            elif rsi > 60: narrative.append("confirming trend strength")
-            if dist_to_vwap > 0: narrative.append(f"holding {dist_to_vwap:.2f}% above VWAP")
+            narrative.append("Bullish divergence")
+            if vol_spike: narrative.append("on high volume")
+            if rsi < 35: narrative.append("from oversold")
+            elif rsi > 60: narrative.append("with strong momentum")
+            if dist_to_vwap > 0: narrative.append(f"holding {dist_to_vwap:.1f}% > VWAP")
         elif "BEARISH" in signal:
-            narrative.append("Bearish rejection detected")
-            if vol_spike: narrative.append("on heavy selling pressure")
-            if rsi > 65: narrative.append("at overextended levels")
-            if dist_to_vwap < 0: narrative.append(f"rejected {abs(dist_to_vwap):.2f}% below VWAP")
+            narrative.append("Bearish rejection")
+            if vol_spike: narrative.append("on heavy selling")
+            if rsi > 65: narrative.append("at overbought")
+            if dist_to_vwap < 0: narrative.append(f"trading {abs(dist_to_vwap):.1f}% < VWAP")
         else:
-            narrative.append("Price is consolidating")
-            narrative.append("awaiting a volatility trigger")
+            narrative.append("Consolidation awaiting vol expansion")
         return f"{', '.join(narrative)}."
 
 def determine_strategy(price, bb_upper, bb_lower, current_width, avg_width, signal, is_crypto):
@@ -158,27 +180,22 @@ def determine_strategy(price, bb_upper, bb_lower, current_width, avg_width, sign
     setup_text = {"type": "WAIT", "entry": "-", "target": "-", "stop": "-"}
     if is_crypto:
         risk = current_width / 2.0
-        if "BULLISH" in signal: setup_text = {"type": "CRYPTO SCALP LONG", "entry": f"${price:,.2f}", "target": f"${(price+(risk*1.5)):,.2f}", "stop": f"${(price-risk):,.2f}"}
-        elif "BEARISH" in signal: setup_text = {"type": "CRYPTO SCALP SHORT", "entry": f"${price:,.2f}", "target": f"${(price-(risk*1.5)):,.2f}", "stop": f"${(price+risk):,.2f}"}
+        if "BULLISH" in signal: setup_text = {"type": "SCALP LONG", "entry": f"${price:,.2f}", "target": f"${(price+(risk*1.5)):,.2f}", "stop": f"${(price-risk):,.2f}"}
+        elif "BEARISH" in signal: setup_text = {"type": "SCALP SHORT", "entry": f"${price:,.2f}", "target": f"${(price-(risk*1.5)):,.2f}", "stop": f"${(price+risk):,.2f}"}
     else:
         if "BULLISH" in signal:
-            if vol_ratio > 1.25: setup_text = {"type": "BULL PUT SPREAD", "entry": f"SELL Put ${np.floor(bb_lower)}", "target": "Expire Worthless", "stop": "Close < Strike"}
-            elif vol_ratio < 0.75: setup_text = {"type": "LONG CALL BUTTERFLY", "entry": f"Center ${np.ceil(price)}", "target": "Pin Strike", "stop": "Wing Breach"}
-            else: setup_text = {"type": "BULL CALL SPREAD", "entry": f"BUY Call ${np.ceil(price)}", "target": f"${np.ceil(bb_upper)}", "stop": "-40% Prem"}
+            if vol_ratio > 1.25: setup_text = {"type": "BULL PUT SPREAD", "entry": f"Sell Put ${int(bb_lower)}", "target": "Expire", "stop": "Close < Strike"}
+            else: setup_text = {"type": "CALL DEBIT SPREAD", "entry": f"Buy Call ${int(price)}", "target": f"${int(bb_upper)}", "stop": "-40% Prem"}
         elif "BEARISH" in signal:
-            if vol_ratio > 1.25: setup_text = {"type": "BEAR CALL SPREAD", "entry": f"SELL Call ${np.ceil(bb_upper)}", "target": "Expire Worthless", "stop": "Close > Strike"}
-            elif vol_ratio < 0.75: setup_text = {"type": "LONG PUT BUTTERFLY", "entry": f"Center ${np.floor(price)}", "target": "Pin Strike", "stop": "Wing Breach"}
-            else: setup_text = {"type": "BEAR PUT SPREAD", "entry": f"BUY Put ${np.floor(price)}", "target": f"${np.floor(bb_lower)}", "stop": "-40% Prem"}
-        else:
-            if vol_ratio > 1.1: setup_text = {"type": "IRON CONDOR", "entry": f"SELL Call ${np.ceil(bb_upper)}", "target": "Range Bound", "stop": "Wing Breach"}
-            else: setup_text = {"type": "CALENDAR SPREAD", "entry": f"Strike ${np.round(price,0)}", "target": "Vol Expansion", "stop": "Price Runaway"}
+            if vol_ratio > 1.25: setup_text = {"type": "BEAR CALL SPREAD", "entry": f"Sell Call ${int(bb_upper)}", "target": "Expire", "stop": "Close > Strike"}
+            else: setup_text = {"type": "PUT DEBIT SPREAD", "entry": f"Buy Put ${int(price)}", "target": f"${int(bb_lower)}", "stop": "-40% Prem"}
     return setup_text
 
 def get_social_sentiment(rsi, vol_ratio):
-    if rsi > 75 and vol_ratio > 1.1: return {"score": "MAX HYPE", "comment": random.choice(["🚀 GAMMA SQUEEZE", "FOMO"]), "icon": "🔥"}
-    if rsi < 25 and vol_ratio > 1.1: return {"score": "MAX FEAR", "comment": random.choice(["🩸 LIQUIDATION", "DUMP"]), "icon": "🩸"}
-    if vol_ratio > 1.1: return {"score": "TRENDING", "comment": "High Volume", "icon": "👀"}
-    return {"score": "QUIET", "comment": "Consolidation", "icon": "💤"}
+    if rsi > 75 and vol_ratio > 1.1: return {"score": "MAX HYPE", "comment": "FOMO Squeeze", "icon": "🔥"}
+    if rsi < 25 and vol_ratio > 1.1: return {"score": "MAX FEAR", "comment": "Capitulation", "icon": "🩸"}
+    if vol_ratio > 1.1: return {"score": "ACTIVE", "comment": "High Volume", "icon": "👀"}
+    return {"score": "QUIET", "comment": "Choppy", "icon": "💤"}
 
 def analyze_ticker(ticker_input):
     ticker = ticker_input.upper().strip()
@@ -210,10 +227,10 @@ def analyze_ticker(ticker_input):
     price, rsi_val = latest["Close"], latest["RSI"]
     vol_spike = volume_data.iloc[-1] > (volume_data.rolling(window=20).mean().iloc[-1] * 1.5)
     
-    signal, suggestion, trend = "NEUTRAL", "Neutral", "FLAT"
-    if price < latest["BB_Lower"] or rsi_val < 30: signal, suggestion, trend = "BULLISH", "Oversold Bounce", "LONG"
-    elif price > latest["BB_Upper"] or rsi_val > 70: signal, suggestion, trend = "BEARISH", "Overbought Reject", "SHORT"
-    elif vol_spike and price > latest["VWAP"]: signal, suggestion, trend = "BULLISH (VOL)", "Mom. Breakout", "LONG"
+    signal, suggestion = "NEUTRAL", "Neutral"
+    if price < latest["BB_Lower"] or rsi_val < 30: signal, suggestion = "BULLISH", "Oversold Bounce"
+    elif price > latest["BB_Upper"] or rsi_val > 70: signal, suggestion = "BEARISH", "Overbought Reject"
+    elif vol_spike and price > latest["VWAP"]: signal, suggestion = "BULLISH (VOL)", "Mom. Breakout"
 
     is_crypto = "-USD" in ticker
     setup_text = determine_strategy(price, latest["BB_Upper"], latest["BB_Lower"], latest["BB_Width"], df["BB_Width"].rolling(window=20).mean().iloc[-1], signal, is_crypto)
@@ -225,37 +242,31 @@ def analyze_ticker(ticker_input):
         "rationale": NeuralEngine.generate_narrative(signal, rsi_val, vol_spike, price, latest["VWAP"])
     }
 
-# --- GOOGLE INTELLIGENCE SEARCH PROXY ---
+# --- HYBRID SEARCH ENGINE (LOCAL FIRST + FALLBACK) ---
 @app.route("/suggest")
 def suggest():
-    query = request.args.get("q", "").strip()
+    query = request.args.get("q", "").strip().upper()
     if not query: return jsonify([])
     
-    # 1. Try Yahoo Autocomplete (High Quality, but blocked sometimes)
-    url = f"https://query2.finance.yahoo.com/v1/finance/search?q={query}&quotesCount=6&newsCount=0&enableFuzzyQuery=false&quotesQueryId=tss_match_phrase_query"
-    headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+    # 1. INSTANT LOCAL MATCH (0ms Latency)
+    matches = []
+    for item in GLOBAL_INDEX:
+        if item["s"].startswith(query) or query in item["n"].upper():
+            matches.append({"symbol": item["s"], "name": item["n"], "exch": item["e"]})
     
-    try:
-        response = requests.get(url, headers=headers, timeout=2)
-        if response.status_code == 200:
-            data = response.json()
-            suggestions = []
-            if "quotes" in data:
-                for item in data["quotes"]:
-                    suggestions.append({"symbol": item.get("symbol"), "name": item.get("shortname", item.get("longname", item.get("symbol"))), "exch": item.get("exchDisp", "")})
-            return jsonify(suggestions)
-    except Exception:
-        pass # Fallback silently
+    # 2. IF LOCAL FAILS, TRY YAHOO PROXY
+    if not matches and len(query) > 1:
+        try:
+            url = f"https://query2.finance.yahoo.com/v1/finance/search?q={query}&lang=en-US&region=US&quotesCount=5"
+            headers = {"User-Agent": "Mozilla/5.0"}
+            r = requests.get(url, headers=headers, timeout=1.5)
+            if r.status_code == 200:
+                data = r.json()
+                for q in data.get("quotes", []):
+                    matches.append({"symbol": q["symbol"], "name": q.get("shortname", q["symbol"]), "exch": q.get("exchDisp", "Global")})
+        except: pass
 
-    # 2. Fallback: Local Intelligence (Google-like Speed)
-    # Matches query against our expanded local lists if the API fails
-    local_suggestions = []
-    ALL_TICKERS = list(set(STOCKS + CRYPTO + ["CVNA", "EURUSD=X", "GC=F", "CL=F", "SI=F"])) # Add common futures/forex
-    for t in ALL_TICKERS:
-        if t.startswith(query.upper()):
-            name = "Crypto Asset" if "-USD" in t else "Stock Asset"
-            local_suggestions.append({"symbol": t, "name": name, "exch": "Global"})
-    return jsonify(local_suggestions[:5])
+    return jsonify(matches[:6])
 
 @app.after_request
 def add_header(response):
@@ -272,8 +283,10 @@ def scan():
     start_time = t_module.time()
     mode = request.args.get('mode', 'stock')
     
+    # CRITICAL FIX: FORCE LIST SEPARATION
     scan_source = CRYPTO if mode == 'crypto' else STOCKS
     leader = "BTC-USD" if mode == 'crypto' else "SPY"
+    
     scan_list = random.sample(scan_source, min(len(scan_source), 8))
     if leader not in scan_list: scan_list.append(leader)
     
@@ -284,27 +297,23 @@ def scan():
             try:
                 data = future.result()
                 if data: results.append(data)
-            except Exception as e: logger.error(f"Scan Error: {e}")
+            except: pass
 
-    active_setups = [r for r in results if r["signal"] != "NEUTRAL"]
-    chosen_one = sorted(active_setups, key=lambda x: x["probability"], reverse=True)[0] if active_setups else (results[0] if results else None)
-    if chosen_one: chosen_one["news"] = get_ticker_news(chosen_one["ticker"])
+    active = [r for r in results if r["signal"] != "NEUTRAL"]
+    chosen = sorted(active, key=lambda x: x["probability"], reverse=True)[0] if active else (results[0] if results else None)
+    if chosen: chosen["news"] = get_ticker_news(chosen["ticker"])
 
-    bulls = sum(1 for r in results if "BULLISH" in r["signal"])
-    bears = sum(1 for r in results if "BEARISH" in r["signal"])
-    mood = "BULL" if bulls > bears else "BEAR"
-    
-    logger.info(f"Scan complete in {round(t_module.time() - start_time, 2)}s")
-    return render_template("index.html", results=results, chosen_one=chosen_one, mood=mood, vix=get_vix_data(), status_color=get_market_status_color(), timestamp=get_current_time(), version=APP_VERSION, market_status=get_market_status(), current_mode=mode)
+    mood = "BULL" if sum(1 for r in results if "BULLISH" in r["signal"]) > sum(1 for r in results if "BEARISH" in r["signal"]) else "BEAR"
+    return render_template("index.html", results=results, chosen_one=chosen, mood=mood, vix=get_vix_data(), status_color=get_market_status_color(), timestamp=get_current_time(), version=APP_VERSION, market_status=get_market_status(), current_mode=mode)
 
 @app.route("/search", methods=["POST"])
 def search():
     query = request.form.get("query")
     if not query: return redirect(url_for("index"))
     result = analyze_ticker(query)
-    if result is None: return render_template("index.html", results=[], error=f"Could not find '{query}'", vix=get_vix_data(), status_color=get_market_status_color(), timestamp=get_current_time(), version=APP_VERSION, market_status=get_market_status())
+    if result is None: return render_template("index.html", results=[], error=f"Asset '{query}' not found.", vix=get_vix_data(), status_color=get_market_status_color(), timestamp=get_current_time(), version=APP_VERSION, market_status=get_market_status())
     result["news"] = get_ticker_news(result["ticker"])
-    return render_template("index.html", results=[result], chosen_one=result, mood=("BULL" if "BULLISH" in result["signal"] else "BEAR" if "BEARISH" in result["signal"] else "NEUTRAL"), vix=get_vix_data(), status_color=get_market_status_color(), timestamp=get_current_time(), version=APP_VERSION, market_status=get_market_status())
+    return render_template("index.html", results=[result], chosen_one=result, mood="NEUTRAL", vix=get_vix_data(), status_color=get_market_status_color(), timestamp=get_current_time(), version=APP_VERSION, market_status=get_market_status())
 
 @app.route("/api/vix")
 def api_vix(): return jsonify(get_vix_data())
