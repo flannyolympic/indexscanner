@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=57"
+            href="{{ url_for('static', filename='icon.png') }}?v=58"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=57"
+            href="{{ url_for('static', filename='icon.png') }}?v=58"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -331,7 +331,12 @@
                 animation: breatheFrame 4s infinite ease-in-out;
                 margin-bottom: 40px;
             }
-            /* Comic Glitch Border */
+            /* Fallback for older browsers */
+            @supports not (backdrop-filter: blur(15px)) {
+                .manga-glass-bubble {
+                    background: #111;
+                }
+            }
             .manga-glass-bubble::before {
                 content: "";
                 position: absolute;
@@ -399,24 +404,24 @@
 
             .oracle-badge {
                 position: absolute;
-                top: 0;
-                left: 0;
+                top: -14px;
+                left: 50%;
+                transform: translateX(-50%);
                 background: var(--gold);
                 color: black;
                 font-weight: 900;
-                font-size: 0.7rem;
-                padding: 4px 12px;
-                border-bottom-right-radius: 12px;
-                letter-spacing: 1px;
+                font-size: 0.75rem;
+                padding: 6px 16px;
+                border-radius: 20px;
+                letter-spacing: 1.5px;
+                box-shadow: 0 0 15px var(--gold);
             }
-
             .oracle-header {
                 display: flex;
                 flex-wrap: wrap;
                 justify-content: space-between;
                 align-items: flex-end;
                 margin-bottom: 20px;
-                margin-top: 10px;
             }
             .oracle-ticker {
                 font-size: clamp(2.5rem, 6vw, 4rem);
@@ -446,257 +451,6 @@
                 gap: 12px;
                 font-size: 0.95rem;
                 border-left: 3px solid var(--gold);
-            }
-
-            /* MODAL STYLES */
-            #detail-modal {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.85);
-                backdrop-filter: blur(15px);
-                -webkit-backdrop-filter: blur(15px);
-                z-index: 10000;
-                display: none;
-                opacity: 0;
-                transition: opacity 0.3s;
-                align-items: center;
-                justify-content: center;
-            }
-            #detail-modal.active {
-                display: flex;
-                opacity: 1;
-            }
-            .modal-content {
-                width: 90%;
-                max-width: 800px;
-                height: 70vh;
-                background: #111;
-                border: 1px solid var(--gold);
-                border-radius: 16px;
-                overflow: hidden;
-                position: relative;
-                display: flex;
-                flex-direction: column;
-            }
-            .close-modal {
-                position: absolute;
-                top: 10px;
-                right: 15px;
-                color: #fff;
-                font-size: 1.5rem;
-                cursor: pointer;
-                z-index: 20;
-                background: rgba(0, 0, 0, 0.5);
-                padding: 5px 10px;
-                border-radius: 8px;
-            }
-
-            #loading-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.75);
-                backdrop-filter: blur(15px);
-                -webkit-backdrop-filter: blur(15px);
-                z-index: 9999;
-                display: none;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                opacity: 0;
-                transition: opacity 0.4s ease-in-out;
-                overflow: hidden;
-            }
-            #loading-overlay.active {
-                display: flex;
-                opacity: 1;
-            }
-            .goku-container {
-                position: relative;
-                width: 100%;
-                max-width: 800px;
-                height: 60vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .goku-img {
-                height: auto;
-                width: auto;
-                max-height: 60vh;
-                max-width: 90vw;
-                object-fit: contain;
-                position: relative;
-                z-index: 10;
-                transition: filter 0.2s;
-                opacity: 0;
-            }
-            .goku-img.visible {
-                opacity: 0.95;
-            }
-
-            .search-dock-container {
-                position: fixed;
-                bottom: calc(20px + env(safe-area-inset-bottom));
-                left: 50%;
-                transform: translateX(-50%);
-                width: min(600px, 92vw);
-                z-index: 1000;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-            .search-dock {
-                width: 100%;
-                height: 65px;
-                background: var(--input-bg);
-                backdrop-filter: blur(25px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-top: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 40px;
-                padding: 0 10px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
-            }
-            .search-dock:focus-within {
-                transform: translateY(-5px);
-                border-color: var(--gold);
-            }
-            .search-icon {
-                width: 45px;
-                height: 45px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: var(--accent-green);
-                border-radius: 50%;
-                color: #000;
-                font-weight: 900;
-                cursor: pointer;
-                box-shadow: 0 0 15px rgba(0, 230, 118, 0.4);
-                flex-shrink: 0;
-                touch-action: manipulation;
-            }
-            .search-input {
-                flex-grow: 1;
-                background: transparent;
-                border: none;
-                color: white;
-                font-size: 1.05rem;
-                padding: 0 15px;
-                outline: none;
-                font-weight: 500;
-            }
-            .info-orb-embedded {
-                width: 40px;
-                height: 40px;
-                border: 2px solid var(--gold);
-                border-radius: 50%;
-                color: var(--gold);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 900;
-                font-size: 1rem;
-                cursor: pointer;
-                animation: pulseOrb 3s infinite ease-in-out;
-                flex-shrink: 0;
-                background: rgba(0, 0, 0, 0.3);
-                touch-action: manipulation;
-            }
-            @keyframes pulseOrb {
-                0% {
-                    box-shadow: 0 0 5px rgba(255, 215, 0, 0.2);
-                }
-                50% {
-                    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-                }
-                100% {
-                    box-shadow: 0 0 5px rgba(255, 215, 0, 0.2);
-                }
-            }
-
-            #search-results {
-                position: absolute;
-                bottom: 80px;
-                left: 0;
-                width: 100%;
-                background: rgba(10, 10, 10, 0.95);
-                backdrop-filter: blur(20px);
-                border: 1px solid #333;
-                border-radius: 20px;
-                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
-                display: none;
-                overflow: hidden;
-                max-height: 40vh;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            .result-item {
-                padding: 16px 20px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                cursor: pointer;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                touch-action: manipulation;
-            }
-            .result-item:hover {
-                background: rgba(255, 255, 255, 0.1);
-            }
-            .item-symbol {
-                font-weight: 800;
-                color: #fff;
-            }
-            .item-name {
-                font-size: 0.8rem;
-                color: #9aa0a6;
-            }
-
-            .info-bubble {
-                position: absolute;
-                bottom: 80px;
-                right: 0;
-                width: 280px;
-                background: rgba(10, 10, 10, 0.95);
-                backdrop-filter: blur(20px);
-                border: 1px solid var(--gold);
-                border-radius: 16px;
-                border-bottom-right-radius: 4px;
-                padding: 20px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
-                opacity: 0;
-                visibility: hidden;
-                transform: translateY(15px) scale(0.95);
-                transition: all 0.3s;
-                z-index: 1001;
-            }
-            .info-bubble.active {
-                opacity: 1;
-                visibility: visible;
-                transform: translateY(0) scale(1);
-            }
-            .bubble-title {
-                color: var(--gold);
-                font-weight: 900;
-                font-size: 0.85rem;
-                margin-bottom: 8px;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                letter-spacing: 0.5px;
-            }
-            .bubble-text {
-                font-size: 0.85rem;
-                color: #e8eaed;
-                line-height: 1.5;
             }
 
             .news-container {
@@ -747,6 +501,124 @@
             }
             .bear-mode .news-title {
                 color: var(--accent-red);
+            }
+
+            .results-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;
+            }
+            .stock-card {
+                background: var(--card-bg);
+                backdrop-filter: blur(10px);
+                border-radius: 16px;
+                padding: 20px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                transition: transform 0.2s;
+                display: flex;
+                flex-direction: column;
+                touch-action: manipulation;
+                cursor: pointer;
+            }
+            @media (min-width: 768px) {
+                .stock-card:hover {
+                    transform: translateY(-5px);
+                    border-color: rgba(255, 255, 255, 0.3);
+                }
+            }
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+            .ticker {
+                font-size: 1.6rem;
+                font-weight: 800;
+                color: var(--text-main);
+                letter-spacing: -0.5px;
+            }
+            .price {
+                font-family: monospace;
+                font-size: 1.1rem;
+                color: var(--text-muted);
+            }
+            .signal-badge {
+                display: inline-block;
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 0.75rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .bullish {
+                color: var(--accent-green);
+                border: 1px solid var(--accent-green);
+                background: rgba(0, 230, 118, 0.1);
+            }
+            .bearish {
+                color: var(--accent-red);
+                border: 1px solid var(--accent-red);
+                background: rgba(255, 23, 68, 0.1);
+            }
+
+            .ai-setup {
+                margin-top: auto;
+                background: var(--setup-bg);
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 15px;
+                transition: border-color 0.3s;
+            }
+            .ai-setup.kill-switch-active {
+                border: 2px solid var(--accent-red);
+                animation: pulseKillSwitch 1.5s infinite;
+            }
+            @keyframes pulseKillSwitch {
+                0% {
+                    box-shadow: 0 0 5px var(--accent-red);
+                }
+                50% {
+                    box-shadow: 0 0 20px var(--accent-red);
+                }
+                100% {
+                    box-shadow: 0 0 5px var(--accent-red);
+                }
+            }
+
+            .ai-title::before {
+                content: "⚡";
+                color: #ffd700;
+                margin-right: 5px;
+            }
+            .leg {
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.85rem;
+                color: #ccc;
+                padding: 6px 0;
+            }
+            .leg span:last-child {
+                font-family: monospace;
+                color: white;
+                text-align: right;
+            }
+            .stop-loss-box {
+                margin-top: 10px;
+                padding: 8px;
+                background: rgba(255, 23, 68, 0.15);
+                border: 1px solid var(--accent-red);
+                border-radius: 8px;
+                font-size: 0.75rem;
+                color: #ff8a80;
+                text-align: center;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+            }
+            .kill-switch-active {
+                border-color: var(--accent-red) !important;
+                animation: borderPulse 1s infinite;
             }
 
             .app-footer {
@@ -801,7 +673,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=57"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=58"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
@@ -942,7 +814,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=57"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=58"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -950,7 +822,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=57"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=58"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -1320,19 +1192,16 @@
             rocketBtn.addEventListener("mouseenter", function () {
                 if (isLaunching) return;
 
-                // Visual Lock-On Feedback
                 levitationCore.classList.add("lock-on");
                 rocketBtn.classList.add("lock-active");
                 playSound("hover");
 
-                // Wait 400ms to confirm intention
                 hoverTimer = setTimeout(() => {
                     launchRocket();
                 }, 400);
             });
 
             rocketBtn.addEventListener("mouseleave", function () {
-                // Cancel launch if mouse leaves quickly
                 clearTimeout(hoverTimer);
                 if (!isLaunching) {
                     levitationCore.classList.remove("lock-on");

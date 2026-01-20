@@ -24,8 +24,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.5.0 MANGA GLASS ---
-APP_VERSION = "v1.5.0 Manga"
+# --- VERSION 1.5.1 FINAL POLISH ---
+APP_VERSION = "v1.5.1 Final"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -166,7 +166,6 @@ def get_ticker_news(ticker):
 # --- VIX SPECTRUM LOGIC ---
 def get_vix_data(force_update=False):
     global VIX_CACHE
-
     if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
         return VIX_CACHE["data"]
 
