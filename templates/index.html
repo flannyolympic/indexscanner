@@ -6,8 +6,8 @@
     <title>TheMatrix</title>
     
     <link rel="preload" as="image" href="{{ url_for('static', filename='raiden.gif') }}">
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icon.png') }}?v=73">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}?v=73">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icon.png') }}?v=74">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}?v=74">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -191,7 +191,7 @@
 
 <canvas id="market-canvas"></canvas>
 
-<div id="loading-overlay"><div class="goku-container"><img src="{{ url_for('static', filename='raiden.gif') }}?v=73" class="goku-img" id="raiden-gif" alt="Scanning..."></div></div>
+<div id="loading-overlay"><div class="goku-container"><img src="{{ url_for('static', filename='raiden.gif') }}?v=74" class="goku-img" id="raiden-gif" alt="Scanning..."></div></div>
 <div id="detail-modal"><div class="modal-content"><div class="close-modal" onclick="closeModal()">×</div><div id="tv-chart-container" style="width:100%; height:100%;"></div></div></div>
 
 <div class="app-wrapper">
@@ -241,9 +241,9 @@
     <div class="oracle-container">
         <div class="oracle-card">
             {% if 'BULLISH' in chosen_one.signal %}
-                <div class="oracle-mascot-container"><img src="{{ url_for('static', filename='shrek.png') }}?v=73" class="oracle-mascot-img mascot-shrek" alt="Bullish"></div>
+                <div class="oracle-mascot-container"><img src="{{ url_for('static', filename='shrek.png') }}?v=74" class="oracle-mascot-img mascot-shrek" alt="Bullish"></div>
             {% elif 'BEARISH' in chosen_one.signal %}
-                <div class="oracle-mascot-container"><img src="{{ url_for('static', filename='hellboy.png') }}?v=73" class="oracle-mascot-img mascot-hellboy" alt="Bearish"></div>
+                <div class="oracle-mascot-container"><img src="{{ url_for('static', filename='hellboy.png') }}?v=74" class="oracle-mascot-img mascot-hellboy" alt="Bearish"></div>
             {% endif %}
 
             <div class="oracle-badge">ORACLE PICK</div>
@@ -316,7 +316,7 @@
 </div>
 
 <div class="search-dock-container">
-    <div class="info-bubble" id="hft-info"><div class="bubble-title">TRADER BRAIN V2.3</div><div class="bubble-text">System scans live volatility for momentum anomalies.</div></div>
+    <div class="info-bubble" id="hft-info"><div class="bubble-title">TRADER BRAIN V2.4</div><div class="bubble-text">System scans live volatility for momentum anomalies.</div></div>
     <div id="search-results"></div> 
     <div class="search-dock">
         <div class="search-icon" onclick="document.getElementById('searchForm').submit()">➜</div>
