@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=56"
+            href="{{ url_for('static', filename='icon.png') }}?v=57"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=56"
+            href="{{ url_for('static', filename='icon.png') }}?v=57"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -180,7 +180,6 @@
                 height: 160px;
                 align-items: center;
             }
-
             .levitation-core {
                 position: relative;
                 width: 160px;
@@ -191,12 +190,10 @@
                 animation: floatAround 6s ease-in-out infinite alternate;
                 transition: transform 0.3s ease;
             }
-            /* Lock-On Effect: Pauses float and scales up */
             .levitation-core.lock-on {
                 animation-play-state: paused;
                 transform: scale(1.1);
             }
-
             @keyframes floatAround {
                 0% {
                     transform: translate(0, 0);
@@ -211,7 +208,6 @@
                     transform: translate(0, 0);
                 }
             }
-
             .core-glow {
                 position: absolute;
                 top: 50%;
@@ -315,6 +311,141 @@
                 100% {
                     transform: translate(-2px, -2px);
                 }
+            }
+
+            /* MANGA GLASS FRAME */
+            .manga-glass-bubble {
+                position: relative;
+                background: linear-gradient(
+                    135deg,
+                    rgba(20, 20, 20, 0.95),
+                    rgba(5, 5, 5, 0.98)
+                );
+                border: 2px solid rgba(255, 255, 255, 0.2);
+                border-radius: 20px;
+                padding: 30px;
+                box-shadow:
+                    0 15px 50px rgba(0, 0, 0, 0.9),
+                    inset 0 0 30px rgba(255, 255, 255, 0.05);
+                overflow: hidden;
+                animation: breatheFrame 4s infinite ease-in-out;
+                margin-bottom: 40px;
+            }
+            /* Comic Glitch Border */
+            .manga-glass-bubble::before {
+                content: "";
+                position: absolute;
+                top: -2px;
+                left: -2px;
+                right: -2px;
+                bottom: -2px;
+                border-radius: 22px;
+                z-index: -1;
+                background: linear-gradient(
+                    45deg,
+                    transparent,
+                    var(--gold),
+                    transparent,
+                    var(--accent-green)
+                );
+                background-size: 200% 200%;
+                animation: gradientBorder 3s linear infinite;
+                opacity: 0.5;
+            }
+            @keyframes gradientBorder {
+                0% {
+                    background-position: 0% 50%;
+                }
+                100% {
+                    background-position: 100% 50%;
+                }
+            }
+            @keyframes breatheFrame {
+                0%,
+                100% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.01);
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95);
+                }
+            }
+
+            .oracle-mascot-container {
+                position: absolute;
+                right: 10px;
+                top: -45px;
+                width: 90px;
+                height: 90px;
+                z-index: 20;
+                pointer-events: none;
+                filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.5));
+            }
+            .oracle-mascot-img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                animation: mascotFloat 3s infinite ease-in-out;
+            }
+            @keyframes mascotFloat {
+                0%,
+                100% {
+                    transform: translateY(0);
+                }
+                50% {
+                    transform: translateY(-8px);
+                }
+            }
+
+            .oracle-badge {
+                position: absolute;
+                top: 0;
+                left: 0;
+                background: var(--gold);
+                color: black;
+                font-weight: 900;
+                font-size: 0.7rem;
+                padding: 4px 12px;
+                border-bottom-right-radius: 12px;
+                letter-spacing: 1px;
+            }
+
+            .oracle-header {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: flex-end;
+                margin-bottom: 20px;
+                margin-top: 10px;
+            }
+            .oracle-ticker {
+                font-size: clamp(2.5rem, 6vw, 4rem);
+                font-weight: 900;
+                color: white;
+                letter-spacing: -2px;
+                line-height: 1;
+                cursor: pointer;
+                transition: color 0.2s;
+            }
+            .oracle-ticker:hover {
+                color: var(--gold);
+                text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            }
+            .pop-value {
+                font-size: 2rem;
+                font-weight: 900;
+                color: var(--gold);
+            }
+            .social-box {
+                background: rgba(255, 255, 255, 0.05);
+                padding: 15px;
+                border-radius: 12px;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 0.95rem;
+                border-left: 3px solid var(--gold);
             }
 
             /* MODAL STYLES */
@@ -568,143 +699,6 @@
                 line-height: 1.5;
             }
 
-            .battle-arena {
-                display: flex;
-                justify-content: center;
-                gap: 40px;
-                margin-bottom: 40px;
-                height: 80px;
-                align-items: center;
-            }
-
-            .oracle-container {
-                margin-bottom: 40px;
-                animation: slideUp 0.6s ease-out;
-                position: relative;
-            }
-            @keyframes slideUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-            .oracle-card {
-                background: linear-gradient(
-                    145deg,
-                    rgba(30, 30, 30, 0.9) 0%,
-                    rgba(10, 10, 10, 0.95) 100%
-                );
-                backdrop-filter: blur(15px);
-                border: 1px solid var(--gold);
-                border-radius: 24px;
-                padding: 30px;
-                position: relative;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-                overflow: visible;
-            }
-
-            .oracle-mascot-container {
-                position: absolute;
-                right: -10px;
-                top: -40px;
-                width: 85px;
-                height: 85px;
-                z-index: 20;
-                pointer-events: none;
-            }
-            @media (max-width: 380px) {
-                .oracle-mascot-container {
-                    width: 60px;
-                    height: 60px;
-                    top: -30px;
-                    right: -5px;
-                }
-            }
-            .oracle-mascot-img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-                opacity: 0;
-                animation:
-                    igniteReveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s
-                        forwards,
-                    mascotFloat 3s infinite ease-in-out 1.2s;
-            }
-            .mascot-shrek {
-                filter: drop-shadow(0 0 20px rgba(0, 230, 118, 0.8));
-            }
-            .mascot-hellboy {
-                filter: drop-shadow(0 0 20px rgba(255, 23, 68, 0.8));
-            }
-            @keyframes igniteReveal {
-                0% {
-                    transform: scale(0) translateY(50px) rotate(-20deg);
-                    opacity: 0;
-                }
-                100% {
-                    transform: scale(1) translateY(0) rotate(0deg);
-                    opacity: 1;
-                }
-            }
-            @keyframes mascotFloat {
-                0%,
-                100% {
-                    transform: translateY(0);
-                }
-                50% {
-                    transform: translateY(-8px);
-                }
-            }
-
-            .oracle-badge {
-                position: absolute;
-                top: -14px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: var(--gold);
-                color: black;
-                font-weight: 900;
-                font-size: 0.75rem;
-                padding: 6px 16px;
-                border-radius: 20px;
-                letter-spacing: 1.5px;
-                box-shadow: 0 0 15px var(--gold);
-            }
-            .oracle-header {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: space-between;
-                align-items: flex-end;
-                margin-bottom: 20px;
-            }
-            .oracle-ticker {
-                font-size: clamp(2.5rem, 6vw, 4rem);
-                font-weight: 900;
-                color: white;
-                letter-spacing: -2px;
-                line-height: 1;
-            }
-            .pop-value {
-                font-size: 2rem;
-                font-weight: 900;
-                color: var(--gold);
-            }
-            .social-box {
-                background: rgba(255, 255, 255, 0.05);
-                padding: 15px;
-                border-radius: 12px;
-                margin-bottom: 15px;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                font-size: 0.95rem;
-                border-left: 3px solid var(--gold);
-            }
-
             .news-container {
                 margin-top: 20px;
                 padding: 15px;
@@ -753,124 +747,6 @@
             }
             .bear-mode .news-title {
                 color: var(--accent-red);
-            }
-
-            .results-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 20px;
-            }
-            .stock-card {
-                background: var(--card-bg);
-                backdrop-filter: blur(10px);
-                border-radius: 16px;
-                padding: 20px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                transition: transform 0.2s;
-                display: flex;
-                flex-direction: column;
-                touch-action: manipulation;
-                cursor: pointer;
-            }
-            @media (min-width: 768px) {
-                .stock-card:hover {
-                    transform: translateY(-5px);
-                    border-color: rgba(255, 255, 255, 0.3);
-                }
-            }
-            .card-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 15px;
-            }
-            .ticker {
-                font-size: 1.6rem;
-                font-weight: 800;
-                color: var(--text-main);
-                letter-spacing: -0.5px;
-            }
-            .price {
-                font-family: monospace;
-                font-size: 1.1rem;
-                color: var(--text-muted);
-            }
-            .signal-badge {
-                display: inline-block;
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-size: 0.75rem;
-                font-weight: 800;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-            .bullish {
-                color: var(--accent-green);
-                border: 1px solid var(--accent-green);
-                background: rgba(0, 230, 118, 0.1);
-            }
-            .bearish {
-                color: var(--accent-red);
-                border: 1px solid var(--accent-red);
-                background: rgba(255, 23, 68, 0.1);
-            }
-
-            .ai-setup {
-                margin-top: auto;
-                background: var(--setup-bg);
-                border-radius: 12px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                padding: 15px;
-                transition: border-color 0.3s;
-            }
-            .ai-setup.kill-switch-active {
-                border: 2px solid var(--accent-red);
-                animation: pulseKillSwitch 1.5s infinite;
-            }
-            @keyframes pulseKillSwitch {
-                0% {
-                    box-shadow: 0 0 5px var(--accent-red);
-                }
-                50% {
-                    box-shadow: 0 0 20px var(--accent-red);
-                }
-                100% {
-                    box-shadow: 0 0 5px var(--accent-red);
-                }
-            }
-
-            .ai-title::before {
-                content: "⚡";
-                color: #ffd700;
-                margin-right: 5px;
-            }
-            .leg {
-                display: flex;
-                justify-content: space-between;
-                font-size: 0.85rem;
-                color: #ccc;
-                padding: 6px 0;
-            }
-            .leg span:last-child {
-                font-family: monospace;
-                color: white;
-                text-align: right;
-            }
-            .stop-loss-box {
-                margin-top: 10px;
-                padding: 8px;
-                background: rgba(255, 23, 68, 0.15);
-                border: 1px solid var(--accent-red);
-                border-radius: 8px;
-                font-size: 0.75rem;
-                color: #ff8a80;
-                text-align: center;
-                font-weight: 700;
-                letter-spacing: 0.5px;
-            }
-            .kill-switch-active {
-                border-color: var(--accent-red) !important;
-                animation: borderPulse 1s infinite;
             }
 
             .app-footer {
@@ -925,7 +801,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=56"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=57"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
@@ -1062,11 +938,11 @@
             </div>
             {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
             <div class="oracle-container">
-                <div class="oracle-card">
+                <div class="manga-glass-bubble">
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=56"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=57"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -1074,7 +950,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=56"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=57"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
