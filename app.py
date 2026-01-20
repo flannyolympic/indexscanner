@@ -25,8 +25,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.7.1 CEREBRO PRIME ---
-APP_VERSION = "v1.7.1 Cerebro Prime"
+# --- VERSION 1.7.2 SILENT RUNNING ---
+APP_VERSION = "v1.7.2 Silent"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -44,7 +44,7 @@ VIX_CACHE = {
     "last_updated": 0,
 }
 
-# --- EXPANDED UNIVERSE FOR "GOOGLE-LIKE" INSTANT SEARCH ---
+# EXPANDED UNIVERSE FOR INSTANT SEARCH
 STOCKS = [
     "AAPL",
     "MSFT",
@@ -155,38 +155,31 @@ def get_market_status_color():
     return "#ff5252"
 
 
-# --- STEALTH CONNECTION HANDLER ---
+# --- FIXED DATA FETCHING (Log Warning Fix) ---
 def get_market_data(ticker, retries=3):
     """
-    Fetches market data with a custom session to prevent 403 Forbidden errors.
+    Fetches market data using native yfinance handling to avoid session conflicts.
     """
-    session = requests.Session()
-    session.headers.update(
-        {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-    )
-
     attempt = 0
     while attempt <= retries:
         try:
             # Random jitter to avoid synchronized bursts
-            jitter = random.uniform(0.1, 0.3)
+            jitter = random.uniform(0.05, 0.2)
             t_module.sleep(jitter)
 
-            # Use the session for yfinance
-            ticker_obj = yf.Ticker(ticker, session=session)
+            # Removed custom session to let yfinance use curl_cffi internally
+            ticker_obj = yf.Ticker(ticker)
 
-            # Fetch 5 days of 5m data (includes pre/post market)
+            # Fetch 5 days of 5m data
             df = ticker_obj.history(period="5d", interval="5m", prepost=True)
 
-            if not df.empty and len(df) >= 10:  # Relaxed constraint to 10 candles
+            if not df.empty and len(df) >= 10:
                 return df
 
         except Exception as e:
             if attempt > 0:
                 logger.warning(f"Retry {attempt}/{retries} for {ticker}: {e}")
-            t_module.sleep(1 + attempt)  # Exponential backoff
+            t_module.sleep(1 + attempt)
 
         attempt += 1
     return None
@@ -194,7 +187,7 @@ def get_market_data(ticker, retries=3):
 
 def get_ticker_news(ticker):
     """
-    Fetches news using Google RSS to avoid API keys and rate limits.
+    Fetches news using Google RSS.
     """
     try:
         clean_ticker = ticker.replace("-USD", "")
@@ -254,7 +247,6 @@ def get_vix_data(force_update=False):
             df = get_market_data("^VIX", retries=2)
 
             if df is None:
-                # If VIX fails, return cached data if available, else OFFLINE
                 if VIX_CACHE["last_updated"] > 0:
                     return VIX_CACHE["data"]
                 return {
@@ -300,7 +292,7 @@ class NeuralEngine:
     def calculate_technical_score(df):
         latest = df.iloc[-1]
 
-        # RSI Score (30%)
+        # RSI Score
         rsi = latest["RSI"]
         rsi_score = 50 - abs(50 - rsi)
         if rsi < 30:
@@ -308,15 +300,14 @@ class NeuralEngine:
         elif rsi > 70:
             rsi_score = 90
 
-        # Volume Score (30%)
-        # Handle cases where volume might be 0 (e.g. pre-market low liquidity)
+        # Volume Score
         avg_vol = df["Volume"].rolling(20).mean().iloc[-1]
         if pd.isna(avg_vol) or avg_vol == 0:
             vol_score = 50
         else:
             vol_score = min(100, (latest["Volume"] / avg_vol) * 50)
 
-        # Trend Score (40%)
+        # Trend Score
         sma20 = latest["SMA_20"]
         price = latest["Close"]
         trend_score = 100 if price > sma20 else 0
@@ -461,12 +452,10 @@ def analyze_ticker(ticker_input):
     df = get_market_data(ticker)
 
     if df is None:
-        # Fallback: Try appending -USD if it failed and might be crypto (naive check)
         if not ticker.endswith("-USD") and ticker in CRYPTO:
             df = get_market_data(f"{ticker}-USD")
             if df is not None:
                 ticker = f"{ticker}-USD"
-
         if df is None:
             return None
 
@@ -486,20 +475,16 @@ def analyze_ticker(ticker_input):
 
     latest = df.iloc[-1]
 
-    # Handle NaN values safely
     if pd.isna(latest["Close"]) or pd.isna(latest["RSI"]):
         return None
 
     price = latest["Close"]
     avg_width = df["BB_Width"].rolling(window=20).mean().iloc[-1]
     current_width = latest["BB_Width"]
-
-    # Handle Volume 0
     avg_vol = df["Volume"].rolling(window=20).mean().iloc[-1]
     avg_vol = avg_vol if (not pd.isna(avg_vol) and avg_vol > 0) else 1
     vol_spike = latest["Volume"] > (avg_vol * 1.5)
 
-    # Signal Logic
     signal = "NEUTRAL"
     suggestion = "Neutral"
     trend = "FLAT"
@@ -555,22 +540,19 @@ def suggest():
     if not query:
         return jsonify([])
 
-    # 1. INSTANT LOCAL SEARCH (0 Latency)
+    # 1. INSTANT LOCAL SEARCH
     local_suggestions = []
-    # Combine lists for search
     ALL_TICKERS = list(set(STOCKS + CRYPTO))
 
     for t in ALL_TICKERS:
         if t.startswith(query):
-            # Format nicely for the dropdown
             name = "Crypto Asset" if "-USD" in t else "Stock Asset"
             local_suggestions.append({"symbol": t, "name": name, "exch": "Global"})
 
-    # Return local matches immediately if found
     if local_suggestions:
         return jsonify(local_suggestions[:5])
 
-    return jsonify([])  # Don't fallback to remote API if local has data, keeps it fast
+    return jsonify([])
 
 
 @app.after_request
@@ -601,15 +583,12 @@ def scan():
     mode = request.args.get("mode", "stock")
     scan_source = CRYPTO if mode == "crypto" else STOCKS
 
-    # Increase sample size slightly to ensure at least some hits even if some fail
     scan_list = random.sample(scan_source, min(len(scan_source), 8))
-
     leader = "BTC-USD" if mode == "crypto" else "SPY"
     if leader not in scan_list:
         scan_list.append(leader)
 
     results = []
-    # Use max_workers=6 to be gentler on rate limits
     with ThreadPoolExecutor(max_workers=6) as executor:
         future_to_ticker = {executor.submit(analyze_ticker, t): t for t in scan_list}
         for future in as_completed(future_to_ticker):

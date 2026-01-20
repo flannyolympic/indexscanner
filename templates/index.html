@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=66"
+            href="{{ url_for('static', filename='icon.png') }}?v=67"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=66"
+            href="{{ url_for('static', filename='icon.png') }}?v=67"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -280,7 +280,7 @@
                 overflow: hidden;
                 max-height: 40vh;
                 overflow-y: auto;
-                z-index: 101;
+                z-index: 200; /* FIXED Z-INDEX */
             }
             .result-item {
                 padding: 12px 20px;
@@ -315,7 +315,7 @@
                 padding: 15px;
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
                 display: none;
-                z-index: 102;
+                z-index: 202;
             }
             .info-bubble.active {
                 display: block;
@@ -488,37 +488,108 @@
                 }
             }
 
-            /* CLASSIC GLASS CARD UI */
-            .oracle-card {
+            /* MANGA GLASS FRAME */
+            .manga-glass-bubble {
+                position: relative;
                 background: linear-gradient(
                     135deg,
-                    rgba(30, 30, 30, 0.9) 0%,
-                    rgba(10, 10, 10, 0.95) 100%
+                    rgba(15, 15, 15, 0.85),
+                    rgba(5, 5, 5, 0.9)
                 );
-                backdrop-filter: blur(15px);
-                border: 1px solid var(--gold);
-                border-radius: 24px;
+                background-image: radial-gradient(
+                    rgba(255, 255, 255, 0.03) 1px,
+                    transparent 1px
+                );
+                background-size: 20px 20px;
+                border: 2px solid rgba(255, 255, 255, 0.15);
+                border-radius: 20px;
                 padding: 30px;
-                position: relative;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-                overflow: visible;
+                box-shadow:
+                    0 15px 50px rgba(0, 0, 0, 0.9),
+                    inset 0 0 30px rgba(255, 255, 255, 0.02);
+                overflow: hidden;
+                animation: breatheFrame 4s infinite ease-in-out;
                 margin-bottom: 40px;
+                z-index: 10;
             }
+            @supports not (backdrop-filter: blur(15px)) {
+                .manga-glass-bubble {
+                    background: #111;
+                }
+            }
+
+            .manga-glass-bubble::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(
+                    rgba(18, 16, 16, 0) 50%,
+                    rgba(0, 0, 0, 0.1) 50%
+                );
+                background-size: 100% 4px;
+                z-index: 2;
+                pointer-events: none;
+                opacity: 0.3;
+            }
+
+            .manga-glass-bubble::before {
+                content: "";
+                position: absolute;
+                top: -2px;
+                left: -2px;
+                right: -2px;
+                bottom: -2px;
+                border-radius: 22px;
+                z-index: -1;
+                background: linear-gradient(
+                    45deg,
+                    transparent,
+                    var(--gold),
+                    transparent,
+                    var(--accent-green)
+                );
+                background-size: 200% 200%;
+                animation: gradientBorder 3s linear infinite;
+                opacity: 0.5;
+            }
+            @keyframes gradientBorder {
+                0% {
+                    background-position: 0% 50%;
+                }
+                100% {
+                    background-position: 100% 50%;
+                }
+            }
+            @keyframes breatheFrame {
+                0%,
+                100% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.01);
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95);
+                }
+            }
+
             .oracle-mascot-container {
                 position: absolute;
-                right: -10px;
-                top: -40px;
-                width: 85px;
-                height: 85px;
+                right: 10px;
+                top: -45px;
+                width: 90px;
+                height: 90px;
                 z-index: 20;
                 pointer-events: none;
+                filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.5));
             }
-            @media (max-width: 380px) {
+            @media (max-width: 400px) {
                 .oracle-mascot-container {
-                    width: 60px;
-                    height: 60px;
-                    top: -30px;
-                    right: -5px;
+                    top: -35px;
+                    right: 5px;
+                    width: 70px;
+                    height: 70px;
                 }
             }
             .oracle-mascot-img {
@@ -539,17 +610,15 @@
 
             .oracle-badge {
                 position: absolute;
-                top: -14px;
-                left: 50%;
-                transform: translateX(-50%);
+                top: 0;
+                left: 0;
                 background: var(--gold);
                 color: black;
                 font-weight: 900;
-                font-size: 0.75rem;
-                padding: 6px 16px;
-                border-radius: 20px;
-                letter-spacing: 1.5px;
-                box-shadow: 0 0 15px var(--gold);
+                font-size: 0.7rem;
+                padding: 4px 12px;
+                border-bottom-right-radius: 12px;
+                letter-spacing: 1px;
             }
             .oracle-header {
                 display: flex;
@@ -557,6 +626,7 @@
                 justify-content: space-between;
                 align-items: flex-end;
                 margin-bottom: 20px;
+                margin-top: 15px;
             }
             .oracle-ticker {
                 font-size: clamp(2.5rem, 6vw, 4rem);
@@ -847,7 +917,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=66"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=67"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
@@ -1000,11 +1070,11 @@
             </div>
             {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
             <div class="oracle-container">
-                <div class="oracle-card">
+                <div class="manga-glass-bubble">
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=66"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=67"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -1012,7 +1082,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=66"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=67"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -1192,6 +1262,7 @@
                 }
                 initElements() {
                     this.elements = [];
+                    // INCREASED COUNT
                     const count = Math.min(
                         Math.floor(window.innerWidth / 30),
                         80,
@@ -1230,6 +1301,7 @@
                             p.y = -40;
                             p.x = Math.random() * window.innerWidth;
                         }
+                        // INCREASED OPACITY
                         this.ctx.fillStyle = `rgba(255, 255, 255, 0.4)`;
                         this.ctx.font = `${p.size}px serif`;
                         this.ctx.fillText(p.icon, p.x, p.y);
