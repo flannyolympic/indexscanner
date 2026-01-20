@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=55"
+            href="{{ url_for('static', filename='icon.png') }}?v=56"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=55"
+            href="{{ url_for('static', filename='icon.png') }}?v=56"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -189,7 +189,14 @@
                 align-items: center;
                 justify-content: center;
                 animation: floatAround 6s ease-in-out infinite alternate;
+                transition: transform 0.3s ease;
             }
+            /* Lock-On Effect: Pauses float and scales up */
+            .levitation-core.lock-on {
+                animation-play-state: paused;
+                transform: scale(1.1);
+            }
+
             @keyframes floatAround {
                 0% {
                     transform: translate(0, 0);
@@ -270,6 +277,10 @@
                     inset 0 0 20px rgba(255, 255, 255, 0.05);
                 transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 touch-action: manipulation;
+            }
+            .rocket-btn.lock-active {
+                border-color: var(--gold);
+                box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
             }
             .rocket-btn:active {
                 transform: scale(0.9);
@@ -914,7 +925,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=55"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=56"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
@@ -1022,13 +1033,13 @@
             </div>
 
             <div class="launcher-container">
-                <div class="levitation-core">
+                <div class="levitation-core" id="levitationCore">
                     <div class="core-glow glow-green"></div>
                     <div class="core-glow glow-gold"></div>
                     <div
                         class="rocket-btn"
                         id="rocketBtn"
-                        onclick="launchRocket()"
+                        onclick="launchRocket(true)"
                     >
                         <div class="rocket-icon">🚀</div>
                     </div>
@@ -1055,7 +1066,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=55"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=56"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -1063,7 +1074,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=55"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=56"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -1388,15 +1399,17 @@
                 }
             }
 
-            // HOVER LAUNCH LOGIC
+            // HOVER LAUNCH LOGIC (Intention-Based)
             const rocketBtn = document.getElementById("rocketBtn");
+            const levitationCore = document.getElementById("levitationCore");
             let isLaunching = false;
+            let hoverTimer;
 
-            function launchRocket() {
+            function launchRocket(immediate = false) {
                 if (isLaunching) return;
                 isLaunching = true;
 
-                playSound("launch"); // PLAY SOUND
+                playSound("launch");
                 rocketBtn.classList.add("launching");
                 const overlay = document.getElementById("loading-overlay");
                 const gif = document.getElementById("raiden-gif");
@@ -1427,10 +1440,28 @@
                 }, 300);
             }
 
-            // DESKTOP HOVER TRIGGER
+            // DESKTOP HOVER INTENT
             rocketBtn.addEventListener("mouseenter", function () {
+                if (isLaunching) return;
+
+                // Visual Lock-On Feedback
+                levitationCore.classList.add("lock-on");
+                rocketBtn.classList.add("lock-active");
                 playSound("hover");
-                launchRocket();
+
+                // Wait 400ms to confirm intention
+                hoverTimer = setTimeout(() => {
+                    launchRocket();
+                }, 400);
+            });
+
+            rocketBtn.addEventListener("mouseleave", function () {
+                // Cancel launch if mouse leaves quickly
+                clearTimeout(hoverTimer);
+                if (!isLaunching) {
+                    levitationCore.classList.remove("lock-on");
+                    rocketBtn.classList.remove("lock-active");
+                }
             });
 
             // SEARCH TRIGGER
@@ -1438,7 +1469,7 @@
                 .getElementById("searchForm")
                 .addEventListener("submit", function (e) {
                     e.preventDefault();
-                    launchRocket();
+                    launchRocket(true);
                 });
 
             // MARKET BELL LOGIC (New York Time)
@@ -1453,9 +1484,7 @@
                 const min = nyDate.getMinutes();
                 const sec = nyDate.getSeconds();
 
-                // Mon-Fri Only
                 if (day >= 1 && day <= 5) {
-                    // 9:30:00 AM or 16:00:00 PM
                     if (
                         (hour === 9 && min === 30 && sec === 0) ||
                         (hour === 16 && min === 0 && sec === 0)
@@ -1465,7 +1494,6 @@
                 }
             }
 
-            // CLOCK & BELL LOOP
             function updateClock() {
                 const now = new Date();
                 const options = {
@@ -1488,7 +1516,6 @@
 
             // MODAL LOGIC
             function openModal(ticker) {
-                // Clean ticker for TradingView (remove -USD for crypto if needed, but TV usually smart)
                 let cleanTicker = ticker.replace("-USD", "USD");
                 const isCrypto = ticker.includes("-USD");
                 const exchange = isCrypto ? "COINBASE" : "NASDAQ";
@@ -1496,7 +1523,6 @@
                 const modal = document.getElementById("detail-modal");
                 modal.classList.add("active");
 
-                // Inject TradingView Widget
                 new TradingView.widget({
                     width: "100%",
                     height: "100%",
@@ -1517,7 +1543,7 @@
                 document
                     .getElementById("detail-modal")
                     .classList.remove("active");
-                document.getElementById("tv-chart-container").innerHTML = ""; // Clear widget
+                document.getElementById("tv-chart-container").innerHTML = "";
             }
 
             function toggleInfoBubble() {
@@ -1542,7 +1568,6 @@
                     document.getElementById("search-results").style.display =
                         "none";
                 }
-                // Close modal if clicked outside
                 const modal = document.getElementById("detail-modal");
                 if (event.target === modal) {
                     closeModal();
@@ -1579,7 +1604,7 @@
                                 div.onclick = () => {
                                     input.value = item.symbol;
                                     resultsBox.style.display = "none";
-                                    launchRocket();
+                                    launchRocket(true);
                                 };
                                 resultsBox.appendChild(div);
                             });

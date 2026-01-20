@@ -24,8 +24,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.4.0 SONIC BOOM ---
-APP_VERSION = "v1.4.0 Sonic"
+# --- VERSION 1.3.1 HOVER LOCK-ON ---
+APP_VERSION = "v1.3.1 Lock-On"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -534,7 +534,6 @@ def api_vix():
 
 
 def background_vix_updater():
-    """Fetches VIX data in the background with auto-restart logic."""
     t_module.sleep(5)
     while True:
         try:
