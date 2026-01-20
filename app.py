@@ -24,14 +24,15 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.2.1 NEWS HUNTER ---
-APP_VERSION = "v1.2.1 Intel"
+# --- VERSION 1.2.2 NEBULA INTEL ---
+APP_VERSION = "v1.2.2 Stable"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
 
-# Robust Cache
+# Robust Cache & Lock
+VIX_LOCK = threading.Lock()
 VIX_CACHE = {
     "data": {
         "price": "...",
@@ -119,102 +120,106 @@ def get_market_data(ticker, retries=3):
     return None
 
 
-# --- NEW: GOOGLE NEWS RSS SCRAPER ---
 def get_ticker_news(ticker):
-    """Fetches real-time news from Google News RSS (Reliable & Free)."""
+    """Fetches real-time news with Browser Headers to prevent blocking."""
     try:
-        # 1. Construct RSS URL
-        # We append 'stock' or 'crypto' to contextually filter for financial news
         query = f"{ticker} stock news"
         if "-USD" in ticker:
             query = f"{ticker.replace('-USD', '')} crypto news"
 
         url = f"https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
 
-        # 2. Fetch XML
-        response = requests.get(url, timeout=4)
+        # MASK AS BROWSER TO PREVENT 403 ERRORS
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+
+        response = requests.get(url, headers=headers, timeout=5)
         response.raise_for_status()
 
-        # 3. Parse XML
         root = ET.fromstring(response.content)
         items = root.findall("./channel/item")
 
         news_data = []
-        for item in items[:3]:  # Top 3 only
+        for item in items[:3]:
             title = (
                 item.find("title").text
                 if item.find("title") is not None
                 else "Market Update"
             )
             link = item.find("link").text if item.find("link") is not None else "#"
-            pubDate = (
-                item.find("pubDate").text if item.find("pubDate") is not None else ""
-            )
 
-            # Extract Publisher (Usually "Title - Publisher")
             publisher = "Financial Wire"
             source = item.find("source")
             if source is not None:
                 publisher = source.text
             elif " - " in title:
-                publisher = title.split(" - ")[-1]  # Fallback parsing
+                publisher = title.split(" - ")[-1]
+                title = title.split(" - ")[0]
 
-            news_data.append(
-                {"title": title, "publisher": publisher, "link": link, "date": pubDate}
-            )
+            news_data.append({"title": title, "publisher": publisher, "link": link})
 
         return news_data
     except Exception as e:
-        logger.error(f"Google News Fetch Failed for {ticker}: {e}")
+        logger.error(f"News Fetch Error ({ticker}): {e}")
         return []
 
 
 # --- VIX SPECTRUM LOGIC ---
 def get_vix_data(force_update=False):
     global VIX_CACHE
+
+    # Check cache freshness first
     if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
         return VIX_CACHE["data"]
 
-    try:
-        status_color = get_market_status_color()
-        df = get_market_data("^VIX", retries=3)
-        if df is None:
-            if VIX_CACHE["last_updated"] > 0:
-                return VIX_CACHE["data"]
-            return {
-                "price": "...",
-                "color": "grey",
-                "label": "OFFLINE",
+    # Thread-safe update
+    with VIX_LOCK:
+        if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
+            return VIX_CACHE["data"]
+
+        try:
+            status_color = get_market_status_color()
+            df = get_market_data("^VIX", retries=3)
+
+            if df is None:
+                if VIX_CACHE["last_updated"] > 0:
+                    return VIX_CACHE["data"]
+                return {
+                    "price": "...",
+                    "color": "grey",
+                    "label": "OFFLINE",
+                    "market_status": status_color,
+                }
+
+            price = df.iloc[-1]["Close"]
+
+            if price < 12:
+                color, label = "#00E676", "COMPLACENCY"
+            elif 12 <= price < 15:
+                color, label = "#66BB6A", "CALM"
+            elif 15 <= price < 20:
+                color, label = "#FFD600", "MILD"
+            elif 20 <= price < 30:
+                color, label = "#FF9100", "ELEVATED"
+            elif 30 <= price < 40:
+                color, label = "#FF3D00", "ANXIETY"
+            elif 40 <= price < 50:
+                color, label = "#D50000", "CRISIS"
+            else:
+                color, label = "#880E4F", "SHOCK"
+
+            new_data = {
+                "price": round(price, 2),
+                "color": color,
+                "label": label,
                 "market_status": status_color,
             }
-
-        price = df.iloc[-1]["Close"]
-        if price < 12:
-            color, label = "#00E676", "COMPLACENCY"
-        elif 12 <= price < 15:
-            color, label = "#66BB6A", "CALM"
-        elif 15 <= price < 20:
-            color, label = "#FFD600", "MILD"
-        elif 20 <= price < 30:
-            color, label = "#FF9100", "ELEVATED"
-        elif 30 <= price < 40:
-            color, label = "#FF3D00", "ANXIETY"
-        elif 40 <= price < 50:
-            color, label = "#D50000", "CRISIS"
-        else:
-            color, label = "#880E4F", "SHOCK"
-
-        new_data = {
-            "price": round(price, 2),
-            "color": color,
-            "label": label,
-            "market_status": status_color,
-        }
-        VIX_CACHE["data"] = new_data
-        VIX_CACHE["last_updated"] = t_module.time()
-        return new_data
-    except Exception:
-        return VIX_CACHE["data"]
+            VIX_CACHE["data"] = new_data
+            VIX_CACHE["last_updated"] = t_module.time()
+            return new_data
+        except Exception:
+            return VIX_CACHE["data"]
 
 
 # --- CORE ANALYSIS ---
@@ -534,8 +539,8 @@ def api_vix():
 
 
 def background_vix_updater():
-    """Fetches VIX data in the background with auto-restart capability"""
-    t_module.sleep(3)
+    """Fetches VIX data in the background with auto-restart logic."""
+    t_module.sleep(5)
     while True:
         try:
             get_vix_data(force_update=True)

@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=52"
+            href="{{ url_for('static', filename='icon.png') }}?v=53"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=52"
+            href="{{ url_for('static', filename='icon.png') }}?v=53"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -281,6 +281,7 @@
                 }
             }
 
+            /* CLOAK MODE OVERLAY */
             #loading-overlay {
                 position: fixed;
                 top: 0;
@@ -826,7 +827,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=52"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=53"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
@@ -951,7 +952,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=52"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=53"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -959,7 +960,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=52"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=53"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -1274,6 +1275,7 @@
                 setTimeout(() => {
                     overlay.classList.add("active");
 
+                    // Wait for overlay fade, then reveal GIF
                     setTimeout(() => {
                         if (gif.complete) {
                             gif.classList.add("visible");
