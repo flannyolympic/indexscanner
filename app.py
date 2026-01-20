@@ -25,8 +25,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.6.0 RESTORED ---
-APP_VERSION = "v1.6.0 Fixed"
+# --- VERSION 1.4.1 RESTORED ---
+APP_VERSION = "v1.4.1 Sonic Nebula"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -218,7 +218,7 @@ def get_vix_data(force_update=False):
             return VIX_CACHE["data"]
 
 
-# --- CORE LOGIC ---
+# --- CORE ANALYSIS ---
 def calculate_probability(price, target, std_dev, rsi, trend):
     safe_vol = max(std_dev, price * 0.005)
     z_score = abs(target - price) / (safe_vol * np.sqrt(3))
@@ -467,6 +467,7 @@ def scan():
     if "BTC-USD" not in scan_list:
         scan_list.append("BTC-USD")
 
+    # PARALLEL PROCESSING PRESERVED
     results = []
     with ThreadPoolExecutor(max_workers=8) as executor:
         future_to_ticker = {executor.submit(analyze_ticker, t): t for t in scan_list}
