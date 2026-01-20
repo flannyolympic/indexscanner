@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=53"
+            href="{{ url_for('static', filename='icon.png') }}?v=54"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=53"
+            href="{{ url_for('static', filename='icon.png') }}?v=54"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -170,7 +170,7 @@
                 white-space: nowrap;
             }
 
-            /* NEBULA CORE ENGINE */
+            /* NEBULA CORE ENGINE WITH LEVITATION */
             .launcher-container {
                 display: flex;
                 justify-content: center;
@@ -180,6 +180,32 @@
                 height: 160px;
                 align-items: center;
             }
+
+            .levitation-core {
+                position: relative;
+                width: 160px;
+                height: 160px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: floatAround 6s ease-in-out infinite alternate;
+            }
+
+            @keyframes floatAround {
+                0% {
+                    transform: translate(0, 0);
+                }
+                33% {
+                    transform: translate(10px, -10px);
+                }
+                66% {
+                    transform: translate(-10px, 5px);
+                }
+                100% {
+                    transform: translate(0, 0);
+                }
+            }
+
             .core-glow {
                 position: absolute;
                 top: 50%;
@@ -281,7 +307,6 @@
                 }
             }
 
-            /* CLOAK MODE OVERLAY */
             #loading-overlay {
                 position: fixed;
                 top: 0;
@@ -827,7 +852,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=53"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=54"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
@@ -925,10 +950,16 @@
             </div>
 
             <div class="launcher-container">
-                <div class="core-glow glow-green"></div>
-                <div class="core-glow glow-gold"></div>
-                <div class="rocket-btn" onclick="launchRocket()">
-                    <div class="rocket-icon">🚀</div>
+                <div class="levitation-core">
+                    <div class="core-glow glow-green"></div>
+                    <div class="core-glow glow-gold"></div>
+                    <div
+                        class="rocket-btn"
+                        id="rocketBtn"
+                        onclick="launchRocket()"
+                    >
+                        <div class="rocket-icon">🚀</div>
+                    </div>
                 </div>
             </div>
 
@@ -952,7 +983,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=53"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=54"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -960,7 +991,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=53"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=54"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -997,7 +1028,6 @@
                             >"{{ chosen_one.social.comment }}"</span
                         >
                     </div>
-
                     <div
                         class="ai-setup {{ 'kill-switch-active' if 'KILL SWITCH' in chosen_one.setup.type else '' }}"
                     >
@@ -1262,20 +1292,23 @@
 
             new MarketPulse();
 
-            // ROCKET LAUNCH
+            // HOVER LAUNCH LOGIC
+            const rocketBtn = document.getElementById("rocketBtn");
+            let isLaunching = false;
+
             function launchRocket() {
-                const btn = document.querySelector(".rocket-btn");
+                if (isLaunching) return;
+                isLaunching = true;
+
+                rocketBtn.classList.add("launching");
                 const overlay = document.getElementById("loading-overlay");
                 const gif = document.getElementById("raiden-gif");
 
                 if (navigator.vibrate) navigator.vibrate(50);
 
-                btn.classList.add("launching");
-
                 setTimeout(() => {
                     overlay.classList.add("active");
 
-                    // Wait for overlay fade, then reveal GIF
                     setTimeout(() => {
                         if (gif.complete) {
                             gif.classList.add("visible");
@@ -1297,12 +1330,17 @@
                 }, 300);
             }
 
-            // UNIVERSAL TRIGGER: HIT ENTER
+            // DESKTOP HOVER TRIGGER
+            rocketBtn.addEventListener("mouseenter", function () {
+                launchRocket();
+            });
+
+            // SEARCH TRIGGER
             document
                 .getElementById("searchForm")
                 .addEventListener("submit", function (e) {
-                    e.preventDefault(); // Stop normal submit
-                    launchRocket(); // Trigger animation which then submits
+                    e.preventDefault();
+                    launchRocket();
                 });
 
             function updateClock() {

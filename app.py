@@ -24,8 +24,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.2.2 NEBULA INTEL ---
-APP_VERSION = "v1.2.2 Stable"
+# --- VERSION 1.3.0 ZERO-G HOVER ---
+APP_VERSION = "v1.3.0 Zero-G"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -121,7 +121,6 @@ def get_market_data(ticker, retries=3):
 
 
 def get_ticker_news(ticker):
-    """Fetches real-time news with Browser Headers to prevent blocking."""
     try:
         query = f"{ticker} stock news"
         if "-USD" in ticker:
@@ -129,7 +128,6 @@ def get_ticker_news(ticker):
 
         url = f"https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
 
-        # MASK AS BROWSER TO PREVENT 403 ERRORS
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
@@ -169,11 +167,9 @@ def get_ticker_news(ticker):
 def get_vix_data(force_update=False):
     global VIX_CACHE
 
-    # Check cache freshness first
     if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
         return VIX_CACHE["data"]
 
-    # Thread-safe update
     with VIX_LOCK:
         if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
             return VIX_CACHE["data"]
@@ -222,7 +218,7 @@ def get_vix_data(force_update=False):
             return VIX_CACHE["data"]
 
 
-# --- CORE ANALYSIS ---
+# --- CORE LOGIC ---
 def calculate_probability(price, target, std_dev, rsi, trend):
     safe_vol = max(std_dev, price * 0.005)
     z_score = abs(target - price) / (safe_vol * np.sqrt(3))
@@ -539,7 +535,6 @@ def api_vix():
 
 
 def background_vix_updater():
-    """Fetches VIX data in the background with auto-restart logic."""
     t_module.sleep(5)
     while True:
         try:
