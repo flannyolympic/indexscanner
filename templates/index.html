@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=63"
+            href="{{ url_for('static', filename='icon.png') }}?v=64"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=63"
+            href="{{ url_for('static', filename='icon.png') }}?v=64"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -181,7 +181,6 @@
                 white-space: nowrap;
             }
 
-            /* MODE TOGGLE */
             .mode-toggle-container {
                 display: flex;
                 justify-content: center;
@@ -209,7 +208,6 @@
                 box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
             }
 
-            /* SEARCH DOCK */
             .search-dock-container {
                 position: relative;
                 width: 100%;
@@ -312,27 +310,26 @@
                 line-height: 1.4;
             }
 
-            /* CONTAINED MACRO WIDGET - FIX APPLIED HERE */
             .macro-container {
                 width: 100%;
-                margin-bottom: 40px; /* Increased margin for better spacing */
+                margin-bottom: 40px;
                 border-radius: 16px;
                 overflow: hidden;
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 background: rgba(10, 10, 10, 0.5);
-                max-height: 300px; /* FIX: Constrain height */
-                overflow-y: auto; /* FIX: Enable internal scrolling */
+                max-height: 300px;
+                overflow-y: auto;
                 position: relative;
-                z-index: 5; /* Ensure it's below the rocket and oracle pick */
+                z-index: 5;
             }
 
-            /* ROCKET LAUNCHER */
+            /* NEBULA CORE ENGINE */
             .launcher-container {
                 display: flex;
                 justify-content: center;
                 margin-bottom: 40px;
                 position: relative;
-                z-index: 20; /* FIX: High z-index */
+                z-index: 20;
                 height: 160px;
                 align-items: center;
             }
@@ -469,17 +466,14 @@
                 }
             }
 
-            /* ORACLE CARD */
-            .oracle-container {
+            /* MANGA GLASS FRAME - TRANSPARENCY FIX */
+            .manga-glass-bubble {
                 position: relative;
-                z-index: 15; /* FIX: Ensure it's above macro widget */
-            }
-            .oracle-card {
                 background: linear-gradient(
                     135deg,
-                    rgba(15, 15, 15, 0.95),
-                    rgba(5, 5, 5, 0.98)
-                );
+                    rgba(15, 15, 15, 0.85),
+                    rgba(5, 5, 5, 0.9)
+                ); /* Reduced opacity to 85-90% */
                 background-image: radial-gradient(
                     rgba(255, 255, 255, 0.03) 1px,
                     transparent 1px
@@ -491,10 +485,73 @@
                 box-shadow:
                     0 15px 50px rgba(0, 0, 0, 0.9),
                     inset 0 0 30px rgba(255, 255, 255, 0.02);
-                overflow: visible;
-                position: relative;
+                overflow: hidden;
+                animation: breatheFrame 4s infinite ease-in-out;
                 margin-bottom: 40px;
+                z-index: 10; /* Ensure layer order */
             }
+            @supports not (backdrop-filter: blur(15px)) {
+                .manga-glass-bubble {
+                    background: #111;
+                }
+            }
+
+            .manga-glass-bubble::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(
+                    rgba(18, 16, 16, 0) 50%,
+                    rgba(0, 0, 0, 0.1) 50%
+                );
+                background-size: 100% 4px;
+                z-index: 2;
+                pointer-events: none;
+                opacity: 0.3;
+            }
+
+            .manga-glass-bubble::before {
+                content: "";
+                position: absolute;
+                top: -2px;
+                left: -2px;
+                right: -2px;
+                bottom: -2px;
+                border-radius: 22px;
+                z-index: -1;
+                background: linear-gradient(
+                    45deg,
+                    transparent,
+                    var(--gold),
+                    transparent,
+                    var(--accent-green)
+                );
+                background-size: 200% 200%;
+                animation: gradientBorder 3s linear infinite;
+                opacity: 0.5;
+            }
+            @keyframes gradientBorder {
+                0% {
+                    background-position: 0% 50%;
+                }
+                100% {
+                    background-position: 100% 50%;
+                }
+            }
+            @keyframes breatheFrame {
+                0%,
+                100% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.01);
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95);
+                }
+            }
+
             .oracle-mascot-container {
                 position: absolute;
                 right: 10px;
@@ -504,6 +561,14 @@
                 z-index: 20;
                 pointer-events: none;
                 filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.5));
+            }
+            @media (max-width: 400px) {
+                .oracle-mascot-container {
+                    top: -35px;
+                    right: 5px;
+                    width: 70px;
+                    height: 70px;
+                }
             }
             .oracle-mascot-img {
                 width: 100%;
@@ -520,6 +585,7 @@
                     transform: translateY(-8px);
                 }
             }
+
             .oracle-badge {
                 position: absolute;
                 top: 0;
@@ -576,7 +642,6 @@
                 z-index: 3;
             }
 
-            /* AI RATIONALE BOX */
             .rationale-box {
                 background: rgba(0, 230, 118, 0.05);
                 border: 1px solid rgba(0, 230, 118, 0.2);
@@ -654,7 +719,7 @@
                 gap: 20px;
             }
             .stock-card {
-                background: var(--card-bg);
+                background: rgba(15, 15, 15, 0.85);
                 backdrop-filter: blur(10px);
                 border-radius: 16px;
                 padding: 20px;
@@ -781,7 +846,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=63"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=64"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
@@ -934,11 +999,11 @@
             </div>
             {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
             <div class="oracle-container">
-                <div class="oracle-card">
+                <div class="manga-glass-bubble">
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=63"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=64"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -946,7 +1011,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=63"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=64"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -1126,9 +1191,10 @@
                 }
                 initElements() {
                     this.elements = [];
+                    // INCREASED COUNT
                     const count = Math.min(
-                        Math.floor(window.innerWidth / 50),
-                        40,
+                        Math.floor(window.innerWidth / 30),
+                        80,
                     );
                     for (let i = 0; i < count; i++)
                         this.elements.push(this.createParticle());
@@ -1137,8 +1203,8 @@
                     return {
                         x: Math.random() * window.innerWidth,
                         y: Math.random() * window.innerHeight,
-                        size: 10 + Math.random() * 20,
-                        speed: 0.5 + Math.random() * 1.0,
+                        size: 14 + Math.random() * 24,
+                        speed: 0.5 + Math.random() * 1.5,
                         icon: "🐂",
                         assigned: false,
                     };
@@ -1164,7 +1230,8 @@
                             p.y = -40;
                             p.x = Math.random() * window.innerWidth;
                         }
-                        this.ctx.fillStyle = `rgba(255, 255, 255, 0.05)`;
+                        // INCREASED OPACITY
+                        this.ctx.fillStyle = `rgba(255, 255, 255, 0.4)`;
                         this.ctx.font = `${p.size}px serif`;
                         this.ctx.fillText(p.icon, p.x, p.y);
                     });
@@ -1242,7 +1309,6 @@
                 document
                     .querySelectorAll(".mode-btn")
                     .forEach((btn) => btn.classList.remove("active"));
-                // Find button containing the mode text (simplified for robustness)
                 const buttons = document.querySelectorAll(".mode-btn");
                 if (mode === "crypto") buttons[1].classList.add("active");
                 else buttons[0].classList.add("active");

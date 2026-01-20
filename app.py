@@ -25,8 +25,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.6.0 MARKET MASTER ---
-APP_VERSION = "v1.6.0 Master"
+# --- VERSION 1.6.1 VISUAL CLARITY ---
+APP_VERSION = "v1.6.1 Clear"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -44,8 +44,7 @@ VIX_CACHE = {
     "last_updated": 0,
 }
 
-# EXPANDED UNIVERSE
-STOCKS = [
+UNIVERSE = [
     "AAPL",
     "MSFT",
     "NVDA",
@@ -54,6 +53,11 @@ STOCKS = [
     "AMZN",
     "GOOGL",
     "META",
+    "BTC-USD",
+    "ETH-USD",
+    "SOL-USD",
+    "DOGE-USD",
+    "SHIB-USD",
     "GME",
     "AMC",
     "PLTR",
@@ -64,29 +68,6 @@ STOCKS = [
     "SPY",
     "QQQ",
     "IWM",
-    "NFLX",
-    "INTC",
-    "BA",
-    "DIS",
-    "JPM",
-    "GS",
-]
-
-CRYPTO = [
-    "BTC-USD",
-    "ETH-USD",
-    "SOL-USD",
-    "DOGE-USD",
-    "SHIB-USD",
-    "XRP-USD",
-    "ADA-USD",
-    "AVAX-USD",
-    "LINK-USD",
-    "LTC-USD",
-    "DOT-USD",
-    "MATIC-USD",
-    "UNI-USD",
-    "ATOM-USD",
 ]
 
 
@@ -110,7 +91,6 @@ def get_current_time():
 
 
 def get_market_status():
-    """Determines exact market session."""
     tz = pytz.timezone("US/Eastern")
     now = datetime.now(tz)
     current_time = now.time()
@@ -142,10 +122,7 @@ def get_market_data(ticker, retries=3):
         try:
             jitter = random.uniform(0.05, 0.2)
             t_module.sleep(jitter)
-            # prepost=True ensures we capture extended hours movement
-            df = yf.download(
-                ticker, period="5d", interval="5m", prepost=True, progress=False
-            )
+            df = yf.download(ticker, period="5d", interval="5m", progress=False)
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
             if not df.empty and len(df) >= 20:
@@ -201,7 +178,7 @@ def get_ticker_news(ticker):
         return []
 
 
-# --- VIX LOGIC ---
+# --- VIX SPECTRUM LOGIC ---
 def get_vix_data(force_update=False):
     global VIX_CACHE
     if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
@@ -255,39 +232,31 @@ def get_vix_data(force_update=False):
             return VIX_CACHE["data"]
 
 
-# --- INTELLIGENT ANALYSIS ---
+# --- CORE LOGIC ---
 def generate_rationale(signal, rsi, vol_spike, vwap_dist):
-    """Generates a human-readable reason for the trade."""
     reasons = []
-
     if "BULLISH" in signal:
         if rsi < 30:
             reasons.append("RSI is deeply oversold (<30)")
         elif rsi < 40:
             reasons.append("RSI is showing bullish divergence")
-
         if vol_spike:
             reasons.append("volume breakout detected")
         if vwap_dist > 0:
             reasons.append("price holds above VWAP")
         else:
             reasons.append("reclaiming VWAP support")
-
         return f"Long signal triggering because {', and '.join(reasons)}."
-
     elif "BEARISH" in signal:
         if rsi > 70:
             reasons.append("RSI is overbought (>70)")
         elif rsi > 60:
             reasons.append("RSI momentum is fading")
-
         if vol_spike:
             reasons.append("selling volume is accelerating")
         if vwap_dist < 0:
             reasons.append("rejected at VWAP resistance")
-
         return f"Short signal triggering because {', and '.join(reasons)}."
-
     return "Market in consolidation. Awaiting clearer volatility expansion."
 
 
@@ -471,14 +440,9 @@ def analyze_ticker(ticker_input):
         price, target_price, latest["Std_Dev"], latest["RSI"], trend
     )
     social = get_social_sentiment(latest["RSI"], vol_spike)
-
-    # NEW: AI RATIONALE
     rationale = generate_rationale(
         signal, latest["RSI"], vol_spike, price - latest["VWAP"]
     )
-
-    # NEW: WIN RATE SIMULATION
-    win_rate = min(98, max(45, int(probability + (5 if vol_spike else -5))))
 
     return {
         "ticker": ticker,
@@ -491,7 +455,6 @@ def analyze_ticker(ticker_input):
         "social": social,
         "setup": setup_text,
         "rationale": rationale,
-        "win_rate": win_rate,
     }
 
 
@@ -546,17 +509,9 @@ def index():
 @app.route("/scan")
 def scan():
     start_time = t_module.time()
-
-    # DETERMINE MODE (STOCK vs CRYPTO)
-    mode = request.args.get("mode", "stock")
-    scan_source = CRYPTO if mode == "crypto" else STOCKS
-
-    scan_list = random.sample(scan_source, 8)
-
-    # Always include the big dog for that sector
-    leader = "BTC-USD" if mode == "crypto" else "SPY"
-    if leader not in scan_list:
-        scan_list.append(leader)
+    scan_list = random.sample(UNIVERSE, 8)
+    if "BTC-USD" not in scan_list:
+        scan_list.append("BTC-USD")
 
     results = []
     with ThreadPoolExecutor(max_workers=8) as executor:
@@ -596,7 +551,6 @@ def scan():
         timestamp=get_current_time(),
         version=APP_VERSION,
         market_status=get_market_status(),
-        current_mode=mode,
     )
 
 
@@ -615,7 +569,6 @@ def search():
             status_color=get_market_status_color(),
             timestamp=get_current_time(),
             version=APP_VERSION,
-            market_status=get_market_status(),
         )
     result["news"] = get_ticker_news(result["ticker"])
     mood = (
