@@ -18,7 +18,7 @@ packaging==25.0
 pandas==2.3.3
 peewee==3.19.0
 platformdirs==4.5.1
-protobuf==6.33.4
+protobuf
 pycparser==2.23
 python-dateutil==2.9.0.post0
 pytz==2025.2
