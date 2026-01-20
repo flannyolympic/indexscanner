@@ -25,8 +25,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.7.2 SILENT RUNNING ---
-APP_VERSION = "v1.7.2 Silent"
+# --- VERSION 1.8.0 DATA FOCUS ---
+APP_VERSION = "v1.8.0 Pro"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -44,7 +44,7 @@ VIX_CACHE = {
     "last_updated": 0,
 }
 
-# EXPANDED UNIVERSE FOR INSTANT SEARCH
+# UNIVERSE
 STOCKS = [
     "AAPL",
     "MSFT",
@@ -155,54 +155,39 @@ def get_market_status_color():
     return "#ff5252"
 
 
-# --- FIXED DATA FETCHING (Log Warning Fix) ---
+# --- DATA FETCHING ---
 def get_market_data(ticker, retries=3):
-    """
-    Fetches market data using native yfinance handling to avoid session conflicts.
-    """
     attempt = 0
     while attempt <= retries:
         try:
-            # Random jitter to avoid synchronized bursts
             jitter = random.uniform(0.05, 0.2)
             t_module.sleep(jitter)
-
-            # Removed custom session to let yfinance use curl_cffi internally
-            ticker_obj = yf.Ticker(ticker)
-
-            # Fetch 5 days of 5m data
-            df = ticker_obj.history(period="5d", interval="5m", prepost=True)
-
+            # Native yfinance handling (Best for Render)
+            df = yf.download(
+                ticker, period="5d", interval="5m", prepost=True, progress=False
+            )
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
             if not df.empty and len(df) >= 10:
                 return df
-
         except Exception as e:
             if attempt > 0:
                 logger.warning(f"Retry {attempt}/{retries} for {ticker}: {e}")
             t_module.sleep(1 + attempt)
-
         attempt += 1
     return None
 
 
 def get_ticker_news(ticker):
-    """
-    Fetches news using Google RSS.
-    """
     try:
         clean_ticker = ticker.replace("-USD", "")
         search_term = (
             f"{clean_ticker} crypto" if "-USD" in ticker else f"{clean_ticker} stock"
         )
-
         url = f"https://news.google.com/rss/search?q={search_term}&hl=en-US&gl=US&ceid=US:en"
 
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-
+        headers = {"User-Agent": "Mozilla/5.0"}
         response = requests.get(url, headers=headers, timeout=3)
-        response.raise_for_status()
 
         root = ET.fromstring(response.content)
         items = root.findall("./channel/item")
@@ -215,24 +200,17 @@ def get_ticker_news(ticker):
                 else "Market Update"
             )
             link = item.find("link").text if item.find("link") is not None else "#"
-
-            publisher = "Financial Wire"
             source = item.find("source")
-            if source is not None:
-                publisher = source.text
-            elif " - " in title:
-                publisher = title.split(" - ")[-1]
-                title = title.split(" - ")[0]
-
+            publisher = source.text if source is not None else "Financial Wire"
             news_data.append({"title": title, "publisher": publisher, "link": link})
 
         return news_data
     except Exception as e:
-        logger.error(f"News Fetch Error ({ticker}): {e}")
+        logger.error(f"News Error: {e}")
         return []
 
 
-# --- VIX LOGIC ---
+# --- VIX ---
 def get_vix_data(force_update=False):
     global VIX_CACHE
     if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
@@ -241,11 +219,9 @@ def get_vix_data(force_update=False):
     with VIX_LOCK:
         if not force_update and t_module.time() - VIX_CACHE["last_updated"] < 60:
             return VIX_CACHE["data"]
-
         try:
             status_color = get_market_status_color()
             df = get_market_data("^VIX", retries=2)
-
             if df is None:
                 if VIX_CACHE["last_updated"] > 0:
                     return VIX_CACHE["data"]
@@ -257,7 +233,6 @@ def get_vix_data(force_update=False):
                 }
 
             price = df.iloc[-1]["Close"]
-
             if price < 12:
                 color, label = "#00E676", "COMPLACENCY"
             elif 12 <= price < 15:
@@ -286,62 +261,46 @@ def get_vix_data(force_update=False):
             return VIX_CACHE["data"]
 
 
-# --- THE NEURAL ENGINE (AI CORE) ---
+# --- AI CORE ---
 class NeuralEngine:
     @staticmethod
     def calculate_technical_score(df):
         latest = df.iloc[-1]
-
-        # RSI Score
         rsi = latest["RSI"]
-        rsi_score = 50 - abs(50 - rsi)
-        if rsi < 30:
-            rsi_score = 90
-        elif rsi > 70:
-            rsi_score = 90
+        rsi_score = 90 if (rsi < 30 or rsi > 70) else (50 - abs(50 - rsi))
 
-        # Volume Score
         avg_vol = df["Volume"].rolling(20).mean().iloc[-1]
-        if pd.isna(avg_vol) or avg_vol == 0:
-            vol_score = 50
-        else:
+        vol_score = 50
+        if not pd.isna(avg_vol) and avg_vol > 0:
             vol_score = min(100, (latest["Volume"] / avg_vol) * 50)
 
-        # Trend Score
-        sma20 = latest["SMA_20"]
-        price = latest["Close"]
-        trend_score = 100 if price > sma20 else 0
-
-        final_score = (rsi_score * 0.3) + (vol_score * 0.3) + (trend_score * 0.4)
-        return final_score
+        trend_score = 100 if latest["Close"] > latest["SMA_20"] else 0
+        return (rsi_score * 0.3) + (vol_score * 0.3) + (trend_score * 0.4)
 
     @staticmethod
     def generate_narrative(signal, rsi, vol_spike, price, vwap):
         dist_to_vwap = ((price - vwap) / vwap) * 100
-
         narrative = []
         if "BULLISH" in signal:
             narrative.append("Bullish momentum detected")
             if vol_spike:
-                narrative.append("with high institutional volume")
+                narrative.append("with high volume")
             if rsi < 35:
-                narrative.append("rebounding from oversold levels")
+                narrative.append("rebounding from oversold")
             elif rsi > 60:
-                narrative.append("confirming trend strength")
+                narrative.append("confirming trend")
             if dist_to_vwap > 0:
                 narrative.append(f"holding {dist_to_vwap:.2f}% above VWAP")
         elif "BEARISH" in signal:
             narrative.append("Bearish rejection detected")
             if vol_spike:
-                narrative.append("on increasing sell volume")
+                narrative.append("on high sell volume")
             if rsi > 65:
                 narrative.append("at overextended levels")
             if dist_to_vwap < 0:
                 narrative.append(f"rejected {abs(dist_to_vwap):.2f}% below VWAP")
         else:
-            narrative.append("Price is consolidating")
-            narrative.append("awaiting a volatility trigger")
-
+            narrative.append("Consolidation phase")
         return f"{', '.join(narrative)}."
 
 
@@ -459,7 +418,6 @@ def analyze_ticker(ticker_input):
         if df is None:
             return None
 
-    # Technical Calculations
     df["SMA_20"] = df["Close"].rolling(window=20).mean()
     df["Std_Dev"] = df["Close"].rolling(window=20).std()
     df["BB_Upper"] = df["SMA_20"] + (df["Std_Dev"] * 2)
@@ -474,7 +432,6 @@ def analyze_ticker(ticker_input):
     df["RSI"] = 100 - (100 / (1 + rs))
 
     latest = df.iloc[-1]
-
     if pd.isna(latest["Close"]) or pd.isna(latest["RSI"]):
         return None
 
@@ -540,18 +497,15 @@ def suggest():
     if not query:
         return jsonify([])
 
-    # 1. INSTANT LOCAL SEARCH
     local_suggestions = []
     ALL_TICKERS = list(set(STOCKS + CRYPTO))
-
     for t in ALL_TICKERS:
         if t.startswith(query):
-            name = "Crypto Asset" if "-USD" in t else "Stock Asset"
+            name = "Crypto" if "-USD" in t else "Stock"
             local_suggestions.append({"symbol": t, "name": name, "exch": "Global"})
 
     if local_suggestions:
         return jsonify(local_suggestions[:5])
-
     return jsonify([])
 
 

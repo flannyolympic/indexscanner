@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=67"
+            href="{{ url_for('static', filename='icon.png') }}?v=68"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=67"
+            href="{{ url_for('static', filename='icon.png') }}?v=68"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -55,7 +55,6 @@
                 --input-bg: rgba(5, 5, 5, 0.85);
                 --setup-bg: rgba(25, 25, 25, 0.6);
                 --max-width: 1400px;
-                --dock-height: 75px;
             }
 
             html {
@@ -120,7 +119,6 @@
                 vertical-align: middle;
                 letter-spacing: 0.5px;
             }
-
             .market-status {
                 font-size: 0.6rem;
                 font-weight: 800;
@@ -280,7 +278,7 @@
                 overflow: hidden;
                 max-height: 40vh;
                 overflow-y: auto;
-                z-index: 200; /* FIXED Z-INDEX */
+                z-index: 200;
             }
             .result-item {
                 padding: 12px 20px;
@@ -339,7 +337,7 @@
                 overflow: hidden;
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 background: rgba(10, 10, 10, 0.5);
-                max-height: 300px;
+                max-height: 250px;
                 overflow-y: auto;
                 position: relative;
                 z-index: 5;
@@ -488,115 +486,55 @@
                 }
             }
 
-            /* MANGA GLASS FRAME */
-            .manga-glass-bubble {
+            /* STANDARD GLASS CARD (NO MANGA) */
+            .oracle-container {
                 position: relative;
+                z-index: 15;
+            }
+            .oracle-card {
                 background: linear-gradient(
                     135deg,
-                    rgba(15, 15, 15, 0.85),
-                    rgba(5, 5, 5, 0.9)
+                    rgba(30, 30, 30, 0.9) 0%,
+                    rgba(10, 10, 10, 0.95) 100%
                 );
-                background-image: radial-gradient(
-                    rgba(255, 255, 255, 0.03) 1px,
-                    transparent 1px
-                );
-                background-size: 20px 20px;
-                border: 2px solid rgba(255, 255, 255, 0.15);
-                border-radius: 20px;
+                backdrop-filter: blur(15px);
+                border: 1px solid var(--gold);
+                border-radius: 24px;
                 padding: 30px;
-                box-shadow:
-                    0 15px 50px rgba(0, 0, 0, 0.9),
-                    inset 0 0 30px rgba(255, 255, 255, 0.02);
-                overflow: hidden;
-                animation: breatheFrame 4s infinite ease-in-out;
+                position: relative;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+                overflow: visible;
                 margin-bottom: 40px;
-                z-index: 10;
-            }
-            @supports not (backdrop-filter: blur(15px)) {
-                .manga-glass-bubble {
-                    background: #111;
-                }
-            }
-
-            .manga-glass-bubble::after {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(
-                    rgba(18, 16, 16, 0) 50%,
-                    rgba(0, 0, 0, 0.1) 50%
-                );
-                background-size: 100% 4px;
-                z-index: 2;
-                pointer-events: none;
-                opacity: 0.3;
-            }
-
-            .manga-glass-bubble::before {
-                content: "";
-                position: absolute;
-                top: -2px;
-                left: -2px;
-                right: -2px;
-                bottom: -2px;
-                border-radius: 22px;
-                z-index: -1;
-                background: linear-gradient(
-                    45deg,
-                    transparent,
-                    var(--gold),
-                    transparent,
-                    var(--accent-green)
-                );
-                background-size: 200% 200%;
-                animation: gradientBorder 3s linear infinite;
-                opacity: 0.5;
-            }
-            @keyframes gradientBorder {
-                0% {
-                    background-position: 0% 50%;
-                }
-                100% {
-                    background-position: 100% 50%;
-                }
-            }
-            @keyframes breatheFrame {
-                0%,
-                100% {
-                    transform: scale(1);
-                }
-                50% {
-                    transform: scale(1.01);
-                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95);
-                }
             }
 
             .oracle-mascot-container {
                 position: absolute;
-                right: 10px;
-                top: -45px;
-                width: 90px;
-                height: 90px;
+                right: -10px;
+                top: -40px;
+                width: 85px;
+                height: 85px;
                 z-index: 20;
                 pointer-events: none;
-                filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.5));
-            }
-            @media (max-width: 400px) {
-                .oracle-mascot-container {
-                    top: -35px;
-                    right: 5px;
-                    width: 70px;
-                    height: 70px;
-                }
             }
             .oracle-mascot-img {
                 width: 100%;
                 height: 100%;
                 object-fit: contain;
-                animation: mascotFloat 3s infinite ease-in-out;
+                opacity: 0;
+                animation:
+                    igniteReveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s
+                        forwards,
+                    mascotFloat 3s infinite ease-in-out 1.2s;
+            }
+            @keyframes igniteReveal {
+                0% {
+                    transform: scale(0) translateY(50px) rotate(-20deg);
+                    opacity: 0;
+                }
+                100% {
+                    transform: scale(1) translateY(0) rotate(0deg);
+                    opacity: 1;
+                }
             }
             @keyframes mascotFloat {
                 0%,
@@ -610,15 +548,17 @@
 
             .oracle-badge {
                 position: absolute;
-                top: 0;
-                left: 0;
+                top: -14px;
+                left: 50%;
+                transform: translateX(-50%);
                 background: var(--gold);
                 color: black;
                 font-weight: 900;
-                font-size: 0.7rem;
-                padding: 4px 12px;
-                border-bottom-right-radius: 12px;
-                letter-spacing: 1px;
+                font-size: 0.75rem;
+                padding: 6px 16px;
+                border-radius: 20px;
+                letter-spacing: 1.5px;
+                box-shadow: 0 0 15px var(--gold);
             }
             .oracle-header {
                 display: flex;
@@ -626,7 +566,6 @@
                 justify-content: space-between;
                 align-items: flex-end;
                 margin-bottom: 20px;
-                margin-top: 15px;
             }
             .oracle-ticker {
                 font-size: clamp(2.5rem, 6vw, 4rem);
@@ -636,8 +575,6 @@
                 line-height: 1;
                 cursor: pointer;
                 transition: color 0.2s;
-                position: relative;
-                z-index: 3;
             }
             .oracle-ticker:hover {
                 color: var(--gold);
@@ -647,8 +584,6 @@
                 font-size: 2rem;
                 font-weight: 900;
                 color: var(--gold);
-                position: relative;
-                z-index: 3;
             }
             .social-box {
                 background: rgba(255, 255, 255, 0.05);
@@ -660,27 +595,21 @@
                 gap: 12px;
                 font-size: 0.95rem;
                 border-left: 3px solid var(--gold);
-                position: relative;
-                z-index: 3;
             }
 
+            /* CLEAN AI TEXT BOX */
             .rationale-box {
-                background: rgba(0, 230, 118, 0.05);
-                border: 1px solid rgba(0, 230, 118, 0.2);
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
                 padding: 15px;
                 border-radius: 12px;
                 margin-bottom: 15px;
                 font-size: 0.85rem;
-                color: #e8eaed;
+                color: #aaa;
                 font-style: italic;
-                position: relative;
-                z-index: 3;
                 display: flex;
                 align-items: flex-start;
                 gap: 10px;
-            }
-            .rationale-icon {
-                font-size: 1.2rem;
             }
 
             .news-container {
@@ -689,8 +618,6 @@
                 border-radius: 12px;
                 background: rgba(0, 0, 0, 0.3);
                 border: 1px solid rgba(255, 255, 255, 0.1);
-                position: relative;
-                z-index: 3;
             }
             .news-title {
                 font-size: 0.7rem;
@@ -741,14 +668,12 @@
                 gap: 20px;
             }
             .stock-card {
-                background: rgba(15, 15, 15, 0.85);
+                background: var(--card-bg);
                 backdrop-filter: blur(10px);
                 border-radius: 16px;
                 padding: 20px;
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 cursor: pointer;
-                position: relative;
-                z-index: 5;
             }
             .ai-setup {
                 margin-top: auto;
@@ -757,8 +682,6 @@
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 padding: 15px;
                 transition: border-color 0.3s;
-                position: relative;
-                z-index: 3;
             }
             .ai-setup.kill-switch-active {
                 border: 2px solid var(--accent-red);
@@ -917,7 +840,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=67"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=68"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
@@ -1070,11 +993,11 @@
             </div>
             {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
             <div class="oracle-container">
-                <div class="manga-glass-bubble">
+                <div class="oracle-card">
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=67"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=68"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -1082,7 +1005,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=67"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=68"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -1127,7 +1050,7 @@
                     <div class="rationale-box">
                         <span class="rationale-icon">🧠</span>
                         <span class="rationale-text"
-                            >AI Insight: {{ chosen_one.rationale }}</span
+                            >{{ chosen_one.rationale }}</span
                         >
                     </div>
 
@@ -1262,7 +1185,6 @@
                 }
                 initElements() {
                     this.elements = [];
-                    // INCREASED COUNT
                     const count = Math.min(
                         Math.floor(window.innerWidth / 30),
                         80,
@@ -1301,7 +1223,6 @@
                             p.y = -40;
                             p.x = Math.random() * window.innerWidth;
                         }
-                        // INCREASED OPACITY
                         this.ctx.fillStyle = `rgba(255, 255, 255, 0.4)`;
                         this.ctx.font = `${p.size}px serif`;
                         this.ctx.fillText(p.icon, p.x, p.y);
@@ -1355,7 +1276,6 @@
                         }
                     }, 100);
 
-                    // Get current mode
                     const currentMode = document
                         .querySelector(".mode-btn.active")
                         .innerText.toLowerCase()
