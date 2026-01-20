@@ -4,10 +4,7 @@ import sqlite3
 import threading
 import time as t_module
 import xml.etree.ElementTree as ET
-from concurrent.futures import (  # NEW: Parallel Processing
-    ThreadPoolExecutor,
-    as_completed,
-)
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, time
 
 import numpy as np
@@ -28,8 +25,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.5.2 HYPER SPEED ---
-APP_VERSION = "v1.5.2 Hyper"
+# --- VERSION 1.6.0 RESTORED ---
+APP_VERSION = "v1.6.0 Fixed"
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -109,7 +106,7 @@ def get_market_data(ticker, retries=3):
     attempt = 0
     while attempt <= retries:
         try:
-            jitter = random.uniform(0.05, 0.2)  # Reduced jitter for speed
+            jitter = random.uniform(0.05, 0.2)
             t_module.sleep(jitter)
             df = yf.download(ticker, period="5d", interval="5m", progress=False)
             if isinstance(df.columns, pd.MultiIndex):
@@ -221,7 +218,7 @@ def get_vix_data(force_update=False):
             return VIX_CACHE["data"]
 
 
-# --- CORE ANALYSIS ---
+# --- CORE LOGIC ---
 def calculate_probability(price, target, std_dev, rsi, trend):
     safe_vol = max(std_dev, price * 0.005)
     z_score = abs(target - price) / (safe_vol * np.sqrt(3))
@@ -470,9 +467,6 @@ def scan():
     if "BTC-USD" not in scan_list:
         scan_list.append("BTC-USD")
 
-    # --- PARALLEL PROCESSING UPDATE ---
-    # We use ThreadPoolExecutor to run analyze_ticker for all stocks at once
-    # Max workers = 8 (one for each ticker in the sample)
     results = []
     with ThreadPoolExecutor(max_workers=8) as executor:
         future_to_ticker = {executor.submit(analyze_ticker, t): t for t in scan_list}
@@ -492,7 +486,6 @@ def scan():
     )
 
     if chosen_one:
-        # News fetch is still singular to respect Google rate limits
         chosen_one["news"] = get_ticker_news(chosen_one["ticker"])
 
     bulls = sum(1 for r in results if "BULLISH" in r["signal"])

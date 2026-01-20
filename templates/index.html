@@ -26,11 +26,11 @@
         <link
             rel="icon"
             type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=59"
+            href="{{ url_for('static', filename='icon.png') }}?v=60"
         />
         <link
             rel="apple-touch-icon"
-            href="{{ url_for('static', filename='icon.png') }}?v=59"
+            href="{{ url_for('static', filename='icon.png') }}?v=60"
         />
 
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -55,7 +55,6 @@
                 --input-bg: rgba(5, 5, 5, 0.85);
                 --setup-bg: rgba(25, 25, 25, 0.6);
                 --max-width: 1400px;
-                --dock-height: 75px;
             }
 
             html {
@@ -90,11 +89,12 @@
                 width: 100%;
                 position: relative;
             }
+
             .header-container {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                margin-bottom: 30px;
+                margin-bottom: 20px;
             }
             .brand-box {
                 display: flex;
@@ -170,6 +170,91 @@
                 white-space: nowrap;
             }
 
+            .search-dock-container {
+                position: relative;
+                width: 100%;
+                max-width: 600px;
+                margin: 0 auto 30px;
+                z-index: 100;
+            }
+            .search-dock {
+                width: 100%;
+                height: 50px;
+                background: var(--input-bg);
+                backdrop-filter: blur(25px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 40px;
+                padding: 0 10px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            }
+            .search-icon {
+                width: 35px;
+                height: 35px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: var(--accent-green);
+                border-radius: 50%;
+                color: #000;
+                font-weight: 900;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+            .search-input {
+                flex-grow: 1;
+                background: transparent;
+                border: none;
+                color: white;
+                font-size: 1rem;
+                padding: 0 15px;
+                outline: none;
+                font-weight: 500;
+            }
+            .info-orb-embedded {
+                width: 30px;
+                height: 30px;
+                border: 2px solid var(--gold);
+                border-radius: 50%;
+                color: var(--gold);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 900;
+                font-size: 0.8rem;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+            #search-results {
+                position: absolute;
+                top: 60px;
+                left: 0;
+                width: 100%;
+                background: rgba(10, 10, 10, 0.95);
+                backdrop-filter: blur(20px);
+                border: 1px solid #333;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+                display: none;
+                overflow: hidden;
+                max-height: 40vh;
+                overflow-y: auto;
+                z-index: 101;
+            }
+
+            /* CONTAINED MACRO WIDGET */
+            .macro-container {
+                width: 100%;
+                margin-bottom: 30px;
+                border-radius: 16px;
+                overflow: hidden;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                background: rgba(10, 10, 10, 0.5);
+                max-height: 250px; /* Restrict height */
+            }
+
             /* NEBULA CORE ENGINE */
             .launcher-container {
                 display: flex;
@@ -188,11 +273,6 @@
                 align-items: center;
                 justify-content: center;
                 animation: floatAround 6s ease-in-out infinite alternate;
-                transition: transform 0.3s ease;
-            }
-            .levitation-core.lock-on {
-                animation-play-state: paused;
-                transform: scale(1.1);
             }
             @keyframes floatAround {
                 0% {
@@ -274,272 +354,128 @@
                 transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 touch-action: manipulation;
             }
-            .rocket-btn.lock-active {
-                border-color: var(--gold);
-                box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
-            }
             .rocket-btn:active {
                 transform: scale(0.9);
                 background: rgba(30, 30, 30, 0.6);
             }
-            .rocket-btn.launching {
-                animation: launchSequence 1s
-                    cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
-                pointer-events: none;
-                border-color: var(--gold);
-                background: rgba(255, 215, 0, 0.3);
-            }
-            .rocket-btn.launching .rocket-icon {
-                animation: shake 0.1s linear infinite;
-            }
-            @keyframes launchSequence {
-                0% {
-                    transform: translateY(0) scale(0.9);
-                }
-                30% {
-                    transform: translateY(30px) scale(0.8);
-                }
-                100% {
-                    transform: translateY(-150vh) scale(1.5);
-                    opacity: 0;
-                }
-            }
-            @keyframes shake {
-                0% {
-                    transform: translate(2px, 2px);
-                }
-                100% {
-                    transform: translate(-2px, -2px);
-                }
-            }
 
-            /* MANGA GLASS FRAME (POLISHED) */
-            .manga-glass-bubble {
+            /* TRUE MANGA BUBBLE */
+            .manga-bubble-container {
                 position: relative;
-                background: linear-gradient(
-                    135deg,
-                    rgba(15, 15, 15, 0.95),
-                    rgba(5, 5, 5, 0.98)
-                );
-                background-image: radial-gradient(
-                    rgba(255, 255, 255, 0.03) 1px,
-                    transparent 1px
-                );
-                background-size: 20px 20px;
-                border: 2px solid rgba(255, 255, 255, 0.15);
-                border-radius: 20px;
-                padding: 30px;
-                box-shadow:
-                    0 15px 50px rgba(0, 0, 0, 0.9),
-                    inset 0 0 30px rgba(255, 255, 255, 0.02);
-                overflow: hidden;
-                animation: breatheFrame 4s infinite ease-in-out;
-                margin-bottom: 40px;
+                margin-bottom: 50px;
+                filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.8));
+                animation: breathe 4s infinite ease-in-out;
             }
-            @supports not (backdrop-filter: blur(15px)) {
-                .manga-glass-bubble {
-                    background: #111;
-                }
+            .manga-bubble {
+                background: #f1f1f1; /* High contrast paper look */
+                color: #111;
+                padding: 25px;
+                border-radius: 30px;
+                border-bottom-left-radius: 4px; /* Speech bubble tail effect */
+                border: 4px solid #111;
+                position: relative;
+                z-index: 5;
             }
-
-            /* CRT Scanline Overlay */
-            .manga-glass-bubble::after {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(
-                    rgba(18, 16, 16, 0) 50%,
-                    rgba(0, 0, 0, 0.1) 50%
-                );
-                background-size: 100% 4px;
-                z-index: 2;
-                pointer-events: none;
-                opacity: 0.3;
+            /* Dark Mode Override for Manga Bubble content */
+            .manga-bubble .oracle-ticker {
+                color: #111;
+                text-shadow: none;
+                font-size: 3.5rem;
             }
-
-            .manga-glass-bubble::before {
-                content: "";
-                position: absolute;
-                top: -2px;
-                left: -2px;
-                right: -2px;
-                bottom: -2px;
-                border-radius: 22px;
-                z-index: -1;
-                background: linear-gradient(
-                    45deg,
-                    transparent,
-                    var(--gold),
-                    transparent,
-                    var(--accent-green)
-                );
-                background-size: 200% 200%;
-                animation: gradientBorder 3s linear infinite;
-                opacity: 0.5;
+            .manga-bubble .pop-value {
+                color: #d50000;
             }
-            @keyframes gradientBorder {
-                0% {
-                    background-position: 0% 50%;
-                }
-                100% {
-                    background-position: 100% 50%;
-                }
+            .manga-bubble .social-box {
+                background: #e0e0e0;
+                color: #333;
+                border-left-color: #111;
             }
-            @keyframes breatheFrame {
-                0%,
-                100% {
-                    transform: scale(1);
-                }
-                50% {
-                    transform: scale(1.01);
-                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95);
-                }
+            .manga-bubble .news-container {
+                background: #e0e0e0;
+                border-color: #ccc;
+            }
+            .manga-bubble .news-item {
+                border-bottom-color: #ccc;
+            }
+            .manga-bubble .headline {
+                color: #111;
+            }
+            .manga-bubble .source {
+                color: #555;
+            }
+            .manga-bubble .ai-setup {
+                background: #111;
+                color: #fff;
             }
 
-            .oracle-mascot-container {
-                position: absolute;
-                right: 10px;
-                top: -45px;
-                width: 90px;
-                height: 90px;
-                z-index: 20;
-                pointer-events: none;
-                filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.5));
-            }
-            /* Mobile adjustment for mascot */
-            @media (max-width: 400px) {
-                .oracle-mascot-container {
-                    top: -35px;
-                    right: 5px;
-                    width: 70px;
-                    height: 70px;
-                }
-            }
-            .oracle-mascot-img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-                animation: mascotFloat 3s infinite ease-in-out;
-            }
-            @keyframes mascotFloat {
+            @keyframes breathe {
                 0%,
                 100% {
                     transform: translateY(0);
                 }
                 50% {
-                    transform: translateY(-8px);
+                    transform: translateY(-5px);
                 }
             }
 
-            .oracle-badge {
+            .oracle-mascot-container {
                 position: absolute;
-                top: 0;
-                left: 0;
-                background: var(--gold);
-                color: black;
-                font-weight: 900;
-                font-size: 0.7rem;
-                padding: 4px 12px;
-                border-bottom-right-radius: 12px;
-                letter-spacing: 1px;
+                right: -10px;
+                top: -50px;
+                width: 100px;
+                height: 100px;
+                z-index: 10;
+                pointer-events: none;
+                filter: drop-shadow(5px 5px 0px rgba(0, 0, 0, 0.2));
             }
-            .oracle-header {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: space-between;
-                align-items: flex-end;
-                margin-bottom: 20px;
-                margin-top: 15px;
-            }
-            .oracle-ticker {
-                font-size: clamp(2.5rem, 6vw, 4rem);
-                font-weight: 900;
-                color: white;
-                letter-spacing: -2px;
-                line-height: 1;
-                cursor: pointer;
-                transition: color 0.2s;
-                position: relative;
-                z-index: 3;
-            }
-            .oracle-ticker:hover {
-                color: var(--gold);
-                text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-            }
-            .pop-value {
-                font-size: 2rem;
-                font-weight: 900;
-                color: var(--gold);
-                position: relative;
-                z-index: 3;
-            }
-            .social-box {
-                background: rgba(255, 255, 255, 0.05);
-                padding: 15px;
-                border-radius: 12px;
-                margin-bottom: 15px;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                font-size: 0.95rem;
-                border-left: 3px solid var(--gold);
-                position: relative;
-                z-index: 3;
+            .oracle-mascot-img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
             }
 
-            .news-container {
-                margin-top: 20px;
-                padding: 15px;
-                border-radius: 12px;
-                background: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                position: relative;
-                z-index: 3;
+            /* LOADING OVERLAY - Z-INDEX FIX */
+            #loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                z-index: 100000;
+                display: none;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                transition: opacity 0.3s;
             }
-            .news-title {
-                font-size: 0.7rem;
-                font-weight: 800;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                margin-bottom: 10px;
-                color: var(--text-muted);
+            #loading-overlay.active {
+                display: flex;
+                opacity: 1;
+            }
+            .goku-container {
+                position: relative;
+                width: 100%;
+                max-width: 800px;
+                height: 60vh;
                 display: flex;
                 align-items: center;
-                gap: 6px;
+                justify-content: center;
             }
-            .news-item {
-                display: block;
-                text-decoration: none;
-                padding: 10px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                transition: background 0.2s;
+            .goku-img {
+                height: auto;
+                width: auto;
+                max-height: 60vh;
+                max-width: 90vw;
+                object-fit: contain;
+                opacity: 0;
+                transition: opacity 0.2s;
             }
-            .news-item:last-child {
-                border-bottom: none;
-            }
-            .news-item:hover {
-                background: rgba(255, 255, 255, 0.05);
-                border-radius: 8px;
-            }
-            .headline {
-                font-size: 0.85rem;
-                font-weight: 600;
-                color: #fff;
-                margin-bottom: 4px;
-                line-height: 1.4;
-            }
-            .source {
-                font-size: 0.65rem;
-                color: #9aa0a6;
-            }
-            .bull-mode .news-title {
-                color: var(--accent-green);
-            }
-            .bear-mode .news-title {
-                color: var(--accent-red);
+            .goku-img.visible {
+                opacity: 1;
             }
 
             .results-grid {
@@ -553,142 +489,48 @@
                 border-radius: 16px;
                 padding: 20px;
                 border: 1px solid rgba(255, 255, 255, 0.1);
-                transition: transform 0.2s;
-                display: flex;
-                flex-direction: column;
-                touch-action: manipulation;
                 cursor: pointer;
             }
-            @media (min-width: 768px) {
-                .stock-card:hover {
-                    transform: translateY(-5px);
-                    border-color: rgba(255, 255, 255, 0.3);
-                }
-            }
-            .card-header {
-                display: flex;
-                justify-content: space-between;
+
+            /* MODAL */
+            #detail-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 200000;
+                display: none;
                 align-items: center;
-                margin-bottom: 15px;
+                justify-content: center;
             }
-            .ticker {
-                font-size: 1.6rem;
-                font-weight: 800;
-                color: var(--text-main);
-                letter-spacing: -0.5px;
-            }
-            .price {
-                font-family: monospace;
-                font-size: 1.1rem;
-                color: var(--text-muted);
-            }
-            .signal-badge {
-                display: inline-block;
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-size: 0.75rem;
-                font-weight: 800;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-            .bullish {
-                color: var(--accent-green);
-                border: 1px solid var(--accent-green);
-                background: rgba(0, 230, 118, 0.1);
-            }
-            .bearish {
-                color: var(--accent-red);
-                border: 1px solid var(--accent-red);
-                background: rgba(255, 23, 68, 0.1);
-            }
-
-            .ai-setup {
-                margin-top: auto;
-                background: var(--setup-bg);
-                border-radius: 12px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                padding: 15px;
-                transition: border-color 0.3s;
-                position: relative;
-                z-index: 3;
-            }
-            .ai-setup.kill-switch-active {
-                border: 2px solid var(--accent-red);
-                animation: pulseKillSwitch 1.5s infinite;
-            }
-            @keyframes pulseKillSwitch {
-                0% {
-                    box-shadow: 0 0 5px var(--accent-red);
-                }
-                50% {
-                    box-shadow: 0 0 20px var(--accent-red);
-                }
-                100% {
-                    box-shadow: 0 0 5px var(--accent-red);
-                }
-            }
-
-            .ai-title::before {
-                content: "⚡";
-                color: #ffd700;
-                margin-right: 5px;
-            }
-            .leg {
+            #detail-modal.active {
                 display: flex;
-                justify-content: space-between;
-                font-size: 0.85rem;
-                color: #ccc;
-                padding: 6px 0;
             }
-            .leg span:last-child {
-                font-family: monospace;
-                color: white;
-                text-align: right;
+            .modal-content {
+                width: 90%;
+                height: 70vh;
+                background: #000;
+                border: 1px solid #333;
+                position: relative;
             }
-            .stop-loss-box {
-                margin-top: 10px;
-                padding: 8px;
-                background: rgba(255, 23, 68, 0.15);
-                border: 1px solid var(--accent-red);
-                border-radius: 8px;
-                font-size: 0.75rem;
-                color: #ff8a80;
-                text-align: center;
-                font-weight: 700;
-                letter-spacing: 0.5px;
-            }
-            .kill-switch-active {
-                border-color: var(--accent-red) !important;
-                animation: borderPulse 1s infinite;
+            .close-modal {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                color: #fff;
+                font-size: 2rem;
+                cursor: pointer;
+                z-index: 10;
             }
 
             .app-footer {
                 margin-top: 40px;
                 padding: 20px 0;
                 text-align: center;
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            .ula-text {
-                font-size: 0.65rem;
-                color: #5f6368;
-                line-height: 1.6;
-                max-width: 600px;
-                margin: 0 auto 15px;
-            }
-            .version-info {
                 font-size: 0.7rem;
-                color: var(--accent-green);
-                font-family: monospace;
-                opacity: 0.8;
-            }
-            .status-dot {
-                height: 8px;
-                width: 8px;
-                background-color: var(--accent-green);
-                border-radius: 50%;
-                display: inline-block;
-                margin-right: 5px;
-                box-shadow: 0 0 5px var(--accent-green);
+                color: #666;
             }
         </style>
     </head>
@@ -714,7 +556,7 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=59"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=60"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
@@ -754,7 +596,6 @@
                         >LIVE FEED</span
                     >
                 </div>
-
                 <div
                     class="vix-widget"
                     id="vix-display"
@@ -774,9 +615,7 @@
                 <div class="info-bubble" id="hft-info">
                     <div class="bubble-title">HFT LOGIC V3.0</div>
                     <div class="bubble-text">
-                        System scans 5-minute volatility candles to detect gamma
-                        squeezes, calculating live probability and optimal
-                        strategy.
+                        System scans 5-minute volatility candles...
                     </div>
                 </div>
                 <div id="search-results"></div>
@@ -816,7 +655,7 @@
                         src="https://s3.tradingview.com/external-embedding/embed-widget-events.js"
                         async
                     >
-                        { "width": "100%", "height": "250", "colorTheme": "dark", "isTransparent": true, "locale": "en", "importanceFilter": "0,1", "currencyFilter": "USD" }
+                        { "width": "100%", "height": "100%", "colorTheme": "dark", "isTransparent": true, "locale": "en", "importanceFilter": "0,1", "currencyFilter": "USD" }
                     </script>
                 </div>
             </div>
@@ -851,101 +690,101 @@
             </div>
             {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
             <div class="oracle-container">
-                <div class="manga-glass-bubble">
-                    {% if 'BULLISH' in chosen_one.signal %}
-                    <div class="oracle-mascot-container">
-                        <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=59"
-                            class="oracle-mascot-img mascot-shrek"
-                            alt="Bullish"
-                        />
-                    </div>
-                    {% elif 'BEARISH' in chosen_one.signal %}
-                    <div class="oracle-mascot-container">
-                        <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=59"
-                            class="oracle-mascot-img mascot-hellboy"
-                            alt="Bearish"
-                        />
-                    </div>
-                    {% endif %}
+                <div class="manga-bubble-container">
+                    <div class="manga-bubble">
+                        {% if 'BULLISH' in chosen_one.signal %}
+                        <div class="oracle-mascot-container">
+                            <img
+                                src="{{ url_for('static', filename='shrek.png') }}?v=60"
+                                class="oracle-mascot-img mascot-shrek"
+                                alt="Bullish"
+                            />
+                        </div>
+                        {% elif 'BEARISH' in chosen_one.signal %}
+                        <div class="oracle-mascot-container">
+                            <img
+                                src="{{ url_for('static', filename='hellboy.png') }}?v=60"
+                                class="oracle-mascot-img mascot-hellboy"
+                                alt="Bearish"
+                            />
+                        </div>
+                        {% endif %}
 
-                    <div class="oracle-badge">ORACLE PICK</div>
-                    <div class="oracle-header">
-                        <div>
-                            <div
-                                style="
-                                    font-size: 0.8rem;
-                                    color: var(--gold);
-                                    margin-bottom: 5px;
-                                "
+                        <div class="oracle-badge">ORACLE PICK</div>
+                        <div class="oracle-header">
+                            <div>
+                                <div
+                                    style="
+                                        font-size: 0.8rem;
+                                        color: #555;
+                                        margin-bottom: 5px;
+                                    "
+                                >
+                                    {{ chosen_one.social.score }}
+                                </div>
+                                <div
+                                    class="oracle-ticker"
+                                    onclick="openModal('{{ chosen_one.ticker }}')"
+                                >
+                                    {{ chosen_one.ticker }}
+                                </div>
+                            </div>
+                            <div class="oracle-pop">
+                                <div
+                                    class="pop-label"
+                                    style="font-size: 0.6rem; color: #555"
+                                >
+                                    PROBABILITY
+                                </div>
+                                <div class="pop-value">
+                                    {{ chosen_one.probability }}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="social-box">
+                            <span class="social-icon"
+                                >{{ chosen_one.social.icon }}</span
+                            ><span class="social-text"
+                                >"{{ chosen_one.social.comment }}"</span
                             >
-                                {{ chosen_one.social.score }}
-                            </div>
-                            <div
-                                class="oracle-ticker"
-                                onclick="openModal('{{ chosen_one.ticker }}')"
-                            >
-                                {{ chosen_one.ticker }}
-                            </div>
                         </div>
-                        <div class="oracle-pop">
-                            <div class="pop-label">PROBABILITY</div>
-                            <div class="pop-value">
-                                {{ chosen_one.probability }}%
-                            </div>
-                        </div>
-                    </div>
-                    <div class="social-box">
-                        <span class="social-icon"
-                            >{{ chosen_one.social.icon }}</span
-                        ><span class="social-text"
-                            >"{{ chosen_one.social.comment }}"</span
-                        >
-                    </div>
-                    <div
-                        class="ai-setup {{ 'kill-switch-active' if 'KILL SWITCH' in chosen_one.setup.type else '' }}"
-                    >
-                        <div class="ai-title" style="color: var(--gold)">
-                            WINNING SETUP
-                        </div>
-                        <div class="strategy-name">
-                            {{ chosen_one.setup.type }}
-                        </div>
-                        <div class="leg">
-                            <span>Action</span>
-                            <span>{{ chosen_one.setup.entry }}</span>
-                        </div>
-                        <div class="leg">
-                            <span>Target</span>
-                            <span>{{ chosen_one.setup.target }}</span>
-                        </div>
-                        <div class="stop-loss-box">
-                            STOP: {{ chosen_one.setup.stop }}
-                        </div>
-                    </div>
 
-                    {% if chosen_one.news %}
-                    <div
-                        class="news-container {{ 'bull-mode' if 'BULLISH' in chosen_one.signal else 'bear-mode' }}"
-                    >
-                        <div class="news-title">
-                            {{ '🔥 BULLISH CATALYSTS' if 'BULLISH' in
-                            chosen_one.signal else '🩸 RISK FACTORS & HEADLINES'
-                            }}
+                        <div class="ai-setup">
+                            <div class="ai-title" style="color: #ffd700">
+                                WINNING SETUP
+                            </div>
+                            <div class="strategy-name">
+                                {{ chosen_one.setup.type }}
+                            </div>
+                            <div class="leg">
+                                <span>Action</span>
+                                <span>{{ chosen_one.setup.entry }}</span>
+                            </div>
+                            <div class="leg">
+                                <span>Target</span>
+                                <span>{{ chosen_one.setup.target }}</span>
+                            </div>
+                            <div class="stop-loss-box">
+                                STOP: {{ chosen_one.setup.stop }}
+                            </div>
                         </div>
-                        {% for item in chosen_one.news %}
-                        <a
-                            href="{{ item.link }}"
-                            target="_blank"
-                            class="news-item"
-                        >
-                            <div class="headline">{{ item.title }}</div>
-                            <div class="source">{{ item.publisher }}</div>
-                        </a>
-                        {% endfor %}
+
+                        {% if chosen_one.news %}
+                        <div class="news-container">
+                            <div class="news-title">HEADLINES</div>
+                            {% for item in chosen_one.news %}
+                            <a
+                                href="{{ item.link }}"
+                                target="_blank"
+                                class="news-item"
+                            >
+                                <div class="headline">{{ item.title }}</div>
+                                <div class="source">{{ item.publisher }}</div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
             </div>
             {% endif %} {% if results %}
@@ -982,16 +821,15 @@
                             <span>Action</span>
                             <span>{{ row.setup.entry }}</span>
                         </div>
-                        <div class="leg">
-                            <span>Target</span>
-                            <span>{{ row.setup.target }}</span>
-                        </div>
                     </div>
                 </div>
                 {% endif %} {% endfor %}
             </div>
             {% elif request.path == '/search' %}
-            <div class="no-results">
+            <div
+                class="no-results"
+                style="text-align: center; padding: 50px; color: #666"
+            >
                 No signal in the matrix.<br /><small
                     >Try adding "-USD" for crypto.</small
                 >
@@ -1001,17 +839,8 @@
             <footer class="app-footer">
                 <div class="footer-content">
                     <p class="ula-text">
-                        <strong>OPEN SOURCE INITIATIVE</strong><br />
-                        This platform is an educational tool designed for market
-                        engagement and visual analysis. Data is provided for
-                        entertainment purposes only and does not constitute
-                        financial advice. Built with 💚 for digital
-                        sustainability and efficiency.
+                        OPEN SOURCE INITIATIVE | {{ version }}
                     </p>
-                    <div class="version-info">
-                        <span class="status-dot"></span> {{ version }} |
-                        Continuous Deployment
-                    </div>
                 </div>
             </footer>
         </div>
@@ -1031,21 +860,10 @@
                     this.dpr = window.devicePixelRatio || 1;
                     this.resize();
                     this.initElements();
-
                     window.addEventListener("resize", () => this.resize());
-                    document.addEventListener("visibilitychange", () =>
-                        this.handleVisibility(),
-                    );
                     requestAnimationFrame(() => this.animate());
                     this.startHeartbeat();
                 }
-
-                handleVisibility() {
-                    this.isRunning = !document.hidden;
-                    if (this.isRunning)
-                        requestAnimationFrame(() => this.animate());
-                }
-
                 resize() {
                     const rect = this.canvas.getBoundingClientRect();
                     this.canvas.width = rect.width * this.dpr;
@@ -1053,142 +871,71 @@
                     this.ctx.scale(this.dpr, this.dpr);
                     this.initElements();
                 }
-
                 initElements() {
                     this.elements = [];
                     const count = Math.min(
-                        Math.floor(window.innerWidth / 30),
-                        80,
-                    );
-                    for (let i = 0; i < count; i++) {
+                        Math.floor(window.innerWidth / 50),
+                        40,
+                    ); // Reduced count for cleaner UI
+                    for (let i = 0; i < count; i++)
                         this.elements.push(this.createParticle());
-                    }
                 }
-
                 createParticle() {
                     return {
                         x: Math.random() * window.innerWidth,
                         y: Math.random() * window.innerHeight,
-                        size: 14 + Math.random() * 24,
-                        speed: 0.5 + Math.random() * 1.5,
+                        size: 10 + Math.random() * 20,
+                        speed: 0.5 + Math.random() * 1.0,
                         icon: "🐂",
                         assigned: false,
                     };
                 }
-
-                getVixStats(vix) {
-                    if (vix < 15) return [0.85, 0, 230, 118, 0.8];
-                    if (vix < 25) return [0.5, 255, 215, 0, 1.2];
-                    return [0.15, 255, 23, 68, 2.0];
-                }
-
                 animate() {
-                    if (!this.isRunning) return;
-
-                    const [bullProb, r, g, b, speedMult] = this.getVixStats(
-                        this.vix,
-                    );
-
                     this.ctx.clearRect(
                         0,
                         0,
                         this.canvas.width,
                         this.canvas.height,
                     );
-                    this.ctx.shadowBlur = 10;
-                    this.ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
-
                     this.elements.forEach((p) => {
                         if (!p.assigned) {
-                            p.icon = Math.random() < bullProb ? "🐂" : "🐻";
+                            p.icon = Math.random() < 0.5 ? "🐂" : "🐻";
                             p.assigned = true;
                         }
-
-                        const depthSpeed = (p.size / 25) * p.speed * speedMult;
-
-                        if (p.icon === "🐂") {
-                            p.y -= depthSpeed;
-                            if (p.y < -40) {
-                                p.y = window.innerHeight + 40;
-                                p.x = Math.random() * window.innerWidth;
-                                p.assigned = false;
-                            }
-                        } else {
-                            p.y += depthSpeed;
-                            if (p.y > window.innerHeight + 40) {
-                                p.y = -40;
-                                p.x = Math.random() * window.innerWidth;
-                                p.assigned = false;
-                            }
+                        p.y -= (p.icon === "🐂" ? 1 : -1) * p.speed;
+                        if (p.y < -40) {
+                            p.y = window.innerHeight + 40;
+                            p.x = Math.random() * window.innerWidth;
                         }
-
-                        const opacity = (p.size / 40) * 0.5;
-                        this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                        if (p.y > window.innerHeight + 40) {
+                            p.y = -40;
+                            p.x = Math.random() * window.innerWidth;
+                        }
+                        this.ctx.fillStyle = `rgba(255, 255, 255, 0.05)`; // Very subtle
                         this.ctx.font = `${p.size}px serif`;
                         this.ctx.fillText(p.icon, p.x, p.y);
                     });
-
                     requestAnimationFrame(() => this.animate());
                 }
-
                 async startHeartbeat() {
                     setInterval(async () => {
-                        if (!document.hidden) {
-                            try {
-                                const res = await fetch("/api/vix");
-                                const data = await res.json();
-                                if (data.price !== "ERR") {
-                                    this.vix = parseFloat(data.price);
-                                    const widget =
-                                        document.getElementById("vix-display");
-                                    if (widget) {
-                                        widget.style.borderColor = data.color;
-                                        widget.style.color = data.color;
-                                        widget.querySelector(
-                                            ".vix-price",
-                                        ).style.color = data.color;
-                                        widget.querySelector(
-                                            ".vix-price",
-                                        ).textContent = data.price;
-                                        const label =
-                                            widget.querySelector(".vix-status");
-                                        if (label && data.label) {
-                                            label.style.color = data.color;
-                                            label.textContent = data.label;
-                                        }
-                                    }
-                                    const logo =
-                                        document.getElementById("matrix-logo");
-                                    if (logo && data.market_status) {
-                                        logo.style.color = data.market_status;
-                                    }
-                                }
-                            } catch (e) {}
-                        }
-                    }, 15000);
+                        try {
+                            const res = await fetch("/api/vix");
+                            const data = await res.json();
+                            if (data.price !== "...") {
+                                document.querySelector(
+                                    ".vix-price",
+                                ).textContent = data.price;
+                                document.querySelector(
+                                    ".vix-status",
+                                ).textContent = data.label;
+                            }
+                        } catch (e) {}
+                    }, 10000);
                 }
             }
-
             new MarketPulse();
 
-            // SOUND FX SYSTEM
-            const sounds = {
-                hover: document.getElementById("sound-hover"),
-                launch: document.getElementById("sound-launch"),
-                bell: document.getElementById("sound-bell"),
-            };
-
-            function playSound(type) {
-                if (sounds[type]) {
-                    sounds[type].currentTime = 0;
-                    sounds[type].volume = 0.4;
-                    sounds[type]
-                        .play()
-                        .catch((e) => console.log("Audio prevented"));
-                }
-            }
-
-            // HOVER LAUNCH LOGIC (Intention-Based)
             const rocketBtn = document.getElementById("rocketBtn");
             const levitationCore = document.getElementById("levitationCore");
             let isLaunching = false;
@@ -1197,8 +944,10 @@
             function launchRocket(immediate = false) {
                 if (isLaunching) return;
                 isLaunching = true;
-
-                playSound("launch");
+                document
+                    .getElementById("sound-launch")
+                    .play()
+                    .catch((e) => {});
                 rocketBtn.classList.add("launching");
                 const overlay = document.getElementById("loading-overlay");
                 const gif = document.getElementById("raiden-gif");
@@ -1207,7 +956,6 @@
 
                 setTimeout(() => {
                     overlay.classList.add("active");
-
                     setTimeout(() => {
                         if (gif.complete) {
                             gif.classList.add("visible");
@@ -1215,7 +963,6 @@
                             gif.onload = () => gif.classList.add("visible");
                         }
                     }, 100);
-
                     setTimeout(() => {
                         const searchVal = document
                             .getElementById("searchInput")
@@ -1229,14 +976,14 @@
                 }, 300);
             }
 
-            // DESKTOP HOVER INTENT
             rocketBtn.addEventListener("mouseenter", function () {
                 if (isLaunching) return;
-
                 levitationCore.classList.add("lock-on");
                 rocketBtn.classList.add("lock-active");
-                playSound("hover");
-
+                document
+                    .getElementById("sound-hover")
+                    .play()
+                    .catch((e) => {});
                 hoverTimer = setTimeout(() => {
                     launchRocket();
                 }, 400);
@@ -1250,7 +997,6 @@
                 }
             });
 
-            // SEARCH TRIGGER
             document
                 .getElementById("searchForm")
                 .addEventListener("submit", function (e) {
@@ -1258,57 +1004,11 @@
                     launchRocket(true);
                 });
 
-            // MARKET BELL LOGIC (New York Time)
-            function checkMarketBell() {
-                const now = new Date();
-                const nyTime = now.toLocaleString("en-US", {
-                    timeZone: "America/New_York",
-                });
-                const nyDate = new Date(nyTime);
-                const day = nyDate.getDay();
-                const hour = nyDate.getHours();
-                const min = nyDate.getMinutes();
-                const sec = nyDate.getSeconds();
-
-                if (day >= 1 && day <= 5) {
-                    if (
-                        (hour === 9 && min === 30 && sec === 0) ||
-                        (hour === 16 && min === 0 && sec === 0)
-                    ) {
-                        playSound("bell");
-                    }
-                }
-            }
-
-            function updateClock() {
-                const now = new Date();
-                const options = {
-                    timeZone: "America/New_York",
-                    hour12: false,
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                };
-                const timeString = new Intl.DateTimeFormat(
-                    "en-US",
-                    options,
-                ).format(now);
-                document.getElementById("live-clock").textContent =
-                    "LIVE: " + timeString + " EST";
-                checkMarketBell();
-            }
-            setInterval(updateClock, 1000);
-            updateClock();
-
-            // MODAL LOGIC
             function openModal(ticker) {
                 let cleanTicker = ticker.replace("-USD", "USD");
                 const isCrypto = ticker.includes("-USD");
                 const exchange = isCrypto ? "COINBASE" : "NASDAQ";
-
-                const modal = document.getElementById("detail-modal");
-                modal.classList.add("active");
-
+                document.getElementById("detail-modal").classList.add("active");
                 new TradingView.widget({
                     width: "100%",
                     height: "100%",
@@ -1320,7 +1020,6 @@
                     locale: "en",
                     toolbar_bg: "#f1f3f6",
                     enable_publishing: false,
-                    hide_top_toolbar: false,
                     container_id: "tv-chart-container",
                 });
             }
@@ -1332,74 +1031,22 @@
                 document.getElementById("tv-chart-container").innerHTML = "";
             }
 
-            function toggleInfoBubble() {
-                document.getElementById("hft-info").classList.toggle("active");
+            function updateClock() {
+                const now = new Date();
+                const options = {
+                    timeZone: "America/New_York",
+                    hour12: false,
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                };
+                document.getElementById("live-clock").textContent =
+                    "LIVE: " +
+                    new Intl.DateTimeFormat("en-US", options).format(now) +
+                    " EST";
             }
-
-            document.addEventListener("click", function (event) {
-                const bubble = document.getElementById("hft-info");
-                const trigger = document.querySelector(".info-orb-embedded");
-                if (
-                    bubble.classList.contains("active") &&
-                    !bubble.contains(event.target) &&
-                    !trigger.contains(event.target)
-                ) {
-                    bubble.classList.remove("active");
-                }
-                if (
-                    !document
-                        .querySelector(".search-dock")
-                        .contains(event.target)
-                ) {
-                    document.getElementById("search-results").style.display =
-                        "none";
-                }
-                const modal = document.getElementById("detail-modal");
-                if (event.target === modal) {
-                    closeModal();
-                }
-            });
-
-            const input = document.getElementById("searchInput");
-            const resultsBox = document.getElementById("search-results");
-            const form = document.getElementById("searchForm");
-            let debounceTimer;
-
-            input.addEventListener("input", function () {
-                clearTimeout(debounceTimer);
-                const query = this.value.trim();
-                if (query.length < 1) {
-                    resultsBox.style.display = "none";
-                    return;
-                }
-
-                debounceTimer = setTimeout(async () => {
-                    try {
-                        const res = await fetch(`/suggest?q=${query}`);
-                        const data = await res.json();
-                        resultsBox.innerHTML = "";
-                        if (data.length > 0) {
-                            resultsBox.style.display = "block";
-                            data.forEach((item) => {
-                                const div = document.createElement("div");
-                                div.className = "result-item";
-                                div.innerHTML = `
-                            <div class="item-info"><span class="item-symbol">${item.symbol}</span><span class="item-name">${item.name}</span></div>
-                            <span class="item-exch">${item.exch}</span>
-                        `;
-                                div.onclick = () => {
-                                    input.value = item.symbol;
-                                    resultsBox.style.display = "none";
-                                    launchRocket(true);
-                                };
-                                resultsBox.appendChild(div);
-                            });
-                        } else {
-                            resultsBox.style.display = "none";
-                        }
-                    } catch (e) {}
-                }, 250);
-            });
+            setInterval(updateClock, 1000);
+            updateClock();
         </script>
     </body>
 </html>
