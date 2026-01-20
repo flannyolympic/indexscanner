@@ -25,8 +25,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 2.2.0 THE BRAIN ---
-APP_VERSION = "v2.2.0 Trader Brain" 
+# --- VERSION 2.3.0 OMNISCIENT ---
+APP_VERSION = "v2.3.0 Omniscient" 
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -39,7 +39,7 @@ VIX_CACHE = {
     "last_updated": 0
 }
 
-# --- DEFINITIVE ASSET LISTS ---
+# --- DEFAULT LISTS (For Scan Only) ---
 STOCKS = [
     "AAPL", "MSFT", "NVDA", "TSLA", "AMD", "AMZN", "GOOGL", "META",
     "GME", "AMC", "PLTR", "COIN", "MSTR", "SMCI", "ARM", "SPY", "QQQ", "IWM",
@@ -308,7 +308,7 @@ def analyze_ticker(ticker_input):
     # NEURAL ENGINE EXECUTION
     tech_score = NeuralEngine.calculate_technical_score(df)
     rationale = NeuralEngine.generate_narrative(signal, latest["RSI"], vol_spike, price, latest["VWAP"])
-    probability = tech_score # Use the intelligent score
+    probability = tech_score
     social = get_social_sentiment(latest["RSI"], vol_spike)
 
     return {
@@ -317,21 +317,42 @@ def analyze_ticker(ticker_input):
         "rationale": rationale
     }
 
+# --- GLOBAL MARKET SEARCH (GOOGLE-LIKE INTELLIGENCE) ---
 @app.route("/suggest")
 def suggest():
-    """Instant Local Search"""
-    query = request.args.get("q", "").upper()
+    """Proxies Yahoo Finance Autocomplete for Global Search"""
+    query = request.args.get("q", "").strip()
     if not query: return jsonify([])
     
-    local_suggestions = []
-    ALL_TICKERS = list(set(STOCKS + CRYPTO))
-    for t in ALL_TICKERS:
-        if t.startswith(query):
-            name = "Crypto" if "-USD" in t else "Stock"
-            local_suggestions.append({"symbol": t, "name": name, "exch": "Global"})
+    # This URL connects to the entire global database
+    url = f"https://query2.finance.yahoo.com/v1/finance/search?q={query}&quotesCount=6&newsCount=0&enableFuzzyQuery=false&quotesQueryId=tss_match_phrase_query"
     
-    if local_suggestions: return jsonify(local_suggestions[:5])
-    return jsonify([])
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=2)
+        data = response.json()
+        
+        suggestions = []
+        if "quotes" in data:
+            for item in data["quotes"]:
+                # Only show relevant asset types
+                if item.get("isYahooFinance", False) or True: # Keep broadly permissive
+                    symbol = item.get("symbol")
+                    name = item.get("shortname", item.get("longname", symbol))
+                    exch = item.get("exchDisp", item.get("exchange", ""))
+                    
+                    suggestions.append({
+                        "symbol": symbol,
+                        "name": name,
+                        "exch": exch
+                    })
+        return jsonify(suggestions)
+    except Exception as e:
+        logger.error(f"Search Proxy Error: {e}")
+        return jsonify([])
 
 @app.after_request
 def add_header(response):
