@@ -94,7 +94,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                margin-bottom: 30px;
+                margin-bottom: 20px;
             }
             .brand-box {
                 display: flex;
@@ -119,6 +119,17 @@
                 margin-left: 8px;
                 vertical-align: middle;
                 letter-spacing: 0.5px;
+            }
+
+            .market-status {
+                font-size: 0.6rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                margin-left: 8px;
+                padding: 2px 6px;
+                border-radius: 4px;
+                background: rgba(255, 255, 255, 0.1);
+                color: var(--text-muted);
             }
 
             .vix-widget {
@@ -170,17 +181,182 @@
                 white-space: nowrap;
             }
 
+            .mode-toggle-container {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 20px;
+            }
+            .mode-toggle {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 20px;
+                padding: 4px;
+                display: flex;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .mode-btn {
+                padding: 6px 20px;
+                border-radius: 16px;
+                font-size: 0.75rem;
+                font-weight: 800;
+                color: var(--text-muted);
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+            .mode-btn.active {
+                background: var(--gold);
+                color: #000;
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+            }
+
+            .search-dock-container {
+                position: relative;
+                width: 100%;
+                max-width: 600px;
+                margin: 0 auto 30px;
+                z-index: 100;
+            }
+            .search-dock {
+                width: 100%;
+                height: 50px;
+                background: var(--input-bg);
+                backdrop-filter: blur(25px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 40px;
+                padding: 0 10px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            }
+            .search-icon {
+                width: 35px;
+                height: 35px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: var(--accent-green);
+                border-radius: 50%;
+                color: #000;
+                font-weight: 900;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+            .search-input {
+                flex-grow: 1;
+                background: transparent;
+                border: none;
+                color: white;
+                font-size: 1rem;
+                padding: 0 15px;
+                outline: none;
+                font-weight: 500;
+            }
+            .info-orb-embedded {
+                width: 30px;
+                height: 30px;
+                border: 2px solid var(--gold);
+                border-radius: 50%;
+                color: var(--gold);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 900;
+                font-size: 0.8rem;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+
+            /* TRANSLUCENT SCROLLING SEARCH RESULTS */
+            #search-results {
+                position: absolute;
+                top: 60px;
+                left: 0;
+                width: 100%;
+                background: rgba(10, 10, 10, 0.85); /* Translucent */
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px); /* Blur effect */
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+                display: none;
+                overflow: hidden;
+                max-height: 40vh;
+                overflow-y: auto; /* Scrollable */
+                z-index: 101;
+            }
+            .result-item {
+                padding: 12px 20px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                transition: background 0.2s;
+            }
+            .result-item:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            .item-symbol {
+                font-weight: 800;
+                color: #fff;
+            }
+            .item-name {
+                font-size: 0.8rem;
+                color: #9aa0a6;
+            }
+
+            .info-bubble {
+                position: absolute;
+                top: 60px;
+                right: 0;
+                width: 280px;
+                background: rgba(10, 10, 10, 0.95);
+                backdrop-filter: blur(20px);
+                border: 1px solid var(--gold);
+                border-radius: 12px;
+                padding: 15px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+                display: none;
+                z-index: 102;
+            }
+            .info-bubble.active {
+                display: block;
+            }
+            .bubble-title {
+                color: var(--gold);
+                font-weight: 900;
+                font-size: 0.8rem;
+                margin-bottom: 5px;
+            }
+            .bubble-text {
+                font-size: 0.8rem;
+                color: #ccc;
+                line-height: 1.4;
+            }
+
+            .macro-container {
+                width: 100%;
+                margin-bottom: 40px;
+                border-radius: 16px;
+                overflow: hidden;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                background: rgba(10, 10, 10, 0.5);
+                max-height: 300px;
+                overflow-y: auto;
+                position: relative;
+                z-index: 5;
+            }
+
             /* NEBULA CORE ENGINE */
             .launcher-container {
                 display: flex;
                 justify-content: center;
                 margin-bottom: 40px;
                 position: relative;
-                z-index: 10;
+                z-index: 20;
                 height: 160px;
                 align-items: center;
             }
-
             .levitation-core {
                 position: relative;
                 width: 160px;
@@ -314,239 +490,10 @@
                 }
             }
 
-            #loading-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.75);
-                backdrop-filter: blur(15px);
-                -webkit-backdrop-filter: blur(15px);
-                z-index: 9999;
-                display: none;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                opacity: 0;
-                transition: opacity 0.4s ease-in-out;
-                overflow: hidden;
-            }
-            #loading-overlay.active {
-                display: flex;
-                opacity: 1;
-            }
-            .goku-container {
-                position: relative;
-                width: 100%;
-                max-width: 800px;
-                height: 60vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .goku-img {
-                height: auto;
-                width: auto;
-                max-height: 60vh;
-                max-width: 90vw;
-                object-fit: contain;
-                position: relative;
-                z-index: 10;
-                transition: filter 0.2s;
-                opacity: 0;
-            }
-            .goku-img.visible {
-                opacity: 0.95;
-            }
-
-            .search-dock-container {
-                position: fixed;
-                bottom: calc(20px + env(safe-area-inset-bottom));
-                left: 50%;
-                transform: translateX(-50%);
-                width: min(600px, 92vw);
-                z-index: 1000;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-            .search-dock {
-                width: 100%;
-                height: 65px;
-                background: var(--input-bg);
-                backdrop-filter: blur(25px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-top: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 40px;
-                padding: 0 10px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
-            }
-            .search-dock:focus-within {
-                transform: translateY(-5px);
-                border-color: var(--gold);
-            }
-            .search-icon {
-                width: 45px;
-                height: 45px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: var(--accent-green);
-                border-radius: 50%;
-                color: #000;
-                font-weight: 900;
-                cursor: pointer;
-                box-shadow: 0 0 15px rgba(0, 230, 118, 0.4);
-                flex-shrink: 0;
-                touch-action: manipulation;
-            }
-            .search-input {
-                flex-grow: 1;
-                background: transparent;
-                border: none;
-                color: white;
-                font-size: 1.05rem;
-                padding: 0 15px;
-                outline: none;
-                font-weight: 500;
-            }
-            .info-orb-embedded {
-                width: 40px;
-                height: 40px;
-                border: 2px solid var(--gold);
-                border-radius: 50%;
-                color: var(--gold);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 900;
-                font-size: 1rem;
-                cursor: pointer;
-                animation: pulseOrb 3s infinite ease-in-out;
-                flex-shrink: 0;
-                background: rgba(0, 0, 0, 0.3);
-                touch-action: manipulation;
-            }
-            @keyframes pulseOrb {
-                0% {
-                    box-shadow: 0 0 5px rgba(255, 215, 0, 0.2);
-                }
-                50% {
-                    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-                }
-                100% {
-                    box-shadow: 0 0 5px rgba(255, 215, 0, 0.2);
-                }
-            }
-
-            #search-results {
-                position: absolute;
-                bottom: 80px;
-                left: 0;
-                width: 100%;
-                background: rgba(10, 10, 10, 0.95);
-                backdrop-filter: blur(20px);
-                border: 1px solid #333;
-                border-radius: 20px;
-                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
-                display: none;
-                overflow: hidden;
-                max-height: 40vh;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            .result-item {
-                padding: 16px 20px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                cursor: pointer;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                touch-action: manipulation;
-            }
-            .result-item:hover {
-                background: rgba(255, 255, 255, 0.1);
-            }
-            .item-symbol {
-                font-weight: 800;
-                color: #fff;
-            }
-            .item-name {
-                font-size: 0.8rem;
-                color: #9aa0a6;
-            }
-
-            .info-bubble {
-                position: absolute;
-                bottom: 80px;
-                right: 0;
-                width: 280px;
-                background: rgba(10, 10, 10, 0.95);
-                backdrop-filter: blur(20px);
-                border: 1px solid var(--gold);
-                border-radius: 16px;
-                border-bottom-right-radius: 4px;
-                padding: 20px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
-                opacity: 0;
-                visibility: hidden;
-                transform: translateY(15px) scale(0.95);
-                transition: all 0.3s;
-                z-index: 1001;
-            }
-            .info-bubble.active {
-                opacity: 1;
-                visibility: visible;
-                transform: translateY(0) scale(1);
-            }
-            .bubble-title {
-                color: var(--gold);
-                font-weight: 900;
-                font-size: 0.85rem;
-                margin-bottom: 8px;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                letter-spacing: 0.5px;
-            }
-            .bubble-text {
-                font-size: 0.85rem;
-                color: #e8eaed;
-                line-height: 1.5;
-            }
-
-            .battle-arena {
-                display: flex;
-                justify-content: center;
-                gap: 40px;
-                margin-bottom: 40px;
-                height: 80px;
-                align-items: center;
-            }
-
-            .oracle-container {
-                margin-bottom: 40px;
-                animation: slideUp 0.6s ease-out;
-                position: relative;
-            }
-            @keyframes slideUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-            /* CLASSIC GLASS CARD (NO MANGA) */
+            /* CLASSIC GLASS CARD (STABLE) */
             .oracle-card {
                 background: linear-gradient(
-                    145deg,
+                    135deg,
                     rgba(30, 30, 30, 0.9) 0%,
                     rgba(10, 10, 10, 0.95) 100%
                 );
@@ -557,6 +504,7 @@
                 position: relative;
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
                 overflow: visible;
+                margin-bottom: 40px;
             }
 
             .oracle-mascot-container {
@@ -641,6 +589,8 @@
                 line-height: 1;
                 cursor: pointer;
                 transition: color 0.2s;
+                position: relative;
+                z-index: 3;
             }
             .oracle-ticker:hover {
                 color: var(--gold);
@@ -650,6 +600,8 @@
                 font-size: 2rem;
                 font-weight: 900;
                 color: var(--gold);
+                position: relative;
+                z-index: 3;
             }
             .social-box {
                 background: rgba(255, 255, 255, 0.05);
@@ -661,6 +613,27 @@
                 gap: 12px;
                 font-size: 0.95rem;
                 border-left: 3px solid var(--gold);
+                position: relative;
+                z-index: 3;
+            }
+
+            .rationale-box {
+                background: rgba(0, 230, 118, 0.05);
+                border: 1px solid rgba(0, 230, 118, 0.2);
+                padding: 15px;
+                border-radius: 12px;
+                margin-bottom: 15px;
+                font-size: 0.85rem;
+                color: #e8eaed;
+                font-style: italic;
+                position: relative;
+                z-index: 3;
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .rationale-icon {
+                font-size: 1.2rem;
             }
 
             .news-container {
@@ -669,6 +642,8 @@
                 border-radius: 12px;
                 background: rgba(0, 0, 0, 0.3);
                 border: 1px solid rgba(255, 255, 255, 0.1);
+                position: relative;
+                z-index: 3;
             }
             .news-title {
                 font-size: 0.7rem;
@@ -719,60 +694,15 @@
                 gap: 20px;
             }
             .stock-card {
-                background: var(--card-bg);
+                background: rgba(15, 15, 15, 0.85);
                 backdrop-filter: blur(10px);
                 border-radius: 16px;
                 padding: 20px;
                 border: 1px solid rgba(255, 255, 255, 0.1);
-                transition: transform 0.2s;
-                display: flex;
-                flex-direction: column;
-                touch-action: manipulation;
                 cursor: pointer;
+                position: relative;
+                z-index: 5;
             }
-            @media (min-width: 768px) {
-                .stock-card:hover {
-                    transform: translateY(-5px);
-                    border-color: rgba(255, 255, 255, 0.3);
-                }
-            }
-            .card-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 15px;
-            }
-            .ticker {
-                font-size: 1.6rem;
-                font-weight: 800;
-                color: var(--text-main);
-                letter-spacing: -0.5px;
-            }
-            .price {
-                font-family: monospace;
-                font-size: 1.1rem;
-                color: var(--text-muted);
-            }
-            .signal-badge {
-                display: inline-block;
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-size: 0.75rem;
-                font-weight: 800;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-            .bullish {
-                color: var(--accent-green);
-                border: 1px solid var(--accent-green);
-                background: rgba(0, 230, 118, 0.1);
-            }
-            .bearish {
-                color: var(--accent-red);
-                border: 1px solid var(--accent-red);
-                background: rgba(255, 23, 68, 0.1);
-            }
-
             .ai-setup {
                 margin-top: auto;
                 background: var(--setup-bg);
@@ -780,6 +710,8 @@
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 padding: 15px;
                 transition: border-color 0.3s;
+                position: relative;
+                z-index: 3;
             }
             .ai-setup.kill-switch-active {
                 border: 2px solid var(--accent-red);
@@ -831,91 +763,88 @@
                 animation: borderPulse 1s infinite;
             }
 
-            .app-footer {
-                margin-top: 40px;
-                padding: 20px 0;
-                text-align: center;
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            .ula-text {
-                font-size: 0.65rem;
-                color: #5f6368;
-                line-height: 1.6;
-                max-width: 600px;
-                margin: 0 auto 15px;
-            }
-            .version-info {
-                font-size: 0.7rem;
-                color: var(--accent-green);
-                font-family: monospace;
-                opacity: 0.8;
-            }
-            .status-dot {
-                height: 8px;
-                width: 8px;
-                background-color: var(--accent-green);
-                border-radius: 50%;
-                display: inline-block;
-                margin-right: 5px;
-                box-shadow: 0 0 5px var(--accent-green);
-            }
-
-            /* CONTAINED MACRO WIDGET */
-            .macro-container {
-                width: 100%;
-                margin-bottom: 30px;
-                border-radius: 16px;
-                overflow: hidden;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                background: rgba(10, 10, 10, 0.5);
-                max-height: 250px;
-                overflow-y: auto; /* FIX */
-            }
-
-            /* MODAL STYLES */
-            #detail-modal {
+            #loading-overlay {
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
                 background: rgba(0, 0, 0, 0.85);
-                backdrop-filter: blur(15px);
-                -webkit-backdrop-filter: blur(15px);
-                z-index: 10000;
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                z-index: 100000;
                 display: none;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
                 opacity: 0;
                 transition: opacity 0.3s;
+            }
+            #loading-overlay.active {
+                display: flex;
+                opacity: 1;
+            }
+            .goku-container {
+                position: relative;
+                width: 100%;
+                max-width: 800px;
+                height: 60vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .goku-img {
+                height: auto;
+                width: auto;
+                max-height: 60vh;
+                max-width: 90vw;
+                object-fit: contain;
+                opacity: 0;
+                transition: opacity 0.2s;
+            }
+            .goku-img.visible {
+                opacity: 1;
+            }
+
+            #detail-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                z-index: 200000;
+                display: none;
                 align-items: center;
                 justify-content: center;
             }
             #detail-modal.active {
                 display: flex;
-                opacity: 1;
             }
             .modal-content {
                 width: 90%;
-                max-width: 800px;
                 height: 70vh;
-                background: #111;
-                border: 1px solid var(--gold);
-                border-radius: 16px;
-                overflow: hidden;
+                background: #000;
+                border: 1px solid #333;
                 position: relative;
-                display: flex;
-                flex-direction: column;
             }
             .close-modal {
                 position: absolute;
                 top: 10px;
-                right: 15px;
+                right: 10px;
                 color: #fff;
-                font-size: 1.5rem;
+                font-size: 2rem;
                 cursor: pointer;
-                z-index: 20;
-                background: rgba(0, 0, 0, 0.5);
-                padding: 5px 10px;
-                border-radius: 8px;
+                z-index: 10;
+            }
+            .app-footer {
+                margin-top: 40px;
+                padding: 20px 0;
+                text-align: center;
+                font-size: 0.7rem;
+                color: #666;
+                position: relative;
+                z-index: 5;
             }
         </style>
     </head>
@@ -941,14 +870,13 @@
         <div id="loading-overlay">
             <div class="goku-container">
                 <img
-                    src="{{ url_for('static', filename='raiden.gif') }}?v=56"
+                    src="{{ url_for('static', filename='raiden.gif') }}?v=65"
                     class="goku-img"
                     id="raiden-gif"
                     alt="Scanning..."
                 />
             </div>
         </div>
-
         <div id="detail-modal">
             <div class="modal-content">
                 <div class="close-modal" onclick="closeModal()">×</div>
@@ -978,10 +906,12 @@
                             margin-top: 4px;
                             font-weight: 600;
                         "
-                        >LIVE FEED</span
+                        >LIVE FEED
+                        <span class="market-status"
+                            >{{ market_status }}</span
+                        ></span
                     >
                 </div>
-
                 <div
                     class="vix-widget"
                     id="vix-display"
@@ -997,13 +927,28 @@
                 </div>
             </div>
 
+            <div class="mode-toggle-container">
+                <div class="mode-toggle">
+                    <div
+                        class="mode-btn {{ 'active' if current_mode != 'crypto' else '' }}"
+                        onclick="switchMode('stock')"
+                    >
+                        STOCKS
+                    </div>
+                    <div
+                        class="mode-btn {{ 'active' if current_mode == 'crypto' else '' }}"
+                        onclick="switchMode('crypto')"
+                    >
+                        CRYPTO
+                    </div>
+                </div>
+            </div>
+
             <div class="search-dock-container">
                 <div class="info-bubble" id="hft-info">
                     <div class="bubble-title">HFT LOGIC V3.0</div>
                     <div class="bubble-text">
-                        System scans 5-minute volatility candles to detect gamma
-                        squeezes, calculating live probability and optimal
-                        strategy.
+                        System scans 5-minute volatility candles...
                     </div>
                 </div>
                 <div id="search-results"></div>
@@ -1082,7 +1027,7 @@
                     {% if 'BULLISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='shrek.png') }}?v=56"
+                            src="{{ url_for('static', filename='shrek.png') }}?v=65"
                             class="oracle-mascot-img mascot-shrek"
                             alt="Bullish"
                         />
@@ -1090,7 +1035,7 @@
                     {% elif 'BEARISH' in chosen_one.signal %}
                     <div class="oracle-mascot-container">
                         <img
-                            src="{{ url_for('static', filename='hellboy.png') }}?v=56"
+                            src="{{ url_for('static', filename='hellboy.png') }}?v=65"
                             class="oracle-mascot-img mascot-hellboy"
                             alt="Bearish"
                         />
@@ -1123,6 +1068,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="social-box">
                         <span class="social-icon"
                             >{{ chosen_one.social.icon }}</span
@@ -1130,6 +1076,14 @@
                             >"{{ chosen_one.social.comment }}"</span
                         >
                     </div>
+
+                    <div class="rationale-box">
+                        <span class="rationale-icon">🧠</span>
+                        <span class="rationale-text"
+                            >AI Insight: {{ chosen_one.rationale }}</span
+                        >
+                    </div>
+
                     <div
                         class="ai-setup {{ 'kill-switch-active' if 'KILL SWITCH' in chosen_one.setup.type else '' }}"
                     >
@@ -1209,16 +1163,15 @@
                             <span>Action</span>
                             <span>{{ row.setup.entry }}</span>
                         </div>
-                        <div class="leg">
-                            <span>Target</span>
-                            <span>{{ row.setup.target }}</span>
-                        </div>
                     </div>
                 </div>
                 {% endif %} {% endfor %}
             </div>
             {% elif request.path == '/search' %}
-            <div class="no-results">
+            <div
+                class="no-results"
+                style="text-align: center; padding: 50px; color: #666"
+            >
                 No signal in the matrix.<br /><small
                     >Try adding "-USD" for crypto.</small
                 >
@@ -1228,17 +1181,8 @@
             <footer class="app-footer">
                 <div class="footer-content">
                     <p class="ula-text">
-                        <strong>OPEN SOURCE INITIATIVE</strong><br />
-                        This platform is an educational tool designed for market
-                        engagement and visual analysis. Data is provided for
-                        entertainment purposes only and does not constitute
-                        financial advice. Built with 💚 for digital
-                        sustainability and efficiency.
+                        OPEN SOURCE INITIATIVE | {{ version }}
                     </p>
-                    <div class="version-info">
-                        <span class="status-dot"></span> {{ version }} |
-                        Continuous Deployment
-                    </div>
                 </div>
             </footer>
         </div>
@@ -1258,21 +1202,10 @@
                     this.dpr = window.devicePixelRatio || 1;
                     this.resize();
                     this.initElements();
-
                     window.addEventListener("resize", () => this.resize());
-                    document.addEventListener("visibilitychange", () =>
-                        this.handleVisibility(),
-                    );
                     requestAnimationFrame(() => this.animate());
                     this.startHeartbeat();
                 }
-
-                handleVisibility() {
-                    this.isRunning = !document.hidden;
-                    if (this.isRunning)
-                        requestAnimationFrame(() => this.animate());
-                }
-
                 resize() {
                     const rect = this.canvas.getBoundingClientRect();
                     this.canvas.width = rect.width * this.dpr;
@@ -1280,18 +1213,15 @@
                     this.ctx.scale(this.dpr, this.dpr);
                     this.initElements();
                 }
-
                 initElements() {
                     this.elements = [];
                     const count = Math.min(
                         Math.floor(window.innerWidth / 30),
                         80,
                     );
-                    for (let i = 0; i < count; i++) {
+                    for (let i = 0; i < count; i++)
                         this.elements.push(this.createParticle());
-                    }
                 }
-
                 createParticle() {
                     return {
                         x: Math.random() * window.innerWidth,
@@ -1302,120 +1232,52 @@
                         assigned: false,
                     };
                 }
-
-                getVixStats(vix) {
-                    if (vix < 15) return [0.85, 0, 230, 118, 0.8];
-                    if (vix < 25) return [0.5, 255, 215, 0, 1.2];
-                    return [0.15, 255, 23, 68, 2.0];
-                }
-
                 animate() {
-                    if (!this.isRunning) return;
-
-                    const [bullProb, r, g, b, speedMult] = this.getVixStats(
-                        this.vix,
-                    );
-
                     this.ctx.clearRect(
                         0,
                         0,
                         this.canvas.width,
                         this.canvas.height,
                     );
-                    this.ctx.shadowBlur = 10;
-                    this.ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
-
                     this.elements.forEach((p) => {
                         if (!p.assigned) {
-                            p.icon = Math.random() < bullProb ? "🐂" : "🐻";
+                            p.icon = Math.random() < 0.5 ? "🐂" : "🐻";
                             p.assigned = true;
                         }
-
-                        const depthSpeed = (p.size / 25) * p.speed * speedMult;
-
-                        if (p.icon === "🐂") {
-                            p.y -= depthSpeed;
-                            if (p.y < -40) {
-                                p.y = window.innerHeight + 40;
-                                p.x = Math.random() * window.innerWidth;
-                                p.assigned = false;
-                            }
-                        } else {
-                            p.y += depthSpeed;
-                            if (p.y > window.innerHeight + 40) {
-                                p.y = -40;
-                                p.x = Math.random() * window.innerWidth;
-                                p.assigned = false;
-                            }
+                        p.y -= (p.icon === "🐂" ? 1 : -1) * p.speed;
+                        if (p.y < -40) {
+                            p.y = window.innerHeight + 40;
+                            p.x = Math.random() * window.innerWidth;
                         }
-
-                        const opacity = (p.size / 40) * 0.5;
-                        this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                        if (p.y > window.innerHeight + 40) {
+                            p.y = -40;
+                            p.x = Math.random() * window.innerWidth;
+                        }
+                        this.ctx.fillStyle = `rgba(255, 255, 255, 0.4)`;
                         this.ctx.font = `${p.size}px serif`;
                         this.ctx.fillText(p.icon, p.x, p.y);
                     });
-
                     requestAnimationFrame(() => this.animate());
                 }
-
                 async startHeartbeat() {
                     setInterval(async () => {
-                        if (!document.hidden) {
-                            try {
-                                const res = await fetch("/api/vix");
-                                const data = await res.json();
-                                if (data.price !== "ERR") {
-                                    this.vix = parseFloat(data.price);
-                                    const widget =
-                                        document.getElementById("vix-display");
-                                    if (widget) {
-                                        widget.style.borderColor = data.color;
-                                        widget.style.color = data.color;
-                                        widget.querySelector(
-                                            ".vix-price",
-                                        ).style.color = data.color;
-                                        widget.querySelector(
-                                            ".vix-price",
-                                        ).textContent = data.price;
-                                        const label =
-                                            widget.querySelector(".vix-status");
-                                        if (label && data.label) {
-                                            label.style.color = data.color;
-                                            label.textContent = data.label;
-                                        }
-                                    }
-                                    const logo =
-                                        document.getElementById("matrix-logo");
-                                    if (logo && data.market_status) {
-                                        logo.style.color = data.market_status;
-                                    }
-                                }
-                            } catch (e) {}
-                        }
-                    }, 15000);
+                        try {
+                            const res = await fetch("/api/vix");
+                            const data = await res.json();
+                            if (data.price !== "...") {
+                                document.querySelector(
+                                    ".vix-price",
+                                ).textContent = data.price;
+                                document.querySelector(
+                                    ".vix-status",
+                                ).textContent = data.label;
+                            }
+                        } catch (e) {}
+                    }, 10000);
                 }
             }
-
             new MarketPulse();
 
-            // SOUND FX SYSTEM
-            const sounds = {
-                hover: document.getElementById("sound-hover"),
-                launch: document.getElementById("sound-launch"),
-                bell: document.getElementById("sound-bell"),
-            };
-
-            function playSound(type) {
-                if (sounds[type]) {
-                    sounds[type].currentTime = 0;
-                    sounds[type].volume = 0.4;
-                    sounds[type]
-                        .play()
-                        .catch((e) => console.log("Audio prevented"));
-                }
-            }
-
-            // HOVER LAUNCH LOGIC (Intention-Based)
             const rocketBtn = document.getElementById("rocketBtn");
             const levitationCore = document.getElementById("levitationCore");
             let isLaunching = false;
@@ -1424,8 +1286,10 @@
             function launchRocket(immediate = false) {
                 if (isLaunching) return;
                 isLaunching = true;
-
-                playSound("launch");
+                document
+                    .getElementById("sound-launch")
+                    .play()
+                    .catch((e) => {});
                 rocketBtn.classList.add("launching");
                 const overlay = document.getElementById("loading-overlay");
                 const gif = document.getElementById("raiden-gif");
@@ -1434,7 +1298,6 @@
 
                 setTimeout(() => {
                     overlay.classList.add("active");
-
                     setTimeout(() => {
                         if (gif.complete) {
                             gif.classList.add("visible");
@@ -1443,6 +1306,14 @@
                         }
                     }, 100);
 
+                    // Get current mode
+                    const currentMode = document
+                        .querySelector(".mode-btn.active")
+                        .innerText.toLowerCase()
+                        .includes("crypto")
+                        ? "crypto"
+                        : "stock";
+
                     setTimeout(() => {
                         const searchVal = document
                             .getElementById("searchInput")
@@ -1450,20 +1321,29 @@
                         if (searchVal) {
                             document.getElementById("searchForm").submit();
                         } else {
-                            window.location.href = "/scan";
+                            window.location.href = `/scan?mode=${currentMode}`;
                         }
                     }, 2500);
                 }, 300);
             }
 
-            // DESKTOP HOVER INTENT
+            function switchMode(mode) {
+                document
+                    .querySelectorAll(".mode-btn")
+                    .forEach((btn) => btn.classList.remove("active"));
+                const buttons = document.querySelectorAll(".mode-btn");
+                if (mode === "crypto") buttons[1].classList.add("active");
+                else buttons[0].classList.add("active");
+            }
+
             rocketBtn.addEventListener("mouseenter", function () {
                 if (isLaunching) return;
-
                 levitationCore.classList.add("lock-on");
                 rocketBtn.classList.add("lock-active");
-                playSound("hover");
-
+                document
+                    .getElementById("sound-hover")
+                    .play()
+                    .catch((e) => {});
                 hoverTimer = setTimeout(() => {
                     launchRocket();
                 }, 400);
@@ -1477,7 +1357,6 @@
                 }
             });
 
-            // SEARCH TRIGGER
             document
                 .getElementById("searchForm")
                 .addEventListener("submit", function (e) {
@@ -1485,57 +1364,11 @@
                     launchRocket(true);
                 });
 
-            // MARKET BELL LOGIC (New York Time)
-            function checkMarketBell() {
-                const now = new Date();
-                const nyTime = now.toLocaleString("en-US", {
-                    timeZone: "America/New_York",
-                });
-                const nyDate = new Date(nyTime);
-                const day = nyDate.getDay();
-                const hour = nyDate.getHours();
-                const min = nyDate.getMinutes();
-                const sec = nyDate.getSeconds();
-
-                if (day >= 1 && day <= 5) {
-                    if (
-                        (hour === 9 && min === 30 && sec === 0) ||
-                        (hour === 16 && min === 0 && sec === 0)
-                    ) {
-                        playSound("bell");
-                    }
-                }
-            }
-
-            function updateClock() {
-                const now = new Date();
-                const options = {
-                    timeZone: "America/New_York",
-                    hour12: false,
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                };
-                const timeString = new Intl.DateTimeFormat(
-                    "en-US",
-                    options,
-                ).format(now);
-                document.getElementById("live-clock").textContent =
-                    "LIVE: " + timeString + " EST";
-                checkMarketBell();
-            }
-            setInterval(updateClock, 1000);
-            updateClock();
-
-            // MODAL LOGIC
             function openModal(ticker) {
                 let cleanTicker = ticker.replace("-USD", "USD");
                 const isCrypto = ticker.includes("-USD");
                 const exchange = isCrypto ? "COINBASE" : "NASDAQ";
-
-                const modal = document.getElementById("detail-modal");
-                modal.classList.add("active");
-
+                document.getElementById("detail-modal").classList.add("active");
                 new TradingView.widget({
                     width: "100%",
                     height: "100%",
@@ -1547,7 +1380,6 @@
                     locale: "en",
                     toolbar_bg: "#f1f3f6",
                     enable_publishing: false,
-                    hide_top_toolbar: false,
                     container_id: "tv-chart-container",
                 });
             }
@@ -1559,74 +1391,28 @@
                 document.getElementById("tv-chart-container").innerHTML = "";
             }
 
-            function toggleInfoBubble() {
-                document.getElementById("hft-info").classList.toggle("active");
+            function updateClock() {
+                const now = new Date();
+                const options = {
+                    timeZone: "America/New_York",
+                    hour12: false,
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                };
+                document.getElementById("live-clock").innerHTML =
+                    "LIVE: " +
+                    new Intl.DateTimeFormat("en-US", options).format(now) +
+                    " EST" +
+                    `<span class="market-status">${document.querySelector(".market-status") ? document.querySelector(".market-status").innerText : ""}</span>`;
             }
+            setInterval(updateClock, 1000);
+            updateClock();
 
-            document.addEventListener("click", function (event) {
+            function toggleInfoBubble() {
                 const bubble = document.getElementById("hft-info");
-                const trigger = document.querySelector(".info-orb-embedded");
-                if (
-                    bubble.classList.contains("active") &&
-                    !bubble.contains(event.target) &&
-                    !trigger.contains(event.target)
-                ) {
-                    bubble.classList.remove("active");
-                }
-                if (
-                    !document
-                        .querySelector(".search-dock")
-                        .contains(event.target)
-                ) {
-                    document.getElementById("search-results").style.display =
-                        "none";
-                }
-                const modal = document.getElementById("detail-modal");
-                if (event.target === modal) {
-                    closeModal();
-                }
-            });
-
-            const input = document.getElementById("searchInput");
-            const resultsBox = document.getElementById("search-results");
-            const form = document.getElementById("searchForm");
-            let debounceTimer;
-
-            input.addEventListener("input", function () {
-                clearTimeout(debounceTimer);
-                const query = this.value.trim();
-                if (query.length < 1) {
-                    resultsBox.style.display = "none";
-                    return;
-                }
-
-                debounceTimer = setTimeout(async () => {
-                    try {
-                        const res = await fetch(`/suggest?q=${query}`);
-                        const data = await res.json();
-                        resultsBox.innerHTML = "";
-                        if (data.length > 0) {
-                            resultsBox.style.display = "block";
-                            data.forEach((item) => {
-                                const div = document.createElement("div");
-                                div.className = "result-item";
-                                div.innerHTML = `
-                            <div class="item-info"><span class="item-symbol">${item.symbol}</span><span class="item-name">${item.name}</span></div>
-                            <span class="item-exch">${item.exch}</span>
-                        `;
-                                div.onclick = () => {
-                                    input.value = item.symbol;
-                                    resultsBox.style.display = "none";
-                                    launchRocket(true);
-                                };
-                                resultsBox.appendChild(div);
-                            });
-                        } else {
-                            resultsBox.style.display = "none";
-                        }
-                    } catch (e) {}
-                }, 250);
-            });
+                bubble.classList.toggle("active");
+            }
         </script>
     </body>
 </html>
