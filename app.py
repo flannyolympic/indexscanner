@@ -25,8 +25,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 2.0.0 MASTER RESET ---
-APP_VERSION = "v2.0.0 Production" 
+# --- VERSION 2.1.0 MARKET READY ---
+APP_VERSION = "v2.1.0 Market Ready" 
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -87,7 +87,7 @@ def get_market_status_color():
     if status in ["PRE-MARKET", "AFTER-HOURS"]: return "#ffd700"
     return "#ff5252" 
 
-# --- NATIVE DATA FETCHING (UNBLOCKED) ---
+# --- CRITICAL DATA FIX ---
 def get_market_data(ticker, retries=3):
     attempt = 0
     while attempt <= retries:
@@ -95,12 +95,15 @@ def get_market_data(ticker, retries=3):
             jitter = random.uniform(0.05, 0.2)
             t_module.sleep(jitter)
             
-            # Native yfinance handling. No custom session.
-            # This allows the library to use its internal anti-block mechanisms.
-            df = yf.download(ticker, period="5d", interval="5m", prepost=True, progress=False)
+            # Download with auto_adjust to simplify columns
+            df = yf.download(ticker, period="5d", interval="5m", prepost=True, progress=False, auto_adjust=True)
             
+            # Flatten MultiIndex if it exists
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
+            
+            # Deduplicate columns (The specific fix for the 'Multiple Columns' error)
+            df = df.loc[:, ~df.columns.duplicated()]
             
             if not df.empty and len(df) >= 10: 
                 return df
@@ -168,7 +171,7 @@ def get_vix_data(force_update=False):
         except Exception:
             return VIX_CACHE["data"]
 
-# --- CORE ANALYSIS LOGIC ---
+# --- TRADER BRAIN LOGIC ---
 def calculate_probability(price, target, std_dev, rsi, trend):
     safe_vol = max(std_dev, price * 0.005)
     z_score = abs(target - price) / (safe_vol * np.sqrt(3))
@@ -218,54 +221,66 @@ def analyze_ticker(ticker_input):
              if df is not None: ticker = f"{ticker}-USD"
         if df is None: return None
 
-    df["SMA_20"] = df["Close"].rolling(window=20).mean()
-    df["Std_Dev"] = df["Close"].rolling(window=20).std()
-    df["BB_Upper"] = df["SMA_20"] + (df["Std_Dev"] * 2)
-    df["BB_Lower"] = df["SMA_20"] - (df["Std_Dev"] * 2)
-    df["BB_Width"] = df["BB_Upper"] - df["BB_Lower"]
-    df["VWAP"] = (df["Close"] * df["Volume"]).cumsum() / df["Volume"].cumsum()
+    # Explicit column selection to prevent ambiguity
+    close_prices = df["Close"]
+    volume_data = df["Volume"]
 
-    delta = df["Close"].diff(1)
+    # Technical Calculations
+    sma_20 = close_prices.rolling(window=20).mean()
+    std_dev = close_prices.rolling(window=20).std()
+    bb_upper = sma_20 + (std_dev * 2)
+    bb_lower = sma_20 - (std_dev * 2)
+    bb_width = bb_upper - bb_lower
+    
+    # VWAP Calculation
+    vwap = (close_prices * volume_data).cumsum() / volume_data.cumsum()
+
+    delta = close_prices.diff(1)
     gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
     rs = gain / loss
-    df["RSI"] = 100 - (100 / (1 + rs))
+    rsi = 100 - (100 / (1 + rs))
 
-    latest = df.iloc[-1]
-    if pd.isna(latest["Close"]) or pd.isna(latest["RSI"]): return None
+    # Get latest scalar values safely
+    latest_price = close_prices.iloc[-1]
+    latest_rsi = rsi.iloc[-1]
+    latest_bb_lower = bb_lower.iloc[-1]
+    latest_bb_upper = bb_upper.iloc[-1]
+    latest_std_dev = std_dev.iloc[-1]
+    latest_width = bb_width.iloc[-1]
+    avg_width_val = bb_width.rolling(window=20).mean().iloc[-1]
+    latest_volume = volume_data.iloc[-1]
+    avg_vol = volume_data.rolling(window=20).mean().iloc[-1]
+    vol_spike = latest_volume > (avg_vol * 1.5)
+    latest_vwap = vwap.iloc[-1]
 
-    price = latest["Close"]
-    avg_width = df["BB_Width"].rolling(window=20).mean().iloc[-1]
-    current_width = latest["BB_Width"]
-    avg_vol = df["Volume"].rolling(window=20).mean().iloc[-1]
-    avg_vol = avg_vol if (not pd.isna(avg_vol) and avg_vol > 0) else 1
-    vol_spike = latest["Volume"] > (avg_vol * 1.5)
+    if pd.isna(latest_price) or pd.isna(latest_rsi): return None
 
     signal = "NEUTRAL"
     suggestion = "Neutral"
     trend = "FLAT"
 
-    if price < latest["BB_Lower"] or latest["RSI"] < 30:
+    if latest_price < latest_bb_lower or latest_rsi < 30:
         signal = "BULLISH"
         suggestion = "Oversold Bounce"
         trend = "LONG"
-    elif price > latest["BB_Upper"] or latest["RSI"] > 70:
+    elif latest_price > latest_bb_upper or latest_rsi > 70:
         signal = "BEARISH"
         suggestion = "Overbought Reject"
         trend = "SHORT"
-    elif vol_spike and price > latest["VWAP"]:
+    elif vol_spike and latest_price > latest_vwap:
         signal = "BULLISH (VOL)"
         suggestion = "Mom. Breakout"
         trend = "LONG"
 
     is_crypto = "-USD" in ticker
-    setup_text = determine_strategy(price, latest["BB_Upper"], latest["BB_Lower"], current_width, avg_width, signal, is_crypto)
-    target_price = latest["BB_Upper"] if trend == "LONG" else latest["BB_Lower"]
-    probability = calculate_probability(price, target_price, latest["Std_Dev"], latest["RSI"], trend)
-    social = get_social_sentiment(latest["RSI"], vol_spike)
+    setup_text = determine_strategy(latest_price, latest_bb_upper, latest_bb_lower, latest_width, avg_width_val, signal, is_crypto)
+    target_price = latest_bb_upper if trend == "LONG" else latest_bb_lower
+    probability = calculate_probability(latest_price, target_price, latest_std_dev, latest_rsi, trend)
+    social = get_social_sentiment(latest_rsi, vol_spike)
 
     return {
-        "ticker": ticker, "price": round(price, 2), "rsi": round(latest["RSI"], 2), "vwap": round(latest["VWAP"], 2),
+        "ticker": ticker, "price": round(latest_price, 2), "rsi": round(latest_rsi, 2), "vwap": round(latest_vwap, 2),
         "signal": signal, "suggestion": suggestion, "probability": probability, "social": social, "setup": setup_text
     }
 
@@ -300,8 +315,6 @@ def index():
 @app.route("/scan")
 def scan():
     start_time = t_module.time()
-    
-    # --- LOGIC FIX: RESPECT THE MODE ---
     mode = request.args.get('mode', 'stock')
     
     if mode == 'crypto':
@@ -311,7 +324,6 @@ def scan():
         scan_source = STOCKS
         leader = "SPY"
     
-    # SAMPLE ONLY FROM THE CORRECT SOURCE
     scan_list = random.sample(scan_source, min(len(scan_source), 8))
     if leader not in scan_list: scan_list.append(leader)
     
