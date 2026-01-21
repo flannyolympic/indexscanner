@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cerebro Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #050505; --card: #111; --border: #333; --green: #00e676; --red: #ff1744; --text: #e0e0e0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        /* HEADER */
+        .header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 30px; }
+        .brand { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.2rem; letter-spacing: -1px; }
+        .status { font-size: 0.8rem; color: #888; }
+        
+        /* CONTROLS */
+        .controls { display: flex; gap: 10px; margin-bottom: 30px; }
+        .btn { background: var(--card); border: 1px solid var(--border); color: #fff; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-family: 'JetBrains Mono'; font-size: 0.8rem; }
+        .btn:hover { border-color: #fff; }
+        .btn.active { background: #fff; color: #000; }
+        .scan-btn { background: var(--green); color: #000; border: none; font-weight: 700; flex-grow: 1; }
+        
+        /* ORACLE PANEL */
+        .oracle { background: #0a0a0a; border: 1px solid var(--green); border-radius: 8px; padding: 25px; margin-bottom: 40px; display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        .ticker-huge { font-size: 3rem; font-weight: 800; line-height: 1; color: var(--green); }
+        .rationale { font-size: 0.9rem; line-height: 1.6; color: #ccc; border-left: 2px solid var(--border); padding-left: 15px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; font-family: 'JetBrains Mono'; font-size: 0.8rem; }
+        
+        /* GRID */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 6px; cursor: pointer; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-2px); border-color: #666; }
+        .card-header { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 10px; }
+        .tag { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #222; }
+        .bullish { color: var(--green); border: 1px solid var(--green); }
+        .bearish { color: var(--red); border: 1px solid var(--red); }
+        
+        /* UTILS */
+        .spinner { border: 3px solid #333; border-top: 3px solid var(--green); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        @media (max-width: 768px) { .oracle { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand">/// PROJECT CEREBRO</div>
+            <div class="status">{{ market_status }}</div>
+        </div>
+
+        <form action="/scan" method="GET" id="scanForm">
+            <div class="controls">
+                <input type="hidden" name="mode" id="modeInput" value="{{ current_mode }}">
+                <button type="button" class="btn {{ 'active' if current_mode == 'stock' else '' }}" onclick="setMode('stock')">STOCKS</button>
+                <button type="button" class="btn {{ 'active' if current_mode == 'crypto' else '' }}" onclick="setMode('crypto')">CRYPTO</button>
+                <button type="submit" class="btn scan-btn" onclick="document.querySelector('.spinner').style.display='block'">SCAN MARKET</button>
+            </div>
+        </form>
+        
+        <div class="spinner"></div>
+
+        {% if chosen_one %}
+        <div class="oracle">
+            <div>
+                <div class="ticker-huge">{{ chosen_one.ticker }}</div>
+                <div class="tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}" style="display:inline-block; margin-top:10px;">{{ chosen_one.signal }}</div>
+                <div class="stats-grid">
+                    <div>PROB: {{ chosen_one.probability }}%</div>
+                    <div>STOP: {{ chosen_one.setup.stop }}</div>
+                    <div>TGT: {{ chosen_one.setup.target }}</div>
+                </div>
+            </div>
+            <div class="rationale">
+                <strong style="color:var(--green)">AI ANALYST:</strong><br>
+                {{ chosen_one.rationale }}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="grid">
+            {% for row in results %}
+            {% if not chosen_one or row.ticker != chosen_one.ticker %}
+            <div class="card">
+                <div class="card-header">
+                    <span>{{ row.ticker }}</span>
+                    <span>${{ row.price }}</span>
+                </div>
+                <div style="font-size:0.8rem; color:#888;">{{ row.setup.type }}</div>
+                <div style="margin-top:10px;">
+                    <span class="tag {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}">{{ row.signal }}</span>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        function setMode(mode) {
+            document.getElementById('modeInput').value = mode;
+            document.getElementById('scanForm').submit();
+        }
+    </script>
+</body>
+</html>

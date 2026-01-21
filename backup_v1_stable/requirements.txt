@@ -1,0 +1,7 @@
+Flask
+gunicorn
+yfinance
+pandas
+numpy
+requests
+google-generativeai
