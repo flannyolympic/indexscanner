@@ -3,7 +3,6 @@ import random
 import sqlite3
 import time as t_module
 import threading
-import json
 import xml.etree.ElementTree as ET
 from datetime import datetime, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -26,8 +25,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- SYSTEM RESTORE: SONIC NEBULA (STABLE) ---
-APP_VERSION = "v1.4.2 Sonic Nebula (Redux)" 
+# --- CONFIGURATION: SONIC NEBULA (STABLE CORE) ---
+APP_VERSION = "v1.4.2 Sonic Nebula (Stable)" 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
@@ -35,7 +34,8 @@ logger = logging.getLogger("HFT_Scanner")
 VIX_LOCK = threading.Lock()
 VIX_CACHE = {"data": {"price": "...", "color": "grey", "label": "LOADING", "market_status": "grey"}, "last_updated": 0}
 
-# --- GLOBAL INDEX (Zero-Latency Search) ---
+# --- GLOBAL INDEX (The Fix for "Hit or Miss" Search) ---
+# This ensures instant results for popular assets without blocking.
 GLOBAL_INDEX = [
     {"s": "AAPL", "n": "Apple Inc.", "e": "Stock"}, {"s": "MSFT", "n": "Microsoft", "e": "Stock"},
     {"s": "NVDA", "n": "NVIDIA", "e": "Stock"}, {"s": "TSLA", "n": "Tesla", "e": "Stock"},
@@ -47,6 +47,7 @@ GLOBAL_INDEX = [
     {"s": "BTC-USD", "n": "Bitcoin", "e": "Crypto"}, {"s": "ETH-USD", "n": "Ethereum", "e": "Crypto"},
     {"s": "SOL-USD", "n": "Solana", "e": "Crypto"}, {"s": "DOGE-USD", "n": "Dogecoin", "e": "Crypto"},
     {"s": "SHIB-USD", "n": "Shiba Inu", "e": "Crypto"}, {"s": "XRP-USD", "n": "XRP", "e": "Crypto"},
+    {"s": "PEPE-USD", "n": "Pepe", "e": "Crypto"},
     {"s": "^GSPC", "n": "S&P 500", "e": "Index"}, {"s": "^VIX", "n": "Volatility", "e": "Index"}
 ]
 
@@ -78,11 +79,13 @@ def get_market_status_color():
     if status in ["PRE-MARKET", "AFTER-HOURS"]: return "#ffd700"
     return "#ff5252" 
 
+# --- STABLE DATA FETCHING (v2.6.0 Core) ---
 def get_market_data(ticker, retries=2):
     attempt = 0
     while attempt <= retries:
         try:
             t_module.sleep(random.uniform(0.05, 0.2))
+            # Native fetch + Auto Adjust (Prevents Multi-Column Crash)
             df = yf.download(ticker, period="5d", interval="5m", prepost=True, progress=False, auto_adjust=True)
             if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.get_level_values(0)
             df = df.loc[:, ~df.columns.duplicated()]
@@ -114,7 +117,7 @@ def get_vix_data(force_update=False):
             return VIX_CACHE["data"]
         except: return VIX_CACHE["data"]
 
-# --- PURE MATH ENGINE (Sonic Nebula Logic) ---
+# --- CLASSIC MATH ENGINE (v1.4.2 Logic) ---
 def calculate_probability(price, target, std_dev, rsi, trend):
     safe_vol = max(std_dev, price * 0.005)
     z_score = abs(target - price) / (safe_vol * np.sqrt(3))
@@ -170,11 +173,12 @@ def analyze_ticker(ticker_input):
         "signal": signal, "probability": prob, "social": social, "setup": setup
     }
 
+# --- HYBRID SEARCH (v2.6.0 Fix) ---
 @app.route("/suggest")
 def suggest():
     query = request.args.get("q", "").strip().upper()
     if not query: return jsonify([])
-    # Hybrid Search: Local First
+    # Local First (0ms Latency)
     matches = [{"symbol": x["s"], "name": x["n"], "exch": x["e"]} for x in GLOBAL_INDEX if x["s"].startswith(query) or query in x["n"].upper()]
     return jsonify(matches[:6])
 
