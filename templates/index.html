@@ -2,95 +2,347 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cerebro Terminal</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <title>Cerebro /// Terminal</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pulltorefreshjs/0.1.22/index.umd.min.js"></script>
+
     <style>
-        :root { --bg: #050505; --card: #111; --border: #333; --green: #00e676; --red: #ff1744; --text: #e0e0e0; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        :root {
+            --bg-deep: #000000;
+            --glass-surface: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-highlight: rgba(255, 255, 255, 0.1);
+            --accent-green: #00ff9d;
+            --accent-red: #ff4b4b;
+            --text-main: #eeeeee;
+            --text-muted: #888888;
+            --blur-amt: 12px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        /* HEADER */
-        .header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 30px; }
-        .brand { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.2rem; letter-spacing: -1px; }
-        .status { font-size: 0.8rem; color: #888; }
+        body {
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 255, 157, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(50, 50, 255, 0.05), transparent 25%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- LAYOUT --- */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 100px; /* Space for scroll */
+        }
+
+        /* --- HEADER --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(var(--blur-amt));
+            -webkit-backdrop-filter: blur(var(--blur-amt));
+            border-bottom: 1px solid var(--glass-border);
+            margin: -20px -20px 30px -20px; /* Bleed to edges */
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .brand {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: -0.5px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
         
-        /* CONTROLS */
-        .controls { display: flex; gap: 10px; margin-bottom: 30px; }
-        .btn { background: var(--card); border: 1px solid var(--border); color: #fff; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-family: 'JetBrains Mono'; font-size: 0.8rem; }
-        .btn:hover { border-color: #fff; }
-        .btn.active { background: #fff; color: #000; }
-        .scan-btn { background: var(--green); color: #000; border: none; font-weight: 700; flex-grow: 1; }
+        .brand span { color: var(--accent-green); }
+
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        /* --- ORACLE PANEL (Hero) --- */
+        .oracle-glass {
+            background: var(--glass-surface);
+            backdrop-filter: blur(var(--blur-amt));
+            -webkit-backdrop-filter: blur(var(--blur-amt));
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .oracle-glass::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-green), transparent);
+            opacity: 0.5;
+        }
+
+        .oracle-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .ticker-hero {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .rationale-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #ccc;
+            border-left: 2px solid var(--accent-green);
+            padding-left: 20px;
+        }
+
+        /* --- CONTROLS --- */
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            background: var(--glass-surface);
+            padding: 6px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            width: fit-content;
+        }
+
+        .pill-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .pill-btn.active {
+            background: var(--glass-highlight);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .scan-trigger {
+            background: var(--accent-green) !important;
+            color: #000 !important;
+            font-weight: 700;
+        }
+
+        /* --- GRID --- */
+        .market-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--glass-surface);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: default;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            background: var(--glass-highlight);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 12px;
+        }
+
+        .card-ticker {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .card-price {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .tag.bullish { color: var(--accent-green); background: rgba(0, 255, 157, 0.1); border: 1px solid rgba(0, 255, 157, 0.2); }
+        .tag.bearish { color: var(--accent-red); background: rgba(255, 75, 75, 0.1); border: 1px solid rgba(255, 75, 75, 0.2); }
+
+        .setup-info {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--glass-border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* --- LOADING --- */
+        .loader-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
         
-        /* ORACLE PANEL */
-        .oracle { background: #0a0a0a; border: 1px solid var(--green); border-radius: 8px; padding: 25px; margin-bottom: 40px; display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-        .ticker-huge { font-size: 3rem; font-weight: 800; line-height: 1; color: var(--green); }
-        .rationale { font-size: 0.9rem; line-height: 1.6; color: #ccc; border-left: 2px solid var(--border); padding-left: 15px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; font-family: 'JetBrains Mono'; font-size: 0.8rem; }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--accent-green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+        /* --- MOBILE TWEAKS --- */
+        @media (max-width: 768px) {
+            .oracle-content { grid-template-columns: 1fr; text-align: left; }
+            .ticker-hero { font-size: 3rem; }
+            .container { padding: 15px; }
+            .controls { width: 100%; display: grid; grid-template-columns: 1fr 1fr 2fr; }
+            .pill-btn { padding: 12px; text-align: center; }
+        }
         
-        /* GRID */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 6px; cursor: pointer; transition: transform 0.2s; }
-        .card:hover { transform: translateY(-2px); border-color: #666; }
-        .card-header { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 10px; }
-        .tag { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #222; }
-        .bullish { color: var(--green); border: 1px solid var(--green); }
-        .bearish { color: var(--red); border: 1px solid var(--red); }
-        
-        /* UTILS */
-        .spinner { border: 3px solid #333; border-top: 3px solid var(--green); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; margin: 0 auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        @media (max-width: 768px) { .oracle { grid-template-columns: 1fr; } }
+        /* Pull to refresh text */
+        .ptr--text { color: #555; font-family: 'JetBrains Mono'; font-size: 0.8rem; }
     </style>
 </head>
 <body>
-    <div class="container">
+
+    <div class="loader-overlay" id="loader">
+        <div class="spinner"></div>
+        <div style="margin-top: 20px; font-family: 'JetBrains Mono'; color: var(--accent-green); font-size: 0.8rem;">INITIALIZING CEREBRO SCAN...</div>
+    </div>
+
+    <form action="/scan" method="GET" id="scanForm">
+        <input type="hidden" name="mode" id="modeInput" value="{{ current_mode }}">
+    </form>
+
+    <div class="container" id="main-content">
         <div class="header">
-            <div class="brand">/// PROJECT CEREBRO</div>
-            <div class="status">{{ market_status }}</div>
+            <div class="brand">
+                <div class="status-dot"></div>
+                <span>///</span> PROJECT CEREBRO
+            </div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono';">{{ market_status }}</div>
         </div>
 
-        <form action="/scan" method="GET" id="scanForm">
-            <div class="controls">
-                <input type="hidden" name="mode" id="modeInput" value="{{ current_mode }}">
-                <button type="button" class="btn {{ 'active' if current_mode == 'stock' else '' }}" onclick="setMode('stock')">STOCKS</button>
-                <button type="button" class="btn {{ 'active' if current_mode == 'crypto' else '' }}" onclick="setMode('crypto')">CRYPTO</button>
-                <button type="submit" class="btn scan-btn" onclick="document.querySelector('.spinner').style.display='block'">SCAN MARKET</button>
-            </div>
-        </form>
-        
-        <div class="spinner"></div>
+        <div class="controls">
+            <button class="pill-btn {{ 'active' if current_mode == 'stock' else '' }}" onclick="switchMode('stock')">STOCKS</button>
+            <button class="pill-btn {{ 'active' if current_mode == 'crypto' else '' }}" onclick="switchMode('crypto')">CRYPTO</button>
+            <button class="pill-btn scan-trigger" onclick="triggerScan()">SCAN</button>
+        </div>
 
         {% if chosen_one %}
-        <div class="oracle">
-            <div>
-                <div class="ticker-huge">{{ chosen_one.ticker }}</div>
-                <div class="tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}" style="display:inline-block; margin-top:10px;">{{ chosen_one.signal }}</div>
-                <div class="stats-grid">
-                    <div>PROB: {{ chosen_one.probability }}%</div>
-                    <div>STOP: {{ chosen_one.setup.stop }}</div>
-                    <div>TGT: {{ chosen_one.setup.target }}</div>
+        <div class="oracle-glass">
+            <div style="position: absolute; top: 15px; right: 20px; font-family: 'JetBrains Mono'; font-size: 0.7rem; color: var(--accent-green); opacity: 0.7;">
+                HIGHEST CONVICTION SIGNAL
+            </div>
+            <div class="oracle-content">
+                <div>
+                    <div class="ticker-hero">{{ chosen_one.ticker }}</div>
+                    <div class="tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}" style="margin-top: 10px; font-size: 0.8rem;">
+                        {{ chosen_one.signal }}
+                    </div>
+                </div>
+                <div class="rationale-text">
+                    <strong style="color: #fff; display: block; margin-bottom: 5px;">AI ANALYST RATIONALE:</strong>
+                    {{ chosen_one.rationale }}
                 </div>
             </div>
-            <div class="rationale">
-                <strong style="color:var(--green)">AI ANALYST:</strong><br>
-                {{ chosen_one.rationale }}
+            <div class="setup-info" style="margin-top: 25px;">
+                <span>PROBABILITY: {{ chosen_one.probability }}%</span>
+                <span>ENTRY: {{ chosen_one.setup.entry }}</span>
+                <span>STOP: {{ chosen_one.setup.stop }}</span>
+                <span>TARGET: {{ chosen_one.setup.target }}</span>
             </div>
         </div>
         {% endif %}
 
-        <div class="grid">
+        <div class="market-grid">
             {% for row in results %}
             {% if not chosen_one or row.ticker != chosen_one.ticker %}
             <div class="card">
-                <div class="card-header">
-                    <span>{{ row.ticker }}</span>
-                    <span>${{ row.price }}</span>
+                <div class="card-top">
+                    <span class="card-ticker">{{ row.ticker }}</span>
+                    <span class="card-price">${{ row.price }}</span>
                 </div>
-                <div style="font-size:0.8rem; color:#888;">{{ row.setup.type }}</div>
-                <div style="margin-top:10px;">
-                    <span class="tag {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}">{{ row.signal }}</span>
+                <div class="tag {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}">
+                    {{ row.signal }}
+                </div>
+                <div class="setup-info">
+                    <span>{{ row.setup.type }}</span>
+                    <span>VWAP: ${{ row.vwap }}</span>
                 </div>
             </div>
             {% endif %}
@@ -99,10 +351,31 @@
     </div>
 
     <script>
-        function setMode(mode) {
+        // Mode Switching
+        function switchMode(mode) {
             document.getElementById('modeInput').value = mode;
+            triggerScan();
+        }
+
+        // Scan Trigger with Animation
+        function triggerScan() {
+            document.getElementById('loader').style.display = 'flex';
             document.getElementById('scanForm').submit();
         }
+
+        // Pull to Refresh Logic (The Magic)
+        PullToRefresh.init({
+            mainElement: '#main-content',
+            onRefresh: function() {
+                triggerScan();
+            },
+            instructionsPullToRefresh: 'PULL TO SCAN',
+            instructionsReleaseToRefresh: 'RELEASE TO EXECUTE',
+            instructionsRefreshing: 'SCANNING MARKET DATA...',
+            distThreshold: 70, // Distance to trigger
+            iconArrow: '&#8675;', // Down arrow
+            iconRefreshing: '&hellip;'
+        });
     </script>
 </body>
 </html>
