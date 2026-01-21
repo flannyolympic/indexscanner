@@ -1,1 +1,7 @@
-Flask gunicorn yfinance pandas numpy requests google-genai
+Flask
+gunicorn
+yfinance
+pandas
+numpy
+requests
+google-genai
