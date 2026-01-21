@@ -14,20 +14,6 @@ GENAI_API_KEY = os.environ.get("GENAI_API_KEY")
 if GENAI_API_KEY:
     genai.configure(api_key=GENAI_API_KEY)
 
-# --- DIAGNOSTIC: PRINT AVAILABLE MODELS TO LOGS ---
-# This runs once when the app starts so we can see what works
-try:
-    print("--- DIAGNOSTIC: CHECKING AVAILABLE MODELS ---")
-    if GENAI_API_KEY:
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                print(f"VALID MODEL: {m.name}")
-    else:
-        print("NO API KEY FOUND")
-    print("--- END DIAGNOSTIC ---")
-except Exception as e:
-    print(f"DIAGNOSTIC FAILED: {e}")
-
 # ASSET UNIVERSES
 STOCK_TICKERS = [
     "TSLA", "NVDA", "AMD", "AAPL", "MSFT", "AMZN", "GOOGL", "META", "NFLX",
@@ -47,6 +33,7 @@ def get_market_status():
 def analyze_market_data(ticker_list):
     results = []
     try:
+        # Bulk download for speed
         data = yf.download(
             tickers=" ".join(ticker_list), 
             period="5d", 
@@ -62,10 +49,11 @@ def analyze_market_data(ticker_list):
 
     for ticker in ticker_list:
         try:
+            # Handle yfinance multi-index vs single-index
             df = data[ticker] if len(ticker_list) > 1 else data
             if df.empty: continue
 
-            # Technicals
+            # Technical Calcs
             df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
             df['VWAP'] = (df['TP'] * df['Volume']).cumsum() / df['Volume'].cumsum()
             
@@ -79,11 +67,12 @@ def analyze_market_data(ticker_list):
             current_rsi = df['RSI'].iloc[-1]
             current_vwap = df['VWAP'].iloc[-1]
             
-            # Logic
+            # --- CEREBRO SIGNAL LOGIC ---
             signal = "NEUTRAL"
             prob = 50
             setup = "Consolidation"
             
+            # Oversold/Overbought
             if current_rsi < 30:
                 signal = "BULLISH (OVERSOLD)"
                 prob = 75
@@ -92,6 +81,7 @@ def analyze_market_data(ticker_list):
                 signal = "BEARISH (OVERBOUGHT)"
                 prob = 70
                 setup = "Top Reversal"
+            # VWAP Trend
             elif current_price > current_vwap * 1.01:
                 signal = "BULLISH (TREND)"
                 prob = 60
@@ -101,6 +91,7 @@ def analyze_market_data(ticker_list):
                 prob = 60
                 setup = "VWAP Resistance"
 
+            # Entry/Target Logic
             stop = current_price * 0.98 if "BULLISH" in signal else current_price * 1.02
             target = current_price * 1.05 if "BULLISH" in signal else current_price * 0.95
 
@@ -127,15 +118,14 @@ def get_ai_rationale(ticker_data):
         return "AI Module Offline."
     
     try:
-        # Trying the specific versioned name which is less likely to 404
-        model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        # WE FOUND THE CORRECT NAME IN THE LOGS:
+        model = genai.GenerativeModel('gemini-flash-latest')
         
         prompt = (
-            f"As a hedge fund analyst, give a 1-sentence risk assessment for {ticker_data['ticker']}. "
-            f"Technical Context: Price ${ticker_data['price']}, Signal {ticker_data['signal']}, "
-            f"Setup {ticker_data['setup']['type']}. Be direct and professional."
+            f"Act as a quantitative analyst. Analyze {ticker_data['ticker']}. "
+            f"Price: {ticker_data['price']}, Signal: {ticker_data['signal']}, Setup: {ticker_data['setup']['type']}. "
+            f"Provide a 2-sentence institutional rationale. Be concise and professional. No fluff."
         )
-        
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
@@ -152,6 +142,7 @@ def scan():
     
     results = analyze_market_data(tickers)
     
+    # Top Pick Processing
     chosen_one = None
     if results:
         chosen_one = results[0]
