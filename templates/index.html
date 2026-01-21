@@ -11,25 +11,21 @@
 
     <style>
         :root {
-            --bg-deep: #000000;
-            --glass-surface: rgba(255, 255, 255, 0.03);
+            --bg-deep: #050505; /* Slightly deeper black */
+            --glass-surface: rgba(20, 20, 20, 0.4); /* More translucent for background visibility */
             --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-highlight: rgba(255, 255, 255, 0.1);
+            --glass-highlight: rgba(255, 255, 255, 0.05);
             --accent-green: #00ff9d;
             --accent-red: #ff4b4b;
             --text-main: #eeeeee;
             --text-muted: #888888;
-            --blur-amt: 12px;
+            --blur-amt: 20px; /* Heavier blur for premium feel */
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
             background-color: var(--bg-deep);
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(0, 255, 157, 0.08), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(50, 50, 255, 0.05), transparent 25%);
-            background-attachment: fixed;
             color: var(--text-main);
             font-family: 'Inter', sans-serif;
             margin: 0;
@@ -39,6 +35,36 @@
             -webkit-font-smoothing: antialiased;
         }
 
+        /* --- BACKGROUND LOGO LAYER --- */
+        body::before {
+            content: '';
+            position: fixed; /* Stays put while you scroll */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60vw; /* Responsive width */
+            height: 60vh;
+            background: url('/static/aexalogo.png') no-repeat center center;
+            background-size: contain;
+            opacity: 0.15; /* Subtle Watermark Effect */
+            z-index: -1;
+            pointer-events: none;
+            filter: grayscale(100%); /* Optional: makes it neutral/clean */
+        }
+
+        /* --- AMBIENT GRADIENTS (Layered over logo, under content) --- */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(0, 255, 157, 0.03), transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(50, 50, 255, 0.03), transparent 40%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- LAYOUT --- */
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -56,7 +82,8 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            background: rgba(0,0,0,0.7);
+            /* Ultra-Frosted Header */
+            background: rgba(0,0,0,0.6);
             backdrop-filter: blur(var(--blur-amt));
             -webkit-backdrop-filter: blur(var(--blur-amt));
             border-bottom: 1px solid var(--glass-border);
@@ -96,7 +123,7 @@
         }
 
         .vix-badge {
-            background: rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.3); /* Darker backing for readability */
             border: 1px solid var(--glass-border);
             border-radius: 8px;
             padding: 6px 12px;
@@ -111,7 +138,6 @@
         .vix-value { font-weight: 800; font-size: 1rem; }
         .vix-label { font-size: 0.75rem; text-transform: uppercase; opacity: 0.9; }
         
-        /* Updated Market Subtext */
         .market-subtext { 
             font-size: 0.65rem; 
             color: var(--text-muted); 
@@ -123,8 +149,9 @@
             gap: 6px;
         }
 
+        /* --- ORACLE PANEL --- */
         .oracle-glass {
-            background: var(--glass-surface);
+            background: var(--glass-surface); /* More see-through */
             backdrop-filter: blur(var(--blur-amt));
             -webkit-backdrop-filter: blur(var(--blur-amt));
             border: 1px solid var(--glass-border);
@@ -156,29 +183,32 @@
             font-weight: 800;
             line-height: 1;
             letter-spacing: -2px;
-            background: linear-gradient(135deg, #fff, #888);
+            background: linear-gradient(135deg, #fff, #999);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .rationale-text {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.85rem;
             line-height: 1.6;
-            color: #ccc;
+            color: #ddd;
             border-left: 2px solid var(--accent-green);
             padding-left: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8); /* Better contrast against bg */
         }
 
         .controls {
             display: flex;
             gap: 12px;
             margin-bottom: 30px;
-            background: var(--glass-surface);
+            background: rgba(20, 20, 20, 0.6); /* Slightly darker for contrast */
             padding: 6px;
             border-radius: 12px;
             border: 1px solid var(--glass-border);
             width: fit-content;
+            backdrop-filter: blur(10px);
         }
 
         .pill-btn {
@@ -195,9 +225,10 @@
         }
 
         .pill-btn.active {
-            background: var(--glass-highlight);
+            background: rgba(255,255,255,0.1);
             color: #fff;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
         .scan-trigger {
@@ -219,11 +250,12 @@
             padding: 20px;
             transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             cursor: default;
+            backdrop-filter: blur(10px); /* Individual card blur */
         }
 
         .card:hover {
             transform: translateY(-4px);
-            background: var(--glass-highlight);
+            background: rgba(255,255,255,0.07);
             border-color: rgba(255,255,255,0.2);
         }
 
@@ -272,8 +304,8 @@
         .loader-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.85); /* Darker loader for contrast */
+            backdrop-filter: blur(15px);
             z-index: 999;
             display: none;
             justify-content: center;
@@ -294,6 +326,7 @@
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
         @media (max-width: 768px) {
+            body::before { width: 85vw; opacity: 0.12; } /* Larger, subtler logo on mobile */
             .oracle-content { grid-template-columns: 1fr; text-align: left; }
             .ticker-hero { font-size: 3rem; }
             .container { padding: 15px; }
