@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 import pandas as pd
 import yfinance as yf
@@ -24,6 +25,7 @@ CRYPTO_TICKERS = [
     "ADA-USD", "AVAX-USD", "LINK-USD", "LTC-USD", "BCH-USD", "UNI-USD"
 ]
 
+# --- MARKET STATUS & INDICES ---
 def get_market_status():
     tz = pytz.timezone('America/New_York')
     now = datetime.now(tz)
@@ -48,6 +50,41 @@ def get_market_status():
         
     return {"label": status, "color": color}
 
+def get_indices():
+    """Fetches major index data for the header ticker."""
+    indices = {
+        "^GSPC": "S&P 500",
+        "^IXIC": "NASDAQ",
+        "^DJI": "DOW J"
+    }
+    data_list = []
+    try:
+        # Download all indices at once
+        tickers = " ".join(indices.keys())
+        data = yf.download(tickers, period="1d", group_by='ticker', threads=False) # Threads=False fixes DB lock
+        
+        for ticker, name in indices.items():
+            try:
+                # Handle single vs multi-index data structures
+                if len(indices) > 1:
+                    df = data[ticker]
+                else:
+                    df = data
+                
+                current = df['Close'].iloc[-1]
+                open_price = df['Open'].iloc[0]
+                change = ((current - open_price) / open_price) * 100
+                
+                sign = "+" if change >= 0 else ""
+                data_list.append(f"{name}: {int(current)} ({sign}{round(change, 2)}%)")
+            except:
+                continue
+    except Exception as e:
+        print(f"Indices Error: {e}")
+        return ["MARKET DATA OFFLINE"]
+        
+    return data_list
+
 def get_vix_data():
     try:
         vix = yf.Ticker("^VIX")
@@ -70,7 +107,8 @@ def get_vix_data():
 def analyze_market_data(ticker_list):
     results = []
     try:
-        data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", group_by='ticker', auto_adjust=True, prepost=True, threads=True)
+        # Threads=False ensures stability on Render free tier
+        data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", group_by='ticker', auto_adjust=True, prepost=True, threads=False)
     except: return []
 
     for ticker in ticker_list:
@@ -90,22 +128,12 @@ def analyze_market_data(ticker_list):
             current_rsi = df['RSI'].iloc[-1]
             current_vwap = df['VWAP'].iloc[-1]
             
-            signal = "NEUTRAL"
-            prob = 50
-            setup = "Consolidation"
+            signal, prob, setup = ("NEUTRAL", 50, "Consolidation")
             
-            if current_rsi < 30:
-                signal = "BULLISH (OVERSOLD)", 75, "Mean Reversion"
-            elif current_rsi > 70:
-                signal = "BEARISH (OVERBOUGHT)", 70, "Top Reversal"
-            elif current_price > current_vwap * 1.01:
-                signal = "BULLISH (TREND)", 60, "VWAP Support"
-            elif current_price < current_vwap * 0.99:
-                signal = "BEARISH (TREND)", 60, "VWAP Resistance"
-            else:
-                signal = "NEUTRAL", 50, "Consolidation"
-
-            signal, prob, setup = signal # Unpack tuple
+            if current_rsi < 30: signal, prob, setup = ("BULLISH (OVERSOLD)", 75, "Mean Reversion")
+            elif current_rsi > 70: signal, prob, setup = ("BEARISH (OVERBOUGHT)", 70, "Top Reversal")
+            elif current_price > current_vwap * 1.01: signal, prob, setup = ("BULLISH (TREND)", 60, "VWAP Support")
+            elif current_price < current_vwap * 0.99: signal, prob, setup = ("BEARISH (TREND)", 60, "VWAP Resistance")
 
             stop = current_price * 0.98 if "BULLISH" in signal else current_price * 1.02
             target = current_price * 1.05 if "BULLISH" in signal else current_price * 0.95
@@ -126,38 +154,33 @@ def analyze_market_data(ticker_list):
         except: continue
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
-# --- ROBUST AI FUNCTION ---
 def get_ai_rationale(ticker_data):
     if not GENAI_API_KEY: return "AI Module Offline."
-    
-    # EXACT models found in your previous logs
-    models_to_try = [
-        'gemini-2.0-flash-lite-preview-02-05', # Newest/Fastest
-        'gemini-flash-latest', 
-        'gemini-pro-latest',
-        'gemini-pro'
-    ]
+    models_to_try = ['gemini-2.0-flash-lite-preview-02-05', 'gemini-flash-latest', 'gemini-pro']
     
     prompt = (
         f"Act as a quantitative analyst. Analyze {ticker_data['ticker']}. "
         f"Price: {ticker_data['price']}, Signal: {ticker_data['signal']}, Setup: {ticker_data['setup']['type']}. "
-        f"Provide a 2-sentence institutional rationale. Be concise and professional. No fluff."
+        f"Provide a 2-sentence institutional rationale. Be concise. No fluff."
     )
 
     for model_name in models_to_try:
         try:
             model = genai.GenerativeModel(model_name)
             response = model.generate_content(prompt)
-            if response.text:
-                return response.text
-        except:
-            continue 
-            
-    return "AI Unavailable (Connection busy). Technical signal valid."
+            if response.text: return response.text
+        except: continue
+    return "AI Unavailable. Technical signal valid."
 
 @app.route('/')
 def home():
-    return render_template('index.html', market_status=get_market_status(), vix=get_vix_data(), current_mode="stock")
+    return render_template(
+        'index.html', 
+        market_status=get_market_status(), 
+        vix=get_vix_data(), 
+        indices=get_indices(), # Pass indices to frontend
+        current_mode="stock"
+    )
 
 @app.route('/scan')
 def scan():
@@ -169,7 +192,15 @@ def scan():
         chosen_one = results[0]
         chosen_one['rationale'] = get_ai_rationale(chosen_one)
 
-    return render_template('index.html', market_status=get_market_status(), vix=get_vix_data(), current_mode=mode, results=results, chosen_one=chosen_one)
+    return render_template(
+        'index.html',
+        market_status=get_market_status(),
+        vix=get_vix_data(),
+        indices=get_indices(), # Pass indices here too
+        current_mode=mode,
+        results=results,
+        chosen_one=chosen_one
+    )
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))

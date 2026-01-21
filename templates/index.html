@@ -15,7 +15,7 @@
             --glass-surface: rgba(20, 20, 20, 0.4);
             --glass-border: rgba(255, 255, 255, 0.08);
             --glass-highlight: rgba(255, 255, 255, 0.05);
-            --accent-green: #00ff9d; /* The Matrix/Bloomberg Green */
+            --accent-green: #00ff9d;
             --accent-red: #ff4b4b;
             --text-main: #eeeeee;
             --text-muted: #888888;
@@ -34,20 +34,15 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- UPDATED BIGGER BACKGROUND LOGO --- */
+        /* --- BACKGROUND --- */
         .bg-watermark {
-            position: fixed;
-            top: 50%; left: 50%;
+            position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 90vw; /* Increased from 70vw */
-            max-width: 1000px; /* Increased cap */
-            opacity: 0.12; /* Slightly more subtle to not overpower content */
-            z-index: -1;
-            pointer-events: none;
+            width: 90vw; max-width: 1000px;
+            opacity: 0.12; z-index: -1; pointer-events: none;
             filter: grayscale(100%) contrast(1.2);
         }
 
-        /* --- AMBIENT GRADIENTS --- */
         .bg-gradient {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: 
@@ -58,7 +53,7 @@
 
         .container {
             max-width: 1400px; margin: 0 auto; padding: 20px;
-            padding-bottom: 40px; /* Adjusted for footer */
+            padding-bottom: 40px;
         }
 
         /* --- HEADER --- */
@@ -67,33 +62,40 @@
             padding: 20px 0; margin-bottom: 20px;
             position: sticky; top: 0; z-index: 100;
             background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(var(--blur-amt));
-            -webkit-backdrop-filter: blur(var(--blur-amt));
+            backdrop-filter: blur(var(--blur-amt)); -webkit-backdrop-filter: blur(var(--blur-amt));
             border-bottom: 1px solid var(--glass-border);
             margin: -20px -20px 30px -20px;
             padding-left: 20px; padding-right: 20px;
         }
 
-        /* --- NEW TERMINAL TITLE STYLE --- */
+        /* --- TYPEWRITER BRANDING --- */
         .brand {
             font-family: 'JetBrains Mono', monospace;
             font-weight: 700;
-            font-size: 1.2rem;
-            letter-spacing: 1px;
-            color: var(--accent-green); /* The terminal green color */
-            text-shadow: 0 0 10px rgba(0, 255, 157, 0.4); /* Subtle glow */
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            color: var(--accent-green);
+            text-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
             text-transform: uppercase;
             display: flex; align-items: center;
+            white-space: nowrap; /* Prevent wrap */
         }
 
-        /* Blinking terminal cursor effect */
-        .brand::after {
-            content: '_';
+        /* The cycling data span */
+        #typewriter-text {
+            color: var(--text-main);
+            margin-left: 10px;
+            font-weight: 400;
+        }
+
+        /* The cursor */
+        .cursor {
+            color: var(--accent-green);
             animation: blink 1s step-end infinite;
-            margin-left: 5px;
+            margin-left: 2px;
         }
 
-        /* --- VIX & MARKET STATUS --- */
+        /* --- VIX --- */
         .vix-container { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
 
         .vix-badge {
@@ -112,7 +114,7 @@
             display: flex; align-items: center; gap: 6px;
         }
 
-        /* --- ORACLE PANEL --- */
+        /* --- CARDS & PANELS --- */
         .oracle-glass {
             background: var(--glass-surface);
             backdrop-filter: blur(var(--blur-amt)); -webkit-backdrop-filter: blur(var(--blur-amt));
@@ -141,7 +143,6 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
 
-        /* --- CONTROLS --- */
         .controls {
             display: flex; gap: 12px; margin-bottom: 30px;
             background: rgba(20, 20, 20, 0.6); padding: 6px;
@@ -163,7 +164,6 @@
 
         .scan-trigger { background: var(--accent-green) !important; color: #000 !important; font-weight: 700; }
 
-        /* --- GRID --- */
         .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
 
         .card {
@@ -194,24 +194,13 @@
             display: flex; justify-content: space-between;
         }
 
-        /* --- NEW EULA FOOTER --- */
         .terminal-footer {
-            margin-top: 60px;
-            padding-top: 20px;
-            border-top: 1px solid var(--glass-border);
-            text-align: center;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            opacity: 0.7;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            /* Ensure it sits above background but below content */
-            position: relative;
-            z-index: 1;
+            margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--glass-border);
+            text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+            color: var(--text-muted); opacity: 0.7; letter-spacing: 0.5px;
+            text-transform: uppercase; position: relative; z-index: 1;
         }
 
-        /* --- LOADER & ANIMATIONS --- */
         .loader-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
@@ -230,15 +219,16 @@
         @keyframes blink { 50% { opacity: 0; } }
 
         @media (max-width: 768px) {
-            .bg-watermark { width: 95vw; max-width: none; } /* Max width on mobile */
+            .bg-watermark { width: 95vw; max-width: none; }
             .oracle-content { grid-template-columns: 1fr; text-align: left; }
             .ticker-hero { font-size: 3rem; }
             .container { padding: 15px; }
             .controls { width: 100%; display: grid; grid-template-columns: 1fr 1fr 2fr; }
             .pill-btn { padding: 12px; text-align: center; }
-            .header { align-items: flex-start; }
+            .header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .vix-container { width: 100%; align-items: flex-start; flex-direction: row; justify-content: space-between; }
             .vix-badge { padding: 4px 8px; }
-            .vix-label { display: none; }
+            .brand { font-size: 0.9rem; } /* Smaller text for mobile header */
         }
     </style>
 </head>
@@ -259,7 +249,9 @@
     <div class="container" id="main-content">
         <div class="header">
             <div class="brand">
-                > THE CEREBRO PROJECT
+                <span>&gt; THE CEREBRO PROJECT</span>
+                <span id="typewriter-text"></span>
+                <span class="cursor">_</span>
             </div>
             
             <div class="vix-container">
@@ -354,6 +346,52 @@
             iconArrow: '&#8675;',
             iconRefreshing: '&hellip;'
         });
+
+        // --- TYPEWRITER EFFECT ---
+        // Pass data from Flask to JS safely
+        const indicesData = {{ indices | tojson }};
+        const typeEl = document.getElementById('typewriter-text');
+        
+        let msgIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        let currentText = '';
+        
+        function type() {
+            if (indicesData.length === 0) return;
+
+            const fullText = " | " + indicesData[msgIndex]; // Add separator for style
+
+            if (isDeleting) {
+                currentText = fullText.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                currentText = fullText.substring(0, charIndex + 1);
+                charIndex++;
+            }
+
+            typeEl.innerHTML = currentText;
+
+            // Typing Speed Logic
+            let typeSpeed = 50; // fast typing
+            if (isDeleting) typeSpeed /= 2;
+
+            if (!isDeleting && charIndex === fullText.length) {
+                typeSpeed = 3000; // Pause at end of sentence
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                msgIndex = (msgIndex + 1) % indicesData.length;
+                typeSpeed = 200;
+            }
+
+            setTimeout(type, typeSpeed);
+        }
+
+        // Start typing if data exists
+        if(indicesData.length > 0) {
+            setTimeout(type, 1000);
+        }
     </script>
 </body>
 </html>
