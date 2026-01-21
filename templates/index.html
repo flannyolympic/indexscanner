@@ -45,10 +45,10 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
-            padding-bottom: 100px; /* Space for scroll */
+            padding-bottom: 100px;
         }
 
-        /* --- HEADER --- */
+        /* --- HEADER (New VIX Layout) --- */
         .header {
             display: flex;
             justify-content: space-between;
@@ -62,7 +62,7 @@
             backdrop-filter: blur(var(--blur-amt));
             -webkit-backdrop-filter: blur(var(--blur-amt));
             border-bottom: 1px solid var(--glass-border);
-            margin: -20px -20px 30px -20px; /* Bleed to edges */
+            margin: -20px -20px 30px -20px;
             padding-left: 20px;
             padding-right: 20px;
         }
@@ -89,7 +89,32 @@
             animation: pulse 2s infinite;
         }
 
-        /* --- ORACLE PANEL (Hero) --- */
+        /* --- VIX GAUGE --- */
+        .vix-container {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .vix-badge {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .vix-value { font-weight: 800; font-size: 1rem; }
+        .vix-label { font-size: 0.75rem; text-transform: uppercase; opacity: 0.9; }
+        .market-subtext { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono'; letter-spacing: 1px;}
+
+        /* --- ORACLE PANEL --- */
         .oracle-glass {
             background: var(--glass-surface);
             backdrop-filter: blur(var(--blur-amt));
@@ -101,7 +126,6 @@
             box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
             position: relative;
             overflow: hidden;
-            transition: transform 0.3s ease;
         }
 
         .oracle-glass::before {
@@ -271,17 +295,17 @@
             .container { padding: 15px; }
             .controls { width: 100%; display: grid; grid-template-columns: 1fr 1fr 2fr; }
             .pill-btn { padding: 12px; text-align: center; }
+            .header { align-items: flex-start; }
+            .vix-badge { padding: 4px 8px; }
+            .vix-label { display: none; } /* Hide label on very small screens if needed */
         }
-        
-        /* Pull to refresh text */
-        .ptr--text { color: #555; font-family: 'JetBrains Mono'; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
     <div class="loader-overlay" id="loader">
         <div class="spinner"></div>
-        <div style="margin-top: 20px; font-family: 'JetBrains Mono'; color: var(--accent-green); font-size: 0.8rem;">INITIALIZING CEREBRO SCAN...</div>
+        <div style="margin-top: 20px; font-family: 'JetBrains Mono'; color: var(--accent-green); font-size: 0.8rem;">ACCESSING CEREBRO NODE...</div>
     </div>
 
     <form action="/scan" method="GET" id="scanForm">
@@ -294,7 +318,14 @@
                 <div class="status-dot"></div>
                 <span>///</span> PROJECT CEREBRO
             </div>
-            <div style="font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono';">{{ market_status }}</div>
+            
+            <div class="vix-container">
+                <div class="vix-badge" style="border-color: {{ vix.color }}; background: {{ vix.color }}15; color: {{ vix.color }}">
+                    <span class="vix-value">VIX {{ vix.val }}</span>
+                    <span class="vix-label">{{ vix.label }}</span>
+                </div>
+                <div class="market-subtext">{{ market_status }} • {{ vix.desc }}</div>
+            </div>
         </div>
 
         <div class="controls">
@@ -351,29 +382,24 @@
     </div>
 
     <script>
-        // Mode Switching
         function switchMode(mode) {
             document.getElementById('modeInput').value = mode;
             triggerScan();
         }
 
-        // Scan Trigger with Animation
         function triggerScan() {
             document.getElementById('loader').style.display = 'flex';
             document.getElementById('scanForm').submit();
         }
 
-        // Pull to Refresh Logic (The Magic)
         PullToRefresh.init({
             mainElement: '#main-content',
-            onRefresh: function() {
-                triggerScan();
-            },
+            onRefresh: function() { triggerScan(); },
             instructionsPullToRefresh: 'PULL TO SCAN',
             instructionsReleaseToRefresh: 'RELEASE TO EXECUTE',
             instructionsRefreshing: 'SCANNING MARKET DATA...',
-            distThreshold: 70, // Distance to trigger
-            iconArrow: '&#8675;', // Down arrow
+            distThreshold: 70,
+            iconArrow: '&#8675;',
             iconRefreshing: '&hellip;'
         });
     </script>

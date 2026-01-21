@@ -30,10 +30,44 @@ def get_market_status():
         return "MARKET OPEN"
     return "MARKET CLOSED"
 
+# --- NEW: VIX GAUGE LOGIC ---
+def get_vix_data():
+    try:
+        # Fetch live VIX data
+        vix = yf.Ticker("^VIX")
+        # fast_info is faster/stable for single points
+        price = vix.fast_info.last_price
+        
+        # Fallback if fast_info fails
+        if not price:
+            hist = vix.history(period="1d")
+            price = hist['Close'].iloc[-1]
+            
+        val = round(price, 2)
+        
+        # Color & Label Logic (Based on your Screenshot)
+        if val < 12:
+            return {"val": val, "label": "COMPLACENCY", "color": "#00E5FF", "desc": "Overly Chill"} # Cyan/Teal
+        elif val < 15:
+            return {"val": val, "label": "CALM / HEALTHY", "color": "#2ECC71", "desc": "Goldilocks Zone"} # Green
+        elif val < 20:
+            return {"val": val, "label": "MILD CONCERN", "color": "#F1C40F", "desc": "Cautious Vibes"} # Yellow
+        elif val < 30:
+            return {"val": val, "label": "ELEVATED FEAR", "color": "#E67E22", "desc": "Volatility Spikes"} # Orange
+        elif val < 40:
+            return {"val": val, "label": "HIGH ANXIETY", "color": "#D35400", "desc": "Serious Stress"} # Dark Orange
+        elif val < 50:
+            return {"val": val, "label": "CRISIS MODE", "color": "#C0392B", "desc": "Full-Blown Panic"} # Red
+        else:
+            return {"val": val, "label": "SYSTEM SHOCK", "color": "#8B0000", "desc": "Total Meltdown"} # Dark Red
+
+    except Exception as e:
+        print(f"VIX Error: {e}")
+        return {"val": 0, "label": "OFFLINE", "color": "#555555", "desc": "No Connection"}
+
 def analyze_market_data(ticker_list):
     results = []
     try:
-        # Bulk download for speed
         data = yf.download(
             tickers=" ".join(ticker_list), 
             period="5d", 
@@ -49,11 +83,9 @@ def analyze_market_data(ticker_list):
 
     for ticker in ticker_list:
         try:
-            # Handle yfinance multi-index vs single-index
             df = data[ticker] if len(ticker_list) > 1 else data
             if df.empty: continue
 
-            # Technical Calcs
             df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
             df['VWAP'] = (df['TP'] * df['Volume']).cumsum() / df['Volume'].cumsum()
             
@@ -67,12 +99,10 @@ def analyze_market_data(ticker_list):
             current_rsi = df['RSI'].iloc[-1]
             current_vwap = df['VWAP'].iloc[-1]
             
-            # --- CEREBRO SIGNAL LOGIC ---
             signal = "NEUTRAL"
             prob = 50
             setup = "Consolidation"
             
-            # Oversold/Overbought
             if current_rsi < 30:
                 signal = "BULLISH (OVERSOLD)"
                 prob = 75
@@ -81,7 +111,6 @@ def analyze_market_data(ticker_list):
                 signal = "BEARISH (OVERBOUGHT)"
                 prob = 70
                 setup = "Top Reversal"
-            # VWAP Trend
             elif current_price > current_vwap * 1.01:
                 signal = "BULLISH (TREND)"
                 prob = 60
@@ -91,7 +120,6 @@ def analyze_market_data(ticker_list):
                 prob = 60
                 setup = "VWAP Resistance"
 
-            # Entry/Target Logic
             stop = current_price * 0.98 if "BULLISH" in signal else current_price * 1.02
             target = current_price * 1.05 if "BULLISH" in signal else current_price * 0.95
 
@@ -114,13 +142,9 @@ def analyze_market_data(ticker_list):
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
 def get_ai_rationale(ticker_data):
-    if not GENAI_API_KEY:
-        return "AI Module Offline."
-    
+    if not GENAI_API_KEY: return "AI Module Offline."
     try:
-        # WE FOUND THE CORRECT NAME IN THE LOGS:
         model = genai.GenerativeModel('gemini-flash-latest')
-        
         prompt = (
             f"Act as a quantitative analyst. Analyze {ticker_data['ticker']}. "
             f"Price: {ticker_data['price']}, Signal: {ticker_data['signal']}, Setup: {ticker_data['setup']['type']}. "
@@ -131,9 +155,16 @@ def get_ai_rationale(ticker_data):
     except Exception as e:
         return f"AI Error: {str(e)}"
 
+# --- ROUTES ---
 @app.route('/')
 def home():
-    return render_template('index.html', market_status=get_market_status(), current_mode="stock")
+    # Pass VIX data to home page too
+    return render_template(
+        'index.html', 
+        market_status=get_market_status(), 
+        vix=get_vix_data(),
+        current_mode="stock"
+    )
 
 @app.route('/scan')
 def scan():
@@ -141,8 +172,6 @@ def scan():
     tickers = CRYPTO_TICKERS if mode == 'crypto' else STOCK_TICKERS
     
     results = analyze_market_data(tickers)
-    
-    # Top Pick Processing
     chosen_one = None
     if results:
         chosen_one = results[0]
@@ -151,6 +180,7 @@ def scan():
     return render_template(
         'index.html',
         market_status=get_market_status(),
+        vix=get_vix_data(), # Live VIX on scan result page too
         current_mode=mode,
         results=results,
         chosen_one=chosen_one
