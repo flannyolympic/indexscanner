@@ -5,12 +5,16 @@ import pandas as pd
 import yfinance as yf
 from flask import Flask, render_template, request
 from datetime import datetime
-from google import genai
+import google.generativeai as genai
 
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
 GENAI_API_KEY = os.environ.get("GENAI_API_KEY")
+
+# Configure the STABLE library
+if GENAI_API_KEY:
+    genai.configure(api_key=GENAI_API_KEY)
 
 # ASSET UNIVERSES
 STOCK_TICKERS = [
@@ -107,14 +111,12 @@ def analyze_market_data(ticker_list):
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
 def get_ai_rationale(ticker_data):
-    """
-    Updated for google-genai SDK v0.3+ and gemini-1.5-flash
-    """
     if not GENAI_API_KEY:
-        return "AI Module Offline: Check API Key."
+        return "AI Module Offline."
     
     try:
-        client = genai.Client(api_key=GENAI_API_KEY)
+        # Using the STABLE library with the FAST model
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = (
             f"As a hedge fund analyst, give a 1-sentence risk assessment for {ticker_data['ticker']}. "
@@ -122,14 +124,10 @@ def get_ai_rationale(ticker_data):
             f"Setup {ticker_data['setup']['type']}. Be direct and professional."
         )
         
-        # Using 'gemini-1.5-flash' for maximum speed and lower latency
-        response = client.models.generate_content(
-            model='gemini-1.5-flash',
-            contents=prompt
-        )
+        response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        return f"AI Connection Error: {str(e)}"
+        return f"AI Error: {str(e)}"
 
 @app.route('/')
 def home():
@@ -145,7 +143,6 @@ def scan():
     chosen_one = None
     if results:
         chosen_one = results[0]
-        # Only run AI on the top pick to save time
         chosen_one['rationale'] = get_ai_rationale(chosen_one)
 
     return render_template(
