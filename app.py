@@ -11,8 +11,6 @@ app = Flask(__name__)
 
 # --- CONFIGURATION ---
 GENAI_API_KEY = os.environ.get("GENAI_API_KEY")
-
-# Configure the STABLE library
 if GENAI_API_KEY:
     genai.configure(api_key=GENAI_API_KEY)
 
@@ -115,8 +113,8 @@ def get_ai_rationale(ticker_data):
         return "AI Module Offline."
     
     try:
-        # Using the STABLE library with the FAST model
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Reverting to the standard 'gemini-pro' model for maximum compatibility
+        model = genai.GenerativeModel('gemini-pro')
         
         prompt = (
             f"As a hedge fund analyst, give a 1-sentence risk assessment for {ticker_data['ticker']}. "
