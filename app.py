@@ -3,6 +3,7 @@ import random
 import sqlite3
 import time as t_module
 import threading
+import json
 import xml.etree.ElementTree as ET
 from datetime import datetime, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -25,8 +26,8 @@ from scipy.stats import norm
 app = Flask(__name__)
 DB_NAME = "watchlist.db"
 
-# --- VERSION 1.6.2 STABLE RESTORE ---
-APP_VERSION = "v1.6.2 Stable" 
+# --- SYSTEM RESTORE: SONIC NEBULA (STABLE) ---
+APP_VERSION = "v1.4.2 Sonic Nebula (Redux)" 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("HFT_Scanner")
@@ -34,9 +35,23 @@ logger = logging.getLogger("HFT_Scanner")
 VIX_LOCK = threading.Lock()
 VIX_CACHE = {"data": {"price": "...", "color": "grey", "label": "LOADING", "market_status": "grey"}, "last_updated": 0}
 
-# --- CLASSIC LISTS ---
-STOCKS = ["AAPL", "MSFT", "NVDA", "TSLA", "AMD", "AMZN", "GOOGL", "META", "GME", "AMC", "PLTR", "COIN", "MSTR", "SMCI", "ARM", "SPY", "QQQ", "IWM", "NFLX", "INTC", "BA", "DIS", "JPM", "GS", "V", "MA", "WMT", "JNJ"]
-CRYPTO = ["BTC-USD", "ETH-USD", "SOL-USD", "DOGE-USD", "SHIB-USD", "XRP-USD", "ADA-USD", "AVAX-USD", "LINK-USD", "LTC-USD", "DOT-USD", "MATIC-USD", "UNI-USD", "ATOM-USD", "ETC-USD", "XLM-USD", "BCH-USD", "ALGO-USD"]
+# --- GLOBAL INDEX (Zero-Latency Search) ---
+GLOBAL_INDEX = [
+    {"s": "AAPL", "n": "Apple Inc.", "e": "Stock"}, {"s": "MSFT", "n": "Microsoft", "e": "Stock"},
+    {"s": "NVDA", "n": "NVIDIA", "e": "Stock"}, {"s": "TSLA", "n": "Tesla", "e": "Stock"},
+    {"s": "GOOGL", "n": "Alphabet", "e": "Stock"}, {"s": "AMZN", "n": "Amazon", "e": "Stock"},
+    {"s": "META", "n": "Meta", "e": "Stock"}, {"s": "AMD", "n": "AMD", "e": "Stock"},
+    {"s": "GME", "n": "GameStop", "e": "Stock"}, {"s": "AMC", "n": "AMC Ent", "e": "Stock"},
+    {"s": "PLTR", "n": "Palantir", "e": "Stock"}, {"s": "COIN", "n": "Coinbase", "e": "Stock"},
+    {"s": "CVNA", "n": "Carvana", "e": "Stock"}, {"s": "MSTR", "n": "MicroStrategy", "e": "Stock"},
+    {"s": "BTC-USD", "n": "Bitcoin", "e": "Crypto"}, {"s": "ETH-USD", "n": "Ethereum", "e": "Crypto"},
+    {"s": "SOL-USD", "n": "Solana", "e": "Crypto"}, {"s": "DOGE-USD", "n": "Dogecoin", "e": "Crypto"},
+    {"s": "SHIB-USD", "n": "Shiba Inu", "e": "Crypto"}, {"s": "XRP-USD", "n": "XRP", "e": "Crypto"},
+    {"s": "^GSPC", "n": "S&P 500", "e": "Index"}, {"s": "^VIX", "n": "Volatility", "e": "Index"}
+]
+
+STOCKS = [x["s"] for x in GLOBAL_INDEX if x["e"] == "Stock"]
+CRYPTO = [x["s"] for x in GLOBAL_INDEX if x["e"] == "Crypto"]
 
 def init_db():
     conn = sqlite3.connect(DB_NAME, check_same_thread=False)
@@ -63,19 +78,16 @@ def get_market_status_color():
     if status in ["PRE-MARKET", "AFTER-HOURS"]: return "#ffd700"
     return "#ff5252" 
 
-# --- NATIVE DATA FETCH (STABLE) ---
-def get_market_data(ticker, retries=3):
+def get_market_data(ticker, retries=2):
     attempt = 0
     while attempt <= retries:
         try:
             t_module.sleep(random.uniform(0.05, 0.2))
-            # Native fetch, no complex headers
             df = yf.download(ticker, period="5d", interval="5m", prepost=True, progress=False, auto_adjust=True)
             if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.get_level_values(0)
-            df = df.loc[:, ~df.columns.duplicated()] # Prevent crash
+            df = df.loc[:, ~df.columns.duplicated()]
             if not df.empty and len(df) >= 10: return df
-        except:
-            t_module.sleep(1)
+        except: t_module.sleep(0.5)
         attempt += 1
     return None
 
@@ -85,8 +97,7 @@ def get_ticker_news(ticker):
         url = f"https://news.google.com/rss/search?q={clean}+stock&hl=en-US&gl=US&ceid=US:en"
         r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=2)
         root = ET.fromstring(r.content)
-        items = root.findall("./channel/item")[:3]
-        return [{"title": i.find("title").text, "publisher": i.find("source").text, "link": i.find("link").text} for i in items]
+        return [{"title": i.find("title").text, "publisher": i.find("source").text, "link": i.find("link").text} for i in root.findall("./channel/item")[:3]]
     except: return []
 
 def get_vix_data(force_update=False):
@@ -103,7 +114,7 @@ def get_vix_data(force_update=False):
             return VIX_CACHE["data"]
         except: return VIX_CACHE["data"]
 
-# --- CLASSIC MATH LOGIC (No Neural) ---
+# --- PURE MATH ENGINE (Sonic Nebula Logic) ---
 def calculate_probability(price, target, std_dev, rsi, trend):
     safe_vol = max(std_dev, price * 0.005)
     z_score = abs(target - price) / (safe_vol * np.sqrt(3))
@@ -129,14 +140,14 @@ def analyze_ticker(ticker_input):
         if ticker in CRYPTO and not ticker.endswith("-USD"): df = get_market_data(f"{ticker}-USD")
         if df is None: return None
 
-    # Classic Technicals
-    df["SMA_20"] = df["Close"].rolling(20).mean()
-    df["Std_Dev"] = df["Close"].rolling(20).std()
+    close = df["Close"]
+    df["SMA_20"] = close.rolling(20).mean()
+    df["Std_Dev"] = close.rolling(20).std()
     df["BB_Upper"] = df["SMA_20"] + (df["Std_Dev"] * 2)
     df["BB_Lower"] = df["SMA_20"] - (df["Std_Dev"] * 2)
     df["BB_Width"] = df["BB_Upper"] - df["BB_Lower"]
     
-    delta = df["Close"].diff()
+    delta = close.diff()
     gain = (delta.where(delta > 0, 0)).rolling(14).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
     df["RSI"] = 100 - (100 / (1 + (gain/loss)))
@@ -151,24 +162,21 @@ def analyze_ticker(ticker_input):
     elif price > latest["BB_Upper"] or rsi > 70: signal, trend = "BEARISH", "SHORT"
 
     setup = determine_strategy(price, latest["BB_Upper"], latest["BB_Lower"], latest["BB_Width"], df["BB_Width"].mean(), signal, "-USD" in ticker)
-    target = latest["BB_Upper"] if trend == "LONG" else latest["BB_Lower"]
-    prob = calculate_probability(price, target, latest["Std_Dev"], rsi, trend)
-    
-    # Simple Sentiment (No AI)
+    prob = calculate_probability(price, latest["BB_Upper"] if trend == "LONG" else latest["BB_Lower"], latest["Std_Dev"], rsi, trend)
     social = {"score": "HYPE", "icon": "🔥"} if rsi > 70 else {"score": "FEAR", "icon": "🩸"} if rsi < 30 else {"score": "QUIET", "icon": "💤"}
 
     return {
-        "ticker": ticker, "price": round(price, 2), "rsi": round(rsi, 2), "vwap": 0, # VWAP removed for simplicity
+        "ticker": ticker, "price": round(price, 2), "rsi": round(rsi, 2), "vwap": 0,
         "signal": signal, "probability": prob, "social": social, "setup": setup
     }
 
 @app.route("/suggest")
 def suggest():
-    query = request.args.get("q", "").upper()
+    query = request.args.get("q", "").strip().upper()
     if not query: return jsonify([])
-    # Simple Local Suggestion (Fast & Reliable)
-    all_assets = sorted(list(set(STOCKS + CRYPTO)))
-    return jsonify([{"symbol": t, "name": "Crypto" if "-USD" in t else "Stock", "exch": "US"} for t in all_assets if t.startswith(query)][:5])
+    # Hybrid Search: Local First
+    matches = [{"symbol": x["s"], "name": x["n"], "exch": x["e"]} for x in GLOBAL_INDEX if x["s"].startswith(query) or query in x["n"].upper()]
+    return jsonify(matches[:6])
 
 @app.after_request
 def add_header(r):
@@ -183,7 +191,6 @@ def index():
 def scan():
     mode = request.args.get('mode', 'stock')
     source = CRYPTO if mode == 'crypto' else STOCKS
-    # Exact Logic from v1.6.2
     scan_list = random.sample(source, min(len(source), 8))
     
     results = []
