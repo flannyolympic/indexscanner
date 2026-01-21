@@ -14,6 +14,20 @@ GENAI_API_KEY = os.environ.get("GENAI_API_KEY")
 if GENAI_API_KEY:
     genai.configure(api_key=GENAI_API_KEY)
 
+# --- DIAGNOSTIC: PRINT AVAILABLE MODELS TO LOGS ---
+# This runs once when the app starts so we can see what works
+try:
+    print("--- DIAGNOSTIC: CHECKING AVAILABLE MODELS ---")
+    if GENAI_API_KEY:
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                print(f"VALID MODEL: {m.name}")
+    else:
+        print("NO API KEY FOUND")
+    print("--- END DIAGNOSTIC ---")
+except Exception as e:
+    print(f"DIAGNOSTIC FAILED: {e}")
+
 # ASSET UNIVERSES
 STOCK_TICKERS = [
     "TSLA", "NVDA", "AMD", "AAPL", "MSFT", "AMZN", "GOOGL", "META", "NFLX",
@@ -113,8 +127,8 @@ def get_ai_rationale(ticker_data):
         return "AI Module Offline."
     
     try:
-        # Reverting to the standard 'gemini-pro' model for maximum compatibility
-        model = genai.GenerativeModel('gemini-pro')
+        # Trying the specific versioned name which is less likely to 404
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
         
         prompt = (
             f"As a hedge fund analyst, give a 1-sentence risk assessment for {ticker_data['ticker']}. "
