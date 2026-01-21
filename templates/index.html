@@ -1,641 +1,108 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-        />
-        <title>Cerebro | Market Scanner</title>
-        <link
-            rel="icon"
-            type="image/png"
-            href="{{ url_for('static', filename='icon.png') }}?v=70"
-        />
-        <link
-            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap"
-            rel="stylesheet"
-        />
-        <style>
-            :root {
-                --bg-core: #0a0a0a;
-                --bg-card: #141414;
-                --border-color: #2a2a2a;
-                --text-main: #e0e0e0;
-                --text-muted: #888;
-                --accent-green: #00c853;
-                --accent-red: #ff1744;
-                --accent-blue: #2979ff;
-                --gold: #ffd700;
-                --font-mono: "JetBrains Mono", monospace;
-                --font-sans: "Inter", sans-serif;
-            }
-
-            * {
-                box-sizing: border-box;
-            }
-
-            body {
-                background-color: var(--bg-core);
-                color: var(--text-main);
-                font-family: var(--font-sans);
-                margin: 0;
-                padding: 0;
-                -webkit-font-smoothing: antialiased;
-            }
-
-            /* --- LAYOUT UTILS --- */
-            .container {
-                max-width: 1400px;
-                margin: 0 auto;
-                padding: 20px;
-            }
-
-            .flex-row {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            }
-            .flex-col {
-                display: flex;
-                flex-direction: column;
-            }
-            .gap-10 {
-                gap: 10px;
-            }
-            .gap-20 {
-                gap: 20px;
-            }
-
-            .text-green {
-                color: var(--accent-green);
-            }
-            .text-red {
-                color: var(--accent-red);
-            }
-            .text-gold {
-                color: var(--gold);
-            }
-            .mono {
-                font-family: var(--font-mono);
-            }
-
-            /* --- HEADER --- */
-            header {
-                border-bottom: 1px solid var(--border-color);
-                padding: 15px 0;
-                margin-bottom: 30px;
-                background: rgba(10, 10, 10, 0.95);
-                position: sticky;
-                top: 0;
-                z-index: 100;
-                backdrop-filter: blur(10px);
-            }
-
-            .brand {
-                font-size: 1.2rem;
-                font-weight: 800;
-                letter-spacing: -0.5px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            .brand span {
-                color: var(--accent-blue);
-            }
-
-            .system-status {
-                font-size: 0.75rem;
-                color: var(--text-muted);
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-            .status-dot {
-                width: 8px;
-                height: 8px;
-                background: var(--accent-green);
-                border-radius: 50%;
-                box-shadow: 0 0 8px var(--accent-green);
-            }
-
-            /* --- CONTROLS --- */
-            .control-deck {
-                display: flex;
-                gap: 15px;
-                margin-bottom: 30px;
-                background: var(--bg-card);
-                padding: 15px;
-                border-radius: 8px;
-                border: 1px solid var(--border-color);
-            }
-
-            .mode-switch {
-                display: flex;
-                background: #000;
-                border-radius: 6px;
-                padding: 4px;
-                border: 1px solid var(--border-color);
-            }
-            .mode-btn {
-                padding: 8px 20px;
-                font-size: 0.8rem;
-                font-weight: 600;
-                cursor: pointer;
-                border-radius: 4px;
-                color: var(--text-muted);
-                transition: all 0.2s;
-            }
-            .mode-btn.active {
-                background: var(--accent-blue);
-                color: white;
-            }
-
-            .scan-btn {
-                flex-grow: 1;
-                background: var(--text-main);
-                color: black;
-                border: none;
-                border-radius: 6px;
-                font-weight: 700;
-                font-size: 0.9rem;
-                cursor: pointer;
-                transition: opacity 0.2s;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-            }
-            .scan-btn:hover {
-                opacity: 0.9;
-            }
-
-            /* --- ORACLE / HIGH CONVICTION --- */
-            .oracle-panel {
-                background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
-                border: 1px solid var(--gold);
-                border-radius: 12px;
-                padding: 25px;
-                margin-bottom: 40px;
-                position: relative;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            }
-            .oracle-badge {
-                position: absolute;
-                top: -12px;
-                left: 20px;
-                background: var(--gold);
-                color: black;
-                font-size: 0.7rem;
-                font-weight: 800;
-                padding: 4px 12px;
-                border-radius: 20px;
-                text-transform: uppercase;
-            }
-
-            .oracle-grid {
-                display: grid;
-                grid-template-columns: 1fr 2fr 1fr;
-                gap: 30px;
-                align-items: start;
-            }
-
-            .ticker-display {
-                font-size: 3rem;
-                font-weight: 900;
-                line-height: 1;
-                margin-bottom: 5px;
-                cursor: pointer;
-            }
-            .signal-tag {
-                display: inline-block;
-                padding: 4px 8px;
-                border-radius: 4px;
-                font-size: 0.75rem;
-                font-weight: 700;
-                background: rgba(255, 255, 255, 0.1);
-            }
-            .bullish {
-                color: var(--accent-green);
-                border: 1px solid var(--accent-green);
-                background: rgba(0, 200, 83, 0.1);
-            }
-            .bearish {
-                color: var(--accent-red);
-                border: 1px solid var(--accent-red);
-                background: rgba(255, 23, 68, 0.1);
-            }
-
-            .rationale-text {
-                font-size: 0.9rem;
-                line-height: 1.5;
-                color: #ccc;
-                border-left: 2px solid var(--border-color);
-                padding-left: 15px;
-            }
-
-            .stats-box {
-                background: rgba(0, 0, 0, 0.3);
-                padding: 15px;
-                border-radius: 8px;
-                font-family: var(--font-mono);
-                font-size: 0.8rem;
-            }
-            .stat-row {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 6px;
-            }
-            .stat-row:last-child {
-                margin-bottom: 0;
-            }
-            .stat-label {
-                color: var(--text-muted);
-            }
-
-            /* --- RESULTS TERMINAL --- */
-            .terminal-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                gap: 20px;
-            }
-
-            .market-card {
-                background: var(--bg-card);
-                border: 1px solid var(--border-color);
-                border-radius: 8px;
-                padding: 15px;
-                cursor: pointer;
-                transition:
-                    transform 0.2s,
-                    border-color 0.2s;
-            }
-            .market-card:hover {
-                transform: translateY(-2px);
-                border-color: var(--text-muted);
-            }
-
-            .card-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 12px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                padding-bottom: 12px;
-            }
-            .card-ticker {
-                font-size: 1.2rem;
-                font-weight: 700;
-            }
-            .card-price {
-                font-family: var(--font-mono);
-                color: var(--text-muted);
-            }
-
-            .setup-info {
-                font-size: 0.8rem;
-                color: #aaa;
-                margin-top: 10px;
-                background: rgba(0, 0, 0, 0.2);
-                padding: 8px;
-                border-radius: 4px;
-            }
-
-            /* --- LOADING & MODALS --- */
-            #loading-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.9);
-                z-index: 999;
-                display: none;
-                justify-content: center;
-                align-items: center;
-                flex-direction: column;
-            }
-            .spinner {
-                width: 50px;
-                height: 50px;
-                border: 3px solid rgba(255, 255, 255, 0.1);
-                border-top-color: var(--accent-blue);
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-            }
-            @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-
-            #detail-modal {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.9);
-                z-index: 1000;
-                display: none;
-                justify-content: center;
-                align-items: center;
-            }
-            .modal-content {
-                width: 90%;
-                height: 80vh;
-                background: #000;
-                border: 1px solid var(--border-color);
-                position: relative;
-            }
-            .close-btn {
-                position: absolute;
-                top: 10px;
-                right: 15px;
-                font-size: 1.5rem;
-                color: white;
-                cursor: pointer;
-                z-index: 10;
-            }
-
-            @media (max-width: 768px) {
-                .oracle-grid {
-                    grid-template-columns: 1fr;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <div id="loading-overlay">
-            <div class="spinner"></div>
-            <div
-                style="
-                    margin-top: 15px;
-                    font-family: var(--font-mono);
-                    font-size: 0.8rem;
-                "
-            >
-                SCANNING MARKET DATA...
-            </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cerebro Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #050505; --card: #111; --border: #333; --green: #00e676; --red: #ff1744; --text: #e0e0e0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        /* HEADER */
+        .header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 30px; }
+        .brand { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.2rem; letter-spacing: -1px; }
+        .status { font-size: 0.8rem; color: #888; }
+        
+        /* CONTROLS */
+        .controls { display: flex; gap: 10px; margin-bottom: 30px; }
+        .btn { background: var(--card); border: 1px solid var(--border); color: #fff; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-family: 'JetBrains Mono'; font-size: 0.8rem; }
+        .btn:hover { border-color: #fff; }
+        .btn.active { background: #fff; color: #000; }
+        .scan-btn { background: var(--green); color: #000; border: none; font-weight: 700; flex-grow: 1; }
+        
+        /* ORACLE PANEL */
+        .oracle { background: #0a0a0a; border: 1px solid var(--green); border-radius: 8px; padding: 25px; margin-bottom: 40px; display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        .ticker-huge { font-size: 3rem; font-weight: 800; line-height: 1; color: var(--green); }
+        .rationale { font-size: 0.9rem; line-height: 1.6; color: #ccc; border-left: 2px solid var(--border); padding-left: 15px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; font-family: 'JetBrains Mono'; font-size: 0.8rem; }
+        
+        /* GRID */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 6px; cursor: pointer; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-2px); border-color: #666; }
+        .card-header { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 10px; }
+        .tag { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #222; }
+        .bullish { color: var(--green); border: 1px solid var(--green); }
+        .bearish { color: var(--red); border: 1px solid var(--red); }
+        
+        /* UTILS */
+        .spinner { border: 3px solid #333; border-top: 3px solid var(--green); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        @media (max-width: 768px) { .oracle { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand">/// PROJECT CEREBRO</div>
+            <div class="status">{{ market_status }}</div>
         </div>
 
-        <div id="detail-modal">
-            <div class="modal-content">
-                <div class="close-btn" onclick="closeModal()">&times;</div>
-                <div
-                    id="tv-chart-container"
-                    style="width: 100%; height: 100%"
-                ></div>
+        <form action="/scan" method="GET" id="scanForm">
+            <div class="controls">
+                <input type="hidden" name="mode" id="modeInput" value="{{ current_mode }}">
+                <button type="button" class="btn {{ 'active' if current_mode == 'stock' else '' }}" onclick="setMode('stock')">STOCKS</button>
+                <button type="button" class="btn {{ 'active' if current_mode == 'crypto' else '' }}" onclick="setMode('crypto')">CRYPTO</button>
+                <button type="submit" class="btn scan-btn" onclick="document.querySelector('.spinner').style.display='block'">SCAN MARKET</button>
+            </div>
+        </form>
+        
+        <div class="spinner"></div>
+
+        {% if chosen_one %}
+        <div class="oracle">
+            <div>
+                <div class="ticker-huge">{{ chosen_one.ticker }}</div>
+                <div class="tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}" style="display:inline-block; margin-top:10px;">{{ chosen_one.signal }}</div>
+                <div class="stats-grid">
+                    <div>PROB: {{ chosen_one.probability }}%</div>
+                    <div>STOP: {{ chosen_one.setup.stop }}</div>
+                    <div>TGT: {{ chosen_one.setup.target }}</div>
+                </div>
+            </div>
+            <div class="rationale">
+                <strong style="color:var(--green)">AI ANALYST:</strong><br>
+                {{ chosen_one.rationale }}
             </div>
         </div>
+        {% endif %}
 
-        <header>
-            <div class="container flex-row">
-                <div class="brand"><span>///</span> PROJECT CEREBRO</div>
-                <div class="system-status">
-                    <div class="status-dot"></div>
-                    <span id="live-clock">--:--:--</span>
-                    <span>{{ market_status }}</span>
+        <div class="grid">
+            {% for row in results %}
+            {% if not chosen_one or row.ticker != chosen_one.ticker %}
+            <div class="card">
+                <div class="card-header">
+                    <span>{{ row.ticker }}</span>
+                    <span>${{ row.price }}</span>
                 </div>
-            </div>
-        </header>
-
-        <main class="container">
-            <form action="/scan" method="GET" id="scanForm">
-                <div class="control-deck">
-                    <div class="mode-switch">
-                        <div
-                            class="mode-btn {{ 'active' if current_mode != 'crypto' else '' }}"
-                            onclick="setMode('stock')"
-                        >
-                            STOCKS
-                        </div>
-                        <div
-                            class="mode-btn {{ 'active' if current_mode == 'crypto' else '' }}"
-                            onclick="setMode('crypto')"
-                        >
-                            CRYPTO
-                        </div>
-                    </div>
-                    <input
-                        type="hidden"
-                        name="mode"
-                        id="modeInput"
-                        value="{{ current_mode }}"
-                    />
-                    <button
-                        type="submit"
-                        class="scan-btn"
-                        onclick="showLoading()"
-                    >
-                        INITIATE SCAN SEQUENCE
-                    </button>
+                <div style="font-size:0.8rem; color:#888;">{{ row.setup.type }}</div>
+                <div style="margin-top:10px;">
+                    <span class="tag {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}">{{ row.signal }}</span>
                 </div>
-            </form>
-
-            {% if error %}
-            <div
-                style="
-                    padding: 15px;
-                    background: rgba(255, 23, 68, 0.1);
-                    border: 1px solid var(--accent-red);
-                    color: var(--accent-red);
-                    border-radius: 8px;
-                    margin-bottom: 20px;
-                "
-            >
-                SYSTEM ERROR: {{ error }}
-            </div>
-            {% endif %} {% if chosen_one and chosen_one.signal != "NEUTRAL" %}
-            <div class="oracle-panel">
-                <div class="oracle-badge">HIGHEST CONVICTION</div>
-                <div class="oracle-grid">
-                    <div>
-                        <div
-                            class="ticker-display {{ 'text-green' if 'BULLISH' in chosen_one.signal else 'text-red' }}"
-                            onclick="openModal('{{ chosen_one.ticker }}')"
-                        >
-                            {{ chosen_one.ticker }}
-                        </div>
-                        <span
-                            class="signal-tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}"
-                        >
-                            {{ chosen_one.signal }}
-                        </span>
-                        <div
-                            style="
-                                margin-top: 10px;
-                                font-size: 0.8rem;
-                                color: var(--text-muted);
-                            "
-                        >
-                            Social Sentiment:
-                            <span style="color: white"
-                                >{{ chosen_one.social.score }}</span
-                            >
-                        </div>
-                    </div>
-
-                    <div class="rationale-text">
-                        <div
-                            style="
-                                margin-bottom: 5px;
-                                color: var(--text-muted);
-                                font-size: 0.75rem;
-                                text-transform: uppercase;
-                            "
-                        >
-                            AI Analysis
-                        </div>
-                        {{ chosen_one.rationale }}
-                    </div>
-
-                    <div class="stats-box">
-                        <div class="stat-row">
-                            <span class="stat-label">Probability</span>
-                            <span class="text-gold"
-                                >{{ chosen_one.probability }}%</span
-                            >
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-label">Setup</span>
-                            <span>{{ chosen_one.setup.type }}</span>
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-label">Entry</span>
-                            <span>{{ chosen_one.setup.entry }}</span>
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-label">Stop</span>
-                            <span class="text-red"
-                                >{{ chosen_one.setup.stop }}</span
-                            >
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-label">Target</span>
-                            <span class="text-green"
-                                >{{ chosen_one.setup.target }}</span
-                            >
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %} {% if results %}
-            <div
-                style="
-                    margin-bottom: 15px;
-                    font-size: 0.8rem;
-                    color: var(--text-muted);
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                "
-            >
-                Active Signals ({{ results|length }})
-            </div>
-            <div class="terminal-grid">
-                {% for row in results %} {% if not chosen_one or row.ticker !=
-                chosen_one.ticker %}
-                <div
-                    class="market-card"
-                    onclick="openModal('{{ row.ticker }}')"
-                >
-                    <div class="card-header">
-                        <div class="card-ticker">{{ row.ticker }}</div>
-                        <div class="card-price">${{ row.price }}</div>
-                    </div>
-                    <div
-                        style="
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                        "
-                    >
-                        <span
-                            class="signal-tag {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}"
-                        >
-                            {{ row.signal }}
-                        </span>
-                        <span class="mono" style="font-size: 0.8rem"
-                            >{{ row.probability }}% PROB</span
-                        >
-                    </div>
-
-                    <div class="setup-info">
-                        <div class="flex-row">
-                            <span>Type:</span>
-                            <span style="color: white"
-                                >{{ row.setup.type }}</span
-                            >
-                        </div>
-                        <div class="flex-row">
-                            <span>VWAP:</span> <span>{{ row.vwap }}</span>
-                        </div>
-                    </div>
-                </div>
-                {% endif %} {% endfor %}
-            </div>
-            {% elif request.path == '/scan' %}
-            <div
-                style="
-                    text-align: center;
-                    padding: 40px;
-                    color: var(--text-muted);
-                "
-            >
-                NO HIGH-PROBABILITY SETUPS FOUND IN CURRENT SESSION.
             </div>
             {% endif %}
-        </main>
+            {% endfor %}
+        </div>
+    </div>
 
-        <script
-            type="text/javascript"
-            src="https://s3.tradingview.com/tv.js"
-        ></script>
-        <script>
-            function updateClock() {
-                const now = new Date();
-                document.getElementById("live-clock").innerText =
-                    now.toLocaleTimeString("en-US", { hour12: false }) + " EST";
-            }
-            setInterval(updateClock, 1000);
-            updateClock();
-
-            function setMode(mode) {
-                document.getElementById("modeInput").value = mode;
-                document.getElementById("scanForm").submit();
-                showLoading();
-            }
-
-            function showLoading() {
-                document.getElementById("loading-overlay").style.display =
-                    "flex";
-            }
-
-            function openModal(ticker) {
-                // Fix crypto pairs for TradingView
-                let cleanTicker = ticker.replace("-USD", "USD");
-                const isCrypto = ticker.includes("-USD");
-                const exchange = isCrypto ? "COINBASE" : "NASDAQ";
-
-                document.getElementById("detail-modal").style.display = "flex";
-
-                new TradingView.widget({
-                    width: "100%",
-                    height: "100%",
-                    symbol: `${exchange}:${cleanTicker}`,
-                    interval: "15",
-                    timezone: "America/New_York",
-                    theme: "dark",
-                    style: "1",
-                    locale: "en",
-                    toolbar_bg: "#f1f3f6",
-                    enable_publishing: false,
-                    container_id: "tv-chart-container",
-                });
-            }
-
-            function closeModal() {
-                document.getElementById("detail-modal").style.display = "none";
-                document.getElementById("tv-chart-container").innerHTML = "";
-            }
-        </script>
-    </body>
+    <script>
+        function setMode(mode) {
+            document.getElementById('modeInput').value = mode;
+            document.getElementById('scanForm').submit();
+        }
+    </script>
+</body>
 </html>
