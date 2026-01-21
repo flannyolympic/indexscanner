@@ -1,5 +1,4 @@
 import os
-import time
 import requests
 import pandas as pd
 import yfinance as yf
@@ -25,18 +24,15 @@ CRYPTO_TICKERS = [
     "ADA-USD", "AVAX-USD", "LINK-USD", "LTC-USD", "BCH-USD", "UNI-USD"
 ]
 
-# --- MARKET STATUS LOGIC (Dynamic Colors) ---
 def get_market_status():
     tz = pytz.timezone('America/New_York')
     now = datetime.now(tz)
     current_time = now.time()
     
-    # Default: Closed (Red)
     status = "MARKET CLOSED"
     color = "#ff4b4b" 
     
-    if now.weekday() >= 5:
-        return {"label": "WEEKEND CLOSED", "color": color}
+    if now.weekday() >= 5: return {"label": "WEEKEND CLOSED", "color": color}
 
     market_open = dt_time(9, 30)
     market_close = dt_time(16, 0)
@@ -44,14 +40,11 @@ def get_market_status():
     after_hours = dt_time(20, 0)
 
     if market_open <= current_time < market_close:
-        status = "MARKET OPEN"
-        color = "#00ff9d" # Green
+        return {"label": "MARKET OPEN", "color": "#00ff9d"}
     elif pre_market <= current_time < market_open:
-        status = "PRE-MARKET"
-        color = "#F1C40F" # Yellow
+        return {"label": "PRE-MARKET", "color": "#F1C40F"}
     elif market_close <= current_time < after_hours:
-        status = "AFTER HOURS"
-        color = "#F1C40F" # Yellow
+        return {"label": "AFTER HOURS", "color": "#F1C40F"}
         
     return {"label": status, "color": color}
 
@@ -102,21 +95,17 @@ def analyze_market_data(ticker_list):
             setup = "Consolidation"
             
             if current_rsi < 30:
-                signal = "BULLISH (OVERSOLD)"
-                prob = 75
-                setup = "Mean Reversion"
+                signal = "BULLISH (OVERSOLD)", 75, "Mean Reversion"
             elif current_rsi > 70:
-                signal = "BEARISH (OVERBOUGHT)"
-                prob = 70
-                setup = "Top Reversal"
+                signal = "BEARISH (OVERBOUGHT)", 70, "Top Reversal"
             elif current_price > current_vwap * 1.01:
-                signal = "BULLISH (TREND)"
-                prob = 60
-                setup = "VWAP Support"
+                signal = "BULLISH (TREND)", 60, "VWAP Support"
             elif current_price < current_vwap * 0.99:
-                signal = "BEARISH (TREND)"
-                prob = 60
-                setup = "VWAP Resistance"
+                signal = "BEARISH (TREND)", 60, "VWAP Resistance"
+            else:
+                signal = "NEUTRAL", 50, "Consolidation"
+
+            signal, prob, setup = signal # Unpack tuple
 
             stop = current_price * 0.98 if "BULLISH" in signal else current_price * 1.02
             target = current_price * 1.05 if "BULLISH" in signal else current_price * 0.95
@@ -141,8 +130,13 @@ def analyze_market_data(ticker_list):
 def get_ai_rationale(ticker_data):
     if not GENAI_API_KEY: return "AI Module Offline."
     
-    # List of models to try in order of preference
-    models_to_try = ['gemini-flash-latest', 'gemini-1.5-flash', 'gemini-pro']
+    # EXACT models found in your previous logs
+    models_to_try = [
+        'gemini-2.0-flash-lite-preview-02-05', # Newest/Fastest
+        'gemini-flash-latest', 
+        'gemini-pro-latest',
+        'gemini-pro'
+    ]
     
     prompt = (
         f"Act as a quantitative analyst. Analyze {ticker_data['ticker']}. "
@@ -154,11 +148,12 @@ def get_ai_rationale(ticker_data):
         try:
             model = genai.GenerativeModel(model_name)
             response = model.generate_content(prompt)
-            return response.text
+            if response.text:
+                return response.text
         except:
-            continue # Try next model if this one fails
+            continue 
             
-    return "AI Unavailable (All models busy). Rely on technical signal."
+    return "AI Unavailable (Connection busy). Technical signal valid."
 
 @app.route('/')
 def home():
