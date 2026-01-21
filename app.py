@@ -3,16 +3,14 @@ import time
 import requests
 import pandas as pd
 import yfinance as yf
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request
 from datetime import datetime
-import google.generativeai as genai
+from google import genai
 
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
 GENAI_API_KEY = os.environ.get("GENAI_API_KEY")
-if GENAI_API_KEY:
-    genai.configure(api_key=GENAI_API_KEY)
 
 # ASSET UNIVERSES
 STOCK_TICKERS = [
@@ -33,7 +31,6 @@ def get_market_status():
 def analyze_market_data(ticker_list):
     results = []
     try:
-        # Bulk download for speed
         data = yf.download(
             tickers=" ".join(ticker_list), 
             period="5d", 
@@ -49,11 +46,10 @@ def analyze_market_data(ticker_list):
 
     for ticker in ticker_list:
         try:
-            # Handle yfinance multi-index vs single-index
             df = data[ticker] if len(ticker_list) > 1 else data
             if df.empty: continue
 
-            # Technical Calcs
+            # Technicals
             df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
             df['VWAP'] = (df['TP'] * df['Volume']).cumsum() / df['Volume'].cumsum()
             
@@ -67,12 +63,11 @@ def analyze_market_data(ticker_list):
             current_rsi = df['RSI'].iloc[-1]
             current_vwap = df['VWAP'].iloc[-1]
             
-            # --- CEREBRO SIGNAL LOGIC ---
+            # Logic
             signal = "NEUTRAL"
             prob = 50
             setup = "Consolidation"
             
-            # Oversold/Overbought
             if current_rsi < 30:
                 signal = "BULLISH (OVERSOLD)"
                 prob = 75
@@ -81,7 +76,6 @@ def analyze_market_data(ticker_list):
                 signal = "BEARISH (OVERBOUGHT)"
                 prob = 70
                 setup = "Top Reversal"
-            # VWAP Trend
             elif current_price > current_vwap * 1.01:
                 signal = "BULLISH (TREND)"
                 prob = 60
@@ -91,7 +85,6 @@ def analyze_market_data(ticker_list):
                 prob = 60
                 setup = "VWAP Resistance"
 
-            # Entry/Target Logic
             stop = current_price * 0.98 if "BULLISH" in signal else current_price * 1.02
             target = current_price * 1.05 if "BULLISH" in signal else current_price * 0.95
 
@@ -114,20 +107,29 @@ def analyze_market_data(ticker_list):
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
 def get_ai_rationale(ticker_data):
+    """
+    Updated for google-genai SDK v0.3+ and gemini-1.5-flash
+    """
     if not GENAI_API_KEY:
-        return "AI Module Offline: Please add GENAI_API_KEY to Render Environment."
+        return "AI Module Offline: Check API Key."
     
     try:
-        model = genai.GenerativeModel('gemini-pro')
+        client = genai.Client(api_key=GENAI_API_KEY)
+        
         prompt = (
-            f"Act as a quantitative analyst. Analyze {ticker_data['ticker']}. "
-            f"Price: {ticker_data['price']}, Signal: {ticker_data['signal']}, Setup: {ticker_data['setup']['type']}. "
-            f"Provide a 2-sentence institutional rationale. Be concise and professional. No fluff."
+            f"As a hedge fund analyst, give a 1-sentence risk assessment for {ticker_data['ticker']}. "
+            f"Technical Context: Price ${ticker_data['price']}, Signal {ticker_data['signal']}, "
+            f"Setup {ticker_data['setup']['type']}. Be direct and professional."
         )
-        response = model.generate_content(prompt)
+        
+        # Using 'gemini-1.5-flash' for maximum speed and lower latency
+        response = client.models.generate_content(
+            model='gemini-1.5-flash',
+            contents=prompt
+        )
         return response.text
-    except:
-        return "AI Connection Timed Out."
+    except Exception as e:
+        return f"AI Connection Error: {str(e)}"
 
 @app.route('/')
 def home():
@@ -140,12 +142,11 @@ def scan():
     
     results = analyze_market_data(tickers)
     
-    # Top Pick Processing
     chosen_one = None
     if results:
         chosen_one = results[0]
+        # Only run AI on the top pick to save time
         chosen_one['rationale'] = get_ai_rationale(chosen_one)
-        chosen_one['social'] = {"score": "HIGH VOL", "icon": "🔥"}
 
     return render_template(
         'index.html',
