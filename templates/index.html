@@ -11,19 +11,22 @@
 
     <style>
         :root {
-            --bg-deep: #050505;
-            --glass-surface: rgba(20, 20, 20, 0.4);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-highlight: rgba(255, 255, 255, 0.05);
+            --bg-deep: #000000;
+            /* iOS Glass Effect Variables */
+            --glass-surface: rgba(30, 30, 30, 0.5); 
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-highlight: rgba(255, 255, 255, 0.08);
             --accent-green: #00ff9d;
             --accent-red: #ff4b4b;
-            --text-main: #eeeeee;
+            --text-main: #ffffff;
             --text-muted: #888888;
-            --blur-amt: 20px;
+            --blur-amt: 25px;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
+        html { scroll-behavior: smooth; }
+
         body {
             background-color: var(--bg-deep);
             color: var(--text-main);
@@ -34,201 +37,226 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- BACKGROUND --- */
+        /* --- ALIVE BACKGROUND --- */
         .bg-watermark {
             position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 90vw; max-width: 1000px;
+            width: 85vw; max-width: 900px;
             opacity: 0.12; z-index: -1; pointer-events: none;
             filter: grayscale(100%) contrast(1.2);
+            /* The "Breathing" Animation */
+            animation: breathe 8s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.12; }
+            50% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.18; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0.12; }
         }
 
         .bg-gradient {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: 
-                radial-gradient(circle at 10% 20%, rgba(0, 255, 157, 0.03), transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(50, 50, 255, 0.03), transparent 40%);
+                radial-gradient(circle at 10% 20%, rgba(0, 255, 157, 0.04), transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(50, 50, 255, 0.04), transparent 40%);
             z-index: -2; pointer-events: none;
         }
 
         .container {
             max-width: 1400px; margin: 0 auto; padding: 20px;
-            padding-bottom: 40px;
+            padding-bottom: 60px;
         }
 
         /* --- HEADER --- */
         .header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 0; margin-bottom: 20px;
+            padding: 15px 20px; margin: -20px -20px 25px -20px; /* Bleed to edge */
             position: sticky; top: 0; z-index: 100;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(var(--blur-amt)); -webkit-backdrop-filter: blur(var(--blur-amt));
+            /* Premium Glass Effect */
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(var(--blur-amt)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--blur-amt)) saturate(180%);
             border-bottom: 1px solid var(--glass-border);
-            margin: -20px -20px 30px -20px;
-            padding-left: 20px; padding-right: 20px;
         }
 
-        /* --- TYPEWRITER BRANDING --- */
         .brand {
             font-family: 'JetBrains Mono', monospace;
             font-weight: 700;
             font-size: 1.1rem;
-            letter-spacing: 0.5px;
+            letter-spacing: -0.5px;
             color: var(--accent-green);
-            text-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
-            text-transform: uppercase;
-            display: flex; align-items: center;
-            white-space: nowrap; /* Prevent wrap */
+            text-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
+            display: flex; flex-direction: column; /* Stack on mobile if needed */
+            line-height: 1.2;
         }
 
-        /* The cycling data span */
+        /* The scrolling ticker text */
         #typewriter-text {
-            color: var(--text-main);
-            margin-left: 10px;
-            font-weight: 400;
+            color: #fff; font-weight: 400; opacity: 0.9;
+            font-size: 0.95rem; display: inline-block;
         }
 
-        /* The cursor */
         .cursor {
             color: var(--accent-green);
             animation: blink 1s step-end infinite;
-            margin-left: 2px;
         }
 
         /* --- VIX --- */
-        .vix-container { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
+        .vix-container { text-align: right; }
 
         .vix-badge {
-            background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
-            border-radius: 8px; padding: 6px 12px;
-            font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
-            display: flex; align-items: center; gap: 10px; transition: all 0.3s ease;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+            border-radius: 6px; padding: 4px 10px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+            display: inline-flex; align-items: center; gap: 8px;
         }
 
-        .vix-value { font-weight: 800; font-size: 1rem; }
-        .vix-label { font-size: 0.75rem; text-transform: uppercase; opacity: 0.9; }
-        
+        .vix-value { font-weight: 800; }
         .market-subtext { 
-            font-size: 0.65rem; color: var(--text-muted); margin-top: 6px; 
+            font-size: 0.6rem; color: var(--text-muted); margin-top: 4px; 
             font-family: 'JetBrains Mono'; letter-spacing: 0.5px;
-            display: flex; align-items: center; gap: 6px;
         }
 
-        /* --- CARDS & PANELS --- */
+        /* --- ORACLE PANEL --- */
         .oracle-glass {
             background: var(--glass-surface);
-            backdrop-filter: blur(var(--blur-amt)); -webkit-backdrop-filter: blur(var(--blur-amt));
+            backdrop-filter: blur(var(--blur-amt)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--blur-amt)) saturate(180%);
             border: 1px solid var(--glass-border); border-radius: 16px; padding: 30px;
-            margin-bottom: 40px; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+            margin-bottom: 30px; 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
             position: relative; overflow: hidden;
+            transition: transform 0.3s ease;
         }
 
         .oracle-glass::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
             background: linear-gradient(90deg, transparent, var(--accent-green), transparent);
-            opacity: 0.5;
+            opacity: 0.6;
         }
 
         .oracle-content { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; align-items: center; }
 
         .ticker-hero {
-            font-size: 4rem; font-weight: 800; line-height: 1; letter-spacing: -2px;
-            background: linear-gradient(135deg, #fff, #999); -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent; text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-size: 4.5rem; font-weight: 800; line-height: 1; letter-spacing: -3px;
+            background: linear-gradient(135deg, #ffffff 30%, #777777); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; 
         }
 
         .rationale-text {
             font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6;
-            color: #ddd; border-left: 2px solid var(--accent-green); padding-left: 20px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            color: #d0d0d0; border-left: 2px solid var(--accent-green); padding-left: 20px;
         }
 
+        /* --- CONTROLS --- */
         .controls {
-            display: flex; gap: 12px; margin-bottom: 30px;
-            background: rgba(20, 20, 20, 0.6); padding: 6px;
-            border-radius: 12px; border: 1px solid var(--glass-border);
-            width: fit-content; backdrop-filter: blur(10px);
+            display: flex; gap: 10px; margin-bottom: 30px;
+            background: rgba(30, 30, 30, 0.6); padding: 5px;
+            border-radius: 10px; border: 1px solid var(--glass-border);
+            width: fit-content; backdrop-filter: blur(15px);
         }
 
         .pill-btn {
-            background: transparent; border: none; color: var(--text-muted);
-            padding: 10px 24px; border-radius: 8px; font-size: 0.85rem;
+            background: transparent; border: none; color: #aaa;
+            padding: 10px 20px; border-radius: 7px; font-size: 0.8rem;
             font-weight: 600; cursor: pointer; transition: all 0.2s ease;
             font-family: 'Inter', sans-serif;
         }
 
         .pill-btn.active {
-            background: rgba(255,255,255,0.1); color: #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.15); color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .scan-trigger { background: var(--accent-green) !important; color: #000 !important; font-weight: 700; }
+        .scan-trigger { background: var(--accent-green) !important; color: #000 !important; font-weight: 800; }
 
-        .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+        /* --- GRID --- */
+        .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
 
         .card {
             background: var(--glass-surface); border: 1px solid var(--glass-border);
-            border-radius: 12px; padding: 20px; transition: all 0.2s;
-            cursor: default; backdrop-filter: blur(10px);
+            border-radius: 12px; padding: 18px; transition: all 0.2s;
+            cursor: default; 
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
         }
 
         .card:hover {
-            transform: translateY(-4px); background: rgba(255,255,255,0.07);
+            transform: translateY(-3px); background: rgba(255,255,255,0.08);
             border-color: rgba(255,255,255,0.2);
         }
 
-        .card-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+        .card-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
         .card-ticker { font-weight: 700; font-size: 1.1rem; }
-        .card-price { font-family: 'JetBrains Mono'; color: var(--text-muted); font-size: 0.9rem; }
+        .card-price { font-family: 'JetBrains Mono'; color: #999; font-size: 0.9rem; }
 
         .tag {
             display: inline-block; padding: 4px 8px; border-radius: 4px;
             font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
         }
-        .tag.bullish { color: var(--accent-green); background: rgba(0, 255, 157, 0.1); border: 1px solid rgba(0, 255, 157, 0.2); }
-        .tag.bearish { color: var(--accent-red); background: rgba(255, 75, 75, 0.1); border: 1px solid rgba(255, 75, 75, 0.2); }
+        .tag.bullish { color: var(--accent-green); background: rgba(0, 255, 157, 0.12); border: 1px solid rgba(0, 255, 157, 0.2); }
+        .tag.bearish { color: var(--accent-red); background: rgba(255, 75, 75, 0.12); border: 1px solid rgba(255, 75, 75, 0.2); }
 
         .setup-info {
-            margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--glass-border);
-            font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--text-muted);
+            margin-top: 15px; padding-top: 10px; border-top: 1px solid var(--glass-border);
+            font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #777;
             display: flex; justify-content: space-between;
         }
 
         .terminal-footer {
-            margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--glass-border);
-            text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
-            color: var(--text-muted); opacity: 0.7; letter-spacing: 0.5px;
-            text-transform: uppercase; position: relative; z-index: 1;
+            margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--glass-border);
+            text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+            color: #555; text-transform: uppercase; letter-spacing: 1px;
         }
 
+        /* --- LOADER --- */
         .loader-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(20px);
             z-index: 999; display: none; justify-content: center;
             align-items: center; flex-direction: column;
         }
         
         .spinner {
-            width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1);
-            border-top: 3px solid var(--accent-green); border-radius: 50%;
+            width: 40px; height: 40px; border: 2px solid rgba(255,255,255,0.1);
+            border-top: 2px solid var(--accent-green); border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
         @keyframes blink { 50% { opacity: 0; } }
 
+        /* --- MOBILE OPTIMIZATION --- */
         @media (max-width: 768px) {
-            .bg-watermark { width: 95vw; max-width: none; }
+            .bg-watermark { width: 90vw; animation: breathe 6s ease-in-out infinite; }
+            .header { padding: 15px; flex-direction: row; align-items: center; }
+            
+            /* Responsive Brand/Ticker Logic */
+            .brand { 
+                font-size: 0.9rem; 
+                flex-direction: column; /* Stack Title and Data */
+                align-items: flex-start;
+                max-width: 65%; /* Leave room for VIX */
+            }
+            
+            #typewriter-text {
+                font-size: 0.75rem;
+                color: #aaa;
+                margin-left: 0;
+                margin-top: 2px;
+                display: block; /* Force new line on mobile */
+            }
+
+            .vix-container { max-width: 35%; }
+            .vix-badge { padding: 4px 8px; font-size: 0.75rem; }
+            .vix-label { display: none; } /* Hide "MILD CONCERN" text on phones to save space */
+            
             .oracle-content { grid-template-columns: 1fr; text-align: left; }
-            .ticker-hero { font-size: 3rem; }
-            .container { padding: 15px; }
+            .ticker-hero { font-size: 3.5rem; }
+            .rationale-text { border-left: none; padding-left: 0; border-top: 1px solid var(--accent-green); padding-top: 15px; }
+            
             .controls { width: 100%; display: grid; grid-template-columns: 1fr 1fr 2fr; }
             .pill-btn { padding: 12px; text-align: center; }
-            .header { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .vix-container { width: 100%; align-items: flex-start; flex-direction: row; justify-content: space-between; }
-            .vix-badge { padding: 4px 8px; }
-            .brand { font-size: 0.9rem; } /* Smaller text for mobile header */
         }
     </style>
 </head>
@@ -239,7 +267,7 @@
 
     <div class="loader-overlay" id="loader">
         <div class="spinner"></div>
-        <div style="margin-top: 20px; font-family: 'JetBrains Mono'; color: var(--accent-green); font-size: 0.8rem;">ACCESSING CEREBRO NODE...</div>
+        <div style="margin-top: 15px; font-family: 'JetBrains Mono'; color: var(--accent-green); font-size: 0.7rem; letter-spacing: 1px;">INITIALIZING UPLINK...</div>
     </div>
 
     <form action="/scan" method="GET" id="scanForm">
@@ -250,8 +278,9 @@
         <div class="header">
             <div class="brand">
                 <span>&gt; THE CEREBRO PROJECT</span>
-                <span id="typewriter-text"></span>
-                <span class="cursor">_</span>
+                <span>
+                    <span id="typewriter-text"></span><span class="cursor">_</span>
+                </span>
             </div>
             
             <div class="vix-container">
@@ -260,9 +289,7 @@
                     <span class="vix-label">{{ vix.label }}</span>
                 </div>
                 <div class="market-subtext">
-                    <span style="color: {{ market_status.color }}; text-shadow: 0 0 10px {{ market_status.color }}55;">● {{ market_status.label }}</span>
-                    <span style="opacity: 0.3">|</span>
-                    <span>{{ vix.desc }}</span>
+                    <span style="color: {{ market_status.color }}; text-shadow: 0 0 8px {{ market_status.color }}66;">● {{ market_status.label }}</span>
                 </div>
             </div>
         </div>
@@ -270,13 +297,13 @@
         <div class="controls">
             <button class="pill-btn {{ 'active' if current_mode == 'stock' else '' }}" onclick="switchMode('stock')">STOCKS</button>
             <button class="pill-btn {{ 'active' if current_mode == 'crypto' else '' }}" onclick="switchMode('crypto')">CRYPTO</button>
-            <button class="pill-btn scan-trigger" onclick="triggerScan()">SCAN</button>
+            <button class="pill-btn scan-trigger" onclick="triggerScan()">SCAN MARKET</button>
         </div>
 
         {% if chosen_one %}
         <div class="oracle-glass">
-            <div style="position: absolute; top: 15px; right: 20px; font-family: 'JetBrains Mono'; font-size: 0.7rem; color: var(--accent-green); opacity: 0.7;">
-                HIGHEST CONVICTION SIGNAL
+            <div style="position: absolute; top: 20px; right: 20px; font-family: 'JetBrains Mono'; font-size: 0.65rem; color: var(--accent-green); opacity: 0.8; letter-spacing: 1px;">
+                /// ALPHA SIGNAL DETECTED
             </div>
             <div class="oracle-content">
                 <div>
@@ -286,12 +313,12 @@
                     </div>
                 </div>
                 <div class="rationale-text">
-                    <strong style="color: #fff; display: block; margin-bottom: 5px;">AI ANALYST RATIONALE:</strong>
+                    <strong style="color: #fff; display: block; margin-bottom: 8px; font-size: 0.9rem;">AI RISK ASSESSMENT:</strong>
                     {{ chosen_one.rationale }}
                 </div>
             </div>
             <div class="setup-info" style="margin-top: 25px;">
-                <span>PROBABILITY: {{ chosen_one.probability }}%</span>
+                <span>PROB: {{ chosen_one.probability }}%</span>
                 <span>ENTRY: {{ chosen_one.setup.entry }}</span>
                 <span>STOP: {{ chosen_one.setup.stop }}</span>
                 <span>TARGET: {{ chosen_one.setup.target }}</span>
@@ -320,7 +347,7 @@
         </div>
 
         <footer class="terminal-footer">
-            [ EULA: OPEN-SOURCE EDUCATIONAL INITIATIVE. MARKET DATA IS DELAYED. NOT FINANCIAL ADVICE. EXECUTE AT YOUR OWN RISK. ]
+            [ CEREBRO v2.4 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
         </footer>
 
     </div>
@@ -339,16 +366,15 @@
         PullToRefresh.init({
             mainElement: '#main-content',
             onRefresh: function() { triggerScan(); },
-            instructionsPullToRefresh: 'PULL TO SCAN',
-            instructionsReleaseToRefresh: 'RELEASE TO EXECUTE',
-            instructionsRefreshing: 'SCANNING MARKET DATA...',
+            instructionsPullToRefresh: 'PULL TO REFRESH',
+            instructionsReleaseToRefresh: 'RELEASE TO SCAN',
+            instructionsRefreshing: 'ACCESSING NODE...',
             distThreshold: 70,
             iconArrow: '&#8675;',
             iconRefreshing: '&hellip;'
         });
 
-        // --- TYPEWRITER EFFECT ---
-        // Pass data from Flask to JS safely
+        // --- RESPONSIVE TYPEWRITER ---
         const indicesData = {{ indices | tojson }};
         const typeEl = document.getElementById('typewriter-text');
         
@@ -360,7 +386,8 @@
         function type() {
             if (indicesData.length === 0) return;
 
-            const fullText = " | " + indicesData[msgIndex]; // Add separator for style
+            // Use a clean separator
+            const fullText = indicesData[msgIndex]; 
 
             if (isDeleting) {
                 currentText = fullText.substring(0, charIndex - 1);
@@ -372,12 +399,11 @@
 
             typeEl.innerHTML = currentText;
 
-            // Typing Speed Logic
-            let typeSpeed = 50; // fast typing
+            let typeSpeed = 40; 
             if (isDeleting) typeSpeed /= 2;
 
             if (!isDeleting && charIndex === fullText.length) {
-                typeSpeed = 3000; // Pause at end of sentence
+                typeSpeed = 3000; // Wait 3s before deleting (readable speed)
                 isDeleting = true;
             } else if (isDeleting && charIndex === 0) {
                 isDeleting = false;
@@ -388,9 +414,8 @@
             setTimeout(type, typeSpeed);
         }
 
-        // Start typing if data exists
         if(indicesData.length > 0) {
-            setTimeout(type, 1000);
+            setTimeout(type, 800);
         }
     </script>
 </body>
