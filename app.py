@@ -3,8 +3,9 @@ import time
 import requests
 import pandas as pd
 import yfinance as yf
+import pytz # <--- NEW IMPORT
 from flask import Flask, render_template, request
-from datetime import datetime
+from datetime import datetime, time as dt_time
 import google.generativeai as genai
 
 app = Flask(__name__)
@@ -24,46 +25,61 @@ CRYPTO_TICKERS = [
     "ADA-USD", "AVAX-USD", "LINK-USD", "LTC-USD", "BCH-USD", "UNI-USD"
 ]
 
+# --- NEW: TIMEZONE AWARE STATUS ---
 def get_market_status():
-    now = datetime.now()
-    if 9 <= now.hour < 16 and now.weekday() < 5:
-        return "MARKET OPEN"
-    return "MARKET CLOSED"
+    tz = pytz.timezone('America/New_York')
+    now = datetime.now(tz)
+    current_time = now.time()
+    
+    # Defaults (Closed)
+    status = "MARKET CLOSED"
+    color = "#ff4b4b" # Red
+    
+    # Weekend Check
+    if now.weekday() >= 5:
+        return {"label": "WEEKEND", "color": color}
 
-# --- NEW: VIX GAUGE LOGIC ---
+    # Weekday Logic
+    # 9:30 AM
+    market_open = dt_time(9, 30)
+    # 4:00 PM
+    market_close = dt_time(16, 0)
+    # 4:00 AM
+    pre_market = dt_time(4, 0)
+    # 8:00 PM
+    after_hours = dt_time(20, 0)
+
+    if market_open <= current_time < market_close:
+        status = "MARKET OPEN"
+        color = "#00ff9d" # Green
+    elif pre_market <= current_time < market_open:
+        status = "PRE-MARKET"
+        color = "#F1C40F" # Yellow
+    elif market_close <= current_time < after_hours:
+        status = "AFTER HOURS"
+        color = "#F1C40F" # Yellow
+        
+    return {"label": status, "color": color}
+
 def get_vix_data():
     try:
-        # Fetch live VIX data
         vix = yf.Ticker("^VIX")
-        # fast_info is faster/stable for single points
         price = vix.fast_info.last_price
-        
-        # Fallback if fast_info fails
         if not price:
             hist = vix.history(period="1d")
             price = hist['Close'].iloc[-1]
             
         val = round(price, 2)
         
-        # Color & Label Logic (Based on your Screenshot)
-        if val < 12:
-            return {"val": val, "label": "COMPLACENCY", "color": "#00E5FF", "desc": "Overly Chill"} # Cyan/Teal
-        elif val < 15:
-            return {"val": val, "label": "CALM / HEALTHY", "color": "#2ECC71", "desc": "Goldilocks Zone"} # Green
-        elif val < 20:
-            return {"val": val, "label": "MILD CONCERN", "color": "#F1C40F", "desc": "Cautious Vibes"} # Yellow
-        elif val < 30:
-            return {"val": val, "label": "ELEVATED FEAR", "color": "#E67E22", "desc": "Volatility Spikes"} # Orange
-        elif val < 40:
-            return {"val": val, "label": "HIGH ANXIETY", "color": "#D35400", "desc": "Serious Stress"} # Dark Orange
-        elif val < 50:
-            return {"val": val, "label": "CRISIS MODE", "color": "#C0392B", "desc": "Full-Blown Panic"} # Red
-        else:
-            return {"val": val, "label": "SYSTEM SHOCK", "color": "#8B0000", "desc": "Total Meltdown"} # Dark Red
-
-    except Exception as e:
-        print(f"VIX Error: {e}")
-        return {"val": 0, "label": "OFFLINE", "color": "#555555", "desc": "No Connection"}
+        if val < 12: return {"val": val, "label": "COMPLACENCY", "color": "#00E5FF", "desc": "Overly Chill"}
+        elif val < 15: return {"val": val, "label": "CALM / HEALTHY", "color": "#2ECC71", "desc": "Goldilocks Zone"}
+        elif val < 20: return {"val": val, "label": "MILD CONCERN", "color": "#F1C40F", "desc": "Cautious Vibes"}
+        elif val < 30: return {"val": val, "label": "ELEVATED FEAR", "color": "#E67E22", "desc": "Volatility Spikes"}
+        elif val < 40: return {"val": val, "label": "HIGH ANXIETY", "color": "#D35400", "desc": "Serious Stress"}
+        elif val < 50: return {"val": val, "label": "CRISIS MODE", "color": "#C0392B", "desc": "Full-Blown Panic"}
+        else: return {"val": val, "label": "SYSTEM SHOCK", "color": "#8B0000", "desc": "Total Meltdown"}
+    except:
+        return {"val": 0, "label": "OFFLINE", "color": "#555", "desc": "No Connection"}
 
 def analyze_market_data(ticker_list):
     results = []
@@ -155,10 +171,8 @@ def get_ai_rationale(ticker_data):
     except Exception as e:
         return f"AI Error: {str(e)}"
 
-# --- ROUTES ---
 @app.route('/')
 def home():
-    # Pass VIX data to home page too
     return render_template(
         'index.html', 
         market_status=get_market_status(), 
@@ -180,7 +194,7 @@ def scan():
     return render_template(
         'index.html',
         market_status=get_market_status(),
-        vix=get_vix_data(), # Live VIX on scan result page too
+        vix=get_vix_data(),
         current_mode=mode,
         results=results,
         chosen_one=chosen_one

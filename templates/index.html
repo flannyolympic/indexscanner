@@ -7,7 +7,6 @@
     <title>Cerebro /// Terminal</title>
     
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pulltorefreshjs/0.1.22/index.umd.min.js"></script>
 
     <style>
@@ -40,7 +39,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- LAYOUT --- */
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -48,7 +46,7 @@
             padding-bottom: 100px;
         }
 
-        /* --- HEADER (New VIX Layout) --- */
+        /* --- HEADER --- */
         .header {
             display: flex;
             justify-content: space-between;
@@ -89,7 +87,7 @@
             animation: pulse 2s infinite;
         }
 
-        /* --- VIX GAUGE --- */
+        /* --- VIX & MARKET STATUS --- */
         .vix-container {
             text-align: right;
             display: flex;
@@ -112,9 +110,19 @@
 
         .vix-value { font-weight: 800; font-size: 1rem; }
         .vix-label { font-size: 0.75rem; text-transform: uppercase; opacity: 0.9; }
-        .market-subtext { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono'; letter-spacing: 1px;}
+        
+        /* Updated Market Subtext */
+        .market-subtext { 
+            font-size: 0.65rem; 
+            color: var(--text-muted); 
+            margin-top: 6px; 
+            font-family: 'JetBrains Mono'; 
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
 
-        /* --- ORACLE PANEL --- */
         .oracle-glass {
             background: var(--glass-surface);
             backdrop-filter: blur(var(--blur-amt));
@@ -162,7 +170,6 @@
             padding-left: 20px;
         }
 
-        /* --- CONTROLS --- */
         .controls {
             display: flex;
             gap: 12px;
@@ -199,7 +206,6 @@
             font-weight: 700;
         }
 
-        /* --- GRID --- */
         .market-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -263,7 +269,6 @@
             justify-content: space-between;
         }
 
-        /* --- LOADING --- */
         .loader-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -288,7 +293,6 @@
         @keyframes spin { 100% { transform: rotate(360deg); } }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-        /* --- MOBILE TWEAKS --- */
         @media (max-width: 768px) {
             .oracle-content { grid-template-columns: 1fr; text-align: left; }
             .ticker-hero { font-size: 3rem; }
@@ -297,7 +301,7 @@
             .pill-btn { padding: 12px; text-align: center; }
             .header { align-items: flex-start; }
             .vix-badge { padding: 4px 8px; }
-            .vix-label { display: none; } /* Hide label on very small screens if needed */
+            .vix-label { display: none; }
         }
     </style>
 </head>
@@ -324,7 +328,11 @@
                     <span class="vix-value">VIX {{ vix.val }}</span>
                     <span class="vix-label">{{ vix.label }}</span>
                 </div>
-                <div class="market-subtext">{{ market_status }} • {{ vix.desc }}</div>
+                <div class="market-subtext">
+                    <span style="color: {{ market_status.color }}; text-shadow: 0 0 10px {{ market_status.color }}55;">● {{ market_status.label }}</span>
+                    <span style="opacity: 0.3">|</span>
+                    <span>{{ vix.desc }}</span>
+                </div>
             </div>
         </div>
 
