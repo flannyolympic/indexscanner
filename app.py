@@ -3,7 +3,7 @@ import time
 import requests
 import pandas as pd
 import yfinance as yf
-import pytz # <--- NEW IMPORT
+import pytz
 from flask import Flask, render_template, request
 from datetime import datetime, time as dt_time
 import google.generativeai as genai
@@ -25,28 +25,22 @@ CRYPTO_TICKERS = [
     "ADA-USD", "AVAX-USD", "LINK-USD", "LTC-USD", "BCH-USD", "UNI-USD"
 ]
 
-# --- NEW: TIMEZONE AWARE STATUS ---
+# --- MARKET STATUS LOGIC (Dynamic Colors) ---
 def get_market_status():
     tz = pytz.timezone('America/New_York')
     now = datetime.now(tz)
     current_time = now.time()
     
-    # Defaults (Closed)
+    # Default: Closed (Red)
     status = "MARKET CLOSED"
-    color = "#ff4b4b" # Red
+    color = "#ff4b4b" 
     
-    # Weekend Check
     if now.weekday() >= 5:
-        return {"label": "WEEKEND", "color": color}
+        return {"label": "WEEKEND CLOSED", "color": color}
 
-    # Weekday Logic
-    # 9:30 AM
     market_open = dt_time(9, 30)
-    # 4:00 PM
     market_close = dt_time(16, 0)
-    # 4:00 AM
     pre_market = dt_time(4, 0)
-    # 8:00 PM
     after_hours = dt_time(20, 0)
 
     if market_open <= current_time < market_close:
@@ -68,7 +62,6 @@ def get_vix_data():
         if not price:
             hist = vix.history(period="1d")
             price = hist['Close'].iloc[-1]
-            
         val = round(price, 2)
         
         if val < 12: return {"val": val, "label": "COMPLACENCY", "color": "#00E5FF", "desc": "Overly Chill"}
@@ -84,18 +77,8 @@ def get_vix_data():
 def analyze_market_data(ticker_list):
     results = []
     try:
-        data = yf.download(
-            tickers=" ".join(ticker_list), 
-            period="5d", 
-            interval="15m", 
-            group_by='ticker', 
-            auto_adjust=True, 
-            prepost=True, 
-            threads=True
-        )
-    except Exception as e:
-        print(f"Download Error: {e}")
-        return []
+        data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", group_by='ticker', auto_adjust=True, prepost=True, threads=True)
+    except: return []
 
     for ticker in ticker_list:
         try:
@@ -104,7 +87,6 @@ def analyze_market_data(ticker_list):
 
             df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
             df['VWAP'] = (df['TP'] * df['Volume']).cumsum() / df['Volume'].cumsum()
-            
             delta = df['Close'].diff()
             gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
             loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
@@ -152,53 +134,47 @@ def analyze_market_data(ticker_list):
                     "target": f"${round(float(target), 2)}"
                 }
             })
-        except:
-            continue
-
+        except: continue
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
+# --- ROBUST AI FUNCTION ---
 def get_ai_rationale(ticker_data):
     if not GENAI_API_KEY: return "AI Module Offline."
-    try:
-        model = genai.GenerativeModel('gemini-flash-latest')
-        prompt = (
-            f"Act as a quantitative analyst. Analyze {ticker_data['ticker']}. "
-            f"Price: {ticker_data['price']}, Signal: {ticker_data['signal']}, Setup: {ticker_data['setup']['type']}. "
-            f"Provide a 2-sentence institutional rationale. Be concise and professional. No fluff."
-        )
-        response = model.generate_content(prompt)
-        return response.text
-    except Exception as e:
-        return f"AI Error: {str(e)}"
+    
+    # List of models to try in order of preference
+    models_to_try = ['gemini-flash-latest', 'gemini-1.5-flash', 'gemini-pro']
+    
+    prompt = (
+        f"Act as a quantitative analyst. Analyze {ticker_data['ticker']}. "
+        f"Price: {ticker_data['price']}, Signal: {ticker_data['signal']}, Setup: {ticker_data['setup']['type']}. "
+        f"Provide a 2-sentence institutional rationale. Be concise and professional. No fluff."
+    )
+
+    for model_name in models_to_try:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(prompt)
+            return response.text
+        except:
+            continue # Try next model if this one fails
+            
+    return "AI Unavailable (All models busy). Rely on technical signal."
 
 @app.route('/')
 def home():
-    return render_template(
-        'index.html', 
-        market_status=get_market_status(), 
-        vix=get_vix_data(),
-        current_mode="stock"
-    )
+    return render_template('index.html', market_status=get_market_status(), vix=get_vix_data(), current_mode="stock")
 
 @app.route('/scan')
 def scan():
     mode = request.args.get('mode', 'stock')
     tickers = CRYPTO_TICKERS if mode == 'crypto' else STOCK_TICKERS
-    
     results = analyze_market_data(tickers)
     chosen_one = None
     if results:
         chosen_one = results[0]
         chosen_one['rationale'] = get_ai_rationale(chosen_one)
 
-    return render_template(
-        'index.html',
-        market_status=get_market_status(),
-        vix=get_vix_data(),
-        current_mode=mode,
-        results=results,
-        chosen_one=chosen_one
-    )
+    return render_template('index.html', market_status=get_market_status(), vix=get_vix_data(), current_mode=mode, results=results, chosen_one=chosen_one)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
