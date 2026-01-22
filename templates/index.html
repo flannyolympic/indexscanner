@@ -59,6 +59,7 @@
             -webkit-backdrop-filter: blur(var(--blur-amt)) saturate(180%); border-bottom: 1px solid var(--glass-border);
         }
         
+        /* CLICKABLE BRAND */
         .brand-link { text-decoration: none; cursor: pointer; display: block; transition: opacity 0.2s; }
         .brand-link:hover { opacity: 0.8; }
         
@@ -101,19 +102,19 @@
         }
         .orb-btn:active { transform: scale(0.95); box-shadow: 0 0 50px var(--accent-green); }
 
-        /* MINI ORB */
+        /* MINI ORB - FLOATING ACTION BUTTON */
         .mini-orb {
             position: fixed; bottom: 30px; right: 30px;
             width: 60px; height: 60px; border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, rgba(0, 255, 157, 0.2), rgba(0,0,0,0.8));
             border: 1px solid rgba(0, 255, 157, 0.4); backdrop-filter: blur(10px);
             box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
-            cursor: pointer; z-index: 900;
+            cursor: pointer; z-index: 999;
             display: flex; justify-content: center; align-items: center;
             animation: float 4s ease-in-out infinite, pulse-ring 3s infinite;
             transition: transform 0.2s; user-select: none; -webkit-tap-highlight-color: transparent;
         }
-        .mini-orb:active { transform: scale(0.9); }
+        .mini-orb:active { transform: scale(0.9); background: rgba(0, 255, 157, 0.3); }
         .mini-orb svg { width: 24px; height: 24px; fill: var(--accent-green); filter: drop-shadow(0 0 5px var(--accent-green)); }
 
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
@@ -300,7 +301,7 @@
                 </div>
                 
                 <footer class="terminal-footer">
-                    [ CEREBRO v3.4 // QUANTITATIVE ANALYSIS ENGINE // EXECUTE AT OWN RISK ]
+                    [ CEREBRO v3.5 // QUANTITATIVE ANALYSIS ENGINE // EXECUTE AT OWN RISK ]
                 </footer>
 
                 <div class="mini-orb" onclick="triggerScan()">
@@ -316,50 +317,54 @@
     <script>
         window.addEventListener('load', () => { document.body.classList.add('loaded'); });
 
-        // Synthesized "Cyber-Mechanical" Sound Effect
+        // HOLLYWOOD SFX ENGINE (Synthesized in browser)
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playScanSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
-            // Oscillator 1: The "Laser" Pew
+            const now = audioCtx.currentTime;
+
+            // FX 1: Laser Sweep (Pew!)
             const osc1 = audioCtx.createOscillator();
             const gain1 = audioCtx.createGain();
             osc1.type = 'sawtooth';
-            osc1.frequency.setValueAtTime(800, audioCtx.currentTime);
-            osc1.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
-            gain1.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc1.frequency.setValueAtTime(880, now);
+            osc1.frequency.exponentialRampToValueAtTime(110, now + 0.2);
+            gain1.gain.setValueAtTime(0.1, now);
+            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
             osc1.connect(gain1);
             gain1.connect(audioCtx.destination);
-            osc1.start();
-            osc1.stop(audioCtx.currentTime + 0.15);
+            osc1.start(now);
+            osc1.stop(now + 0.2);
 
-            // Oscillator 2: The "Transformer" Growl
+            // FX 2: Low Energy Thrum (Transformer feel)
             const osc2 = audioCtx.createOscillator();
             const gain2 = audioCtx.createGain();
             osc2.type = 'square';
-            osc2.frequency.setValueAtTime(50, audioCtx.currentTime);
-            osc2.frequency.linearRampToValueAtTime(150, audioCtx.currentTime + 0.1);
-            gain2.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gain2.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+            osc2.frequency.setValueAtTime(50, now);
+            osc2.frequency.linearRampToValueAtTime(100, now + 0.1);
+            gain2.gain.setValueAtTime(0.05, now);
+            gain2.gain.linearRampToValueAtTime(0, now + 0.3);
             osc2.connect(gain2);
             gain2.connect(audioCtx.destination);
-            osc2.start();
-            osc2.stop(audioCtx.currentTime + 0.2);
+            osc2.start(now);
+            osc2.stop(now + 0.3);
         }
 
         function triggerScan() {
-            // Update timestamp to force fresh data from server (Cache Busting)
+            // CACHE BUSTING: Force new data every click
             document.getElementById('timestampInput').value = Date.now();
             
             playScanSound(); 
+            
+            // Show Loader
             document.getElementById('loader').style.display = 'flex';
             
-            // Slight delay for sound to register
+            // Submit with slight delay for SFX
             setTimeout(() => {
                 document.getElementById('scanForm').submit();
-            }, 250);
+            }, 300);
         }
 
         PullToRefresh.init({
