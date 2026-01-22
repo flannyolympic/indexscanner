@@ -11,19 +11,22 @@
     <style>
         :root {
             --bg-deep: #000000;
-            --glass-surface: rgba(40, 40, 40, 0.4);
+            --glass-surface: rgba(30, 30, 30, 0.5);
             --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-highlight: rgba(255, 255, 255, 0.08);
             --accent-green: #00ff9d;
             --accent-red: #ff4b4b;
             --text-main: #ffffff;
             --text-muted: #888888;
-            --blur-amt: 30px;
+            --blur-amt: 25px;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; }
+        
         body {
             background-color: var(--bg-deep); color: var(--text-main); font-family: 'Inter', sans-serif;
-            margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden;
+            margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased;
             opacity: 0; transition: opacity 0.8s ease-out;
         }
         body.loaded { opacity: 1; }
@@ -31,20 +34,21 @@
         /* BACKGROUND */
         .bg-watermark {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 85vw; max-width: 900px; opacity: 0.1; z-index: -1; pointer-events: none;
+            width: 85vw; max-width: 900px; opacity: 0.12; z-index: -1; pointer-events: none;
             filter: grayscale(100%) contrast(1.2); animation: breathe 8s ease-in-out infinite;
         }
         @keyframes breathe {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.1; }
-            50% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.15; }
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.12; }
+            50% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.18; }
         }
         .bg-gradient {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 50% 50%, rgba(0, 255, 157, 0.05), transparent 60%);
+            background: radial-gradient(circle at 10% 20%, rgba(0, 255, 157, 0.04), transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(50, 50, 255, 0.04), transparent 40%);
             z-index: -2; pointer-events: none;
         }
 
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; padding-bottom: 60px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; padding-bottom: 80px; }
 
         /* HEADER */
         .header {
@@ -58,7 +62,7 @@
             letter-spacing: -0.5px; color: var(--accent-green); text-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
             display: flex; flex-direction: column; line-height: 1.2;
         }
-        #typewriter-text { color: #fff; font-weight: 400; opacity: 0.9; font-size: 0.95rem; }
+        #typewriter-text { color: #fff; font-weight: 400; opacity: 0.9; font-size: 0.95rem; display: inline-block; }
         .cursor { color: var(--accent-green); animation: blink 1s step-end infinite; }
         
         .vix-container { text-align: right; }
@@ -67,42 +71,50 @@
             border-radius: 6px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
             display: inline-flex; align-items: center; gap: 8px;
         }
+        .vix-value { font-weight: 800; }
         .market-subtext { font-size: 0.6rem; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono'; letter-spacing: 0.5px; }
 
-        /* THE ORB (Magic Button) */
+        /* THE ORB (Main) */
         .orb-container {
             display: flex; justify-content: center; align-items: center;
-            height: 60vh; /* Centered vertically */
-            flex-direction: column;
-            transition: all 0.5s ease;
+            height: 60vh; flex-direction: column; transition: all 0.5s ease;
         }
-        .orb-container.collapsed { height: auto; margin-bottom: 40px; display: none; }
-
         .orb-btn {
-            width: 140px; height: 140px;
-            border-radius: 50%;
+            width: 140px; height: 140px; border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), rgba(0,0,0,0.5));
-            border: 1px solid rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);
             box-shadow: 0 0 30px rgba(0, 255, 157, 0.2), inset 0 0 20px rgba(255,255,255,0.05);
-            cursor: pointer;
-            position: relative;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer; position: relative; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             animation: float 4s ease-in-out infinite;
             display: flex; justify-content: center; align-items: center;
-            color: var(--accent-green);
-            font-family: 'JetBrains Mono'; font-weight: 800; font-size: 0.9rem; letter-spacing: 2px;
+            color: var(--accent-green); font-family: 'JetBrains Mono'; font-weight: 800; font-size: 0.9rem; letter-spacing: 2px;
             text-shadow: 0 0 10px var(--accent-green);
         }
         .orb-btn::after {
             content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px;
-            border-radius: 50%; border: 1px solid var(--accent-green); opacity: 0.3;
-            animation: pulse-ring 2s infinite;
+            border-radius: 50%; border: 1px solid var(--accent-green); opacity: 0.3; animation: pulse-ring 2s infinite;
         }
         .orb-btn:active { transform: scale(0.95); box-shadow: 0 0 50px var(--accent-green); }
 
+        /* MINI ORB (Floating Action Button) */
+        .mini-orb {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(0, 255, 157, 0.2), rgba(0,0,0,0.8));
+            border: 1px solid rgba(0, 255, 157, 0.4);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
+            cursor: pointer; z-index: 999;
+            display: flex; justify-content: center; align-items: center;
+            animation: float 4s ease-in-out infinite, pulse-ring 3s infinite;
+            transition: transform 0.2s;
+        }
+        .mini-orb:active { transform: scale(0.9); }
+        .mini-orb svg { width: 24px; height: 24px; fill: var(--accent-green); filter: drop-shadow(0 0 5px var(--accent-green)); }
+
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        @keyframes pulse-ring { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.5); opacity: 0; } }
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(0, 255, 157, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); } }
 
         /* RESULTS AREA */
         .results-area { display: none; animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -117,67 +129,73 @@
         }
         .oracle-glass::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, var(--accent-green), transparent); opacity: 0.8;
+            background: linear-gradient(90deg, transparent, var(--accent-green), transparent); opacity: 0.6;
         }
         .oracle-content { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; align-items: center; }
         .ticker-hero {
             font-size: 4.5rem; font-weight: 800; line-height: 1; letter-spacing: -3px;
-            background: linear-gradient(135deg, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background: linear-gradient(135deg, #ffffff 30%, #777777); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .rationale-text {
-            font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6; color: #ddd;
-            border-left: 2px solid var(--accent-green); padding-left: 20px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6;
+            color: #d0d0d0; border-left: 2px solid var(--accent-green); padding-left: 20px;
         }
 
         .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
         .card {
-            background: var(--glass-surface); border: 1px solid var(--glass-border); border-radius: 12px; padding: 18px;
-            backdrop-filter: blur(20px) saturate(180%); transition: all 0.2s;
+            background: var(--glass-surface); border: 1px solid var(--glass-border); border-radius: 12px; padding: 18px; transition: all 0.2s;
+            cursor: default; backdrop-filter: blur(20px) saturate(180%);
         }
         .card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.08); }
         .card-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
         .card-ticker { font-weight: 700; font-size: 1.1rem; }
         .card-price { font-family: 'JetBrains Mono'; color: #999; font-size: 0.9rem; }
-        
-        .tag-group { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
-        .tag { display: inline-block; padding: 3px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); }
-        .tag.bullish { color: var(--accent-green); border-color: rgba(0, 255, 157, 0.3); }
-        .tag.bearish { color: var(--accent-red); border-color: rgba(255, 75, 75, 0.3); }
-        
+        .tag { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
+        .tag.bullish { color: var(--accent-green); background: rgba(0, 255, 157, 0.12); border: 1px solid rgba(0, 255, 157, 0.2); }
+        .tag.bearish { color: var(--accent-red); background: rgba(255, 75, 75, 0.12); border: 1px solid rgba(255, 75, 75, 0.2); }
         .setup-info {
-            margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--glass-border);
+            margin-top: 15px; padding-top: 10px; border-top: 1px solid var(--glass-border);
             font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #777; display: flex; justify-content: space-between;
         }
-        .options-setup { color: #fff; font-weight: 600; }
+        .catalyst-info { font-family: 'JetBrains Mono'; font-size: 0.65rem; color: #aaa; margin-top: 5px; text-transform: uppercase; }
+        .catalyst-info span { color: var(--text-main); }
 
-        /* LOADER */
+        .terminal-footer {
+            margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--glass-border);
+            text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+            color: #555; text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        /* SPACE INVADERS LOADER */
         .loader-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); backdrop-filter: blur(30px);
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(20px);
             z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column;
         }
         .invader-ship {
             width: 4px; height: 4px; background: transparent; color: var(--accent-green);
             box-shadow: 0px -12px 0 0 currentColor, -4px -8px 0 0 currentColor, 0px -8px 0 0 currentColor, 4px -8px 0 0 currentColor, -8px -4px 0 0 currentColor, -4px -4px 0 0 currentColor, 0px -4px 0 0 currentColor, 4px -4px 0 0 currentColor, 8px -4px 0 0 currentColor, -12px 0 0 0 currentColor, -8px 0 0 0 currentColor, -4px 0 0 0 currentColor, 0px 0 0 0 currentColor, 4px 0 0 0 currentColor, 8px 0 0 0 currentColor, 12px 0 0 0 currentColor;
-            transform: scale(5); margin-bottom: 50px; position: relative;
+            transform: scale(4); margin-bottom: 40px; position: relative;
         }
         .laser {
-            position: absolute; top: -20px; left: 0; width: 4px; height: 15px; background: var(--accent-green); opacity: 0; animation: shoot 0.8s infinite linear;
+            position: absolute; top: -20px; left: 0; width: 4px; height: 12px; background: var(--accent-green); opacity: 0; animation: shoot 1.2s infinite linear;
         }
-        .laser:nth-child(1) { animation-delay: 0s; left: -10px; }
-        .laser:nth-child(2) { animation-delay: 0.2s; left: 0; }
-        .laser:nth-child(3) { animation-delay: 0.4s; left: 10px; }
-        @keyframes shoot { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-150px); opacity: 0; } }
+        .laser:nth-child(1) { animation-delay: 0s; }
+        .laser:nth-child(2) { animation-delay: 0.4s; }
+        .laser:nth-child(3) { animation-delay: 0.8s; }
+        @keyframes shoot { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-100px); opacity: 0; } }
         .loader-text { font-family: 'JetBrains Mono'; font-size: 0.8rem; color: var(--accent-green); letter-spacing: 2px; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0; } }
 
         @media (max-width: 768px) {
-            .bg-watermark { width: 95vw; }
-            .header { padding: 15px; flex-direction: row; }
-            .brand { font-size: 0.9rem; max-width: 60%; }
-            #typewriter-text { font-size: 0.75rem; display: block; margin-top: 2px; }
-            .vix-container { max-width: 40%; }
-            .oracle-content { grid-template-columns: 1fr; }
+            .bg-watermark { width: 90vw; }
+            .header { padding: 15px; flex-direction: row; align-items: center; }
+            .brand { font-size: 0.9rem; flex-direction: column; align-items: flex-start; max-width: 65%; }
+            #typewriter-text { font-size: 0.75rem; color: #aaa; margin-left: 0; margin-top: 2px; display: block; }
+            .vix-container { max-width: 35%; }
+            .vix-badge { padding: 4px 8px; font-size: 0.75rem; }
+            .vix-label { display: none; }
+            .oracle-content { grid-template-columns: 1fr; text-align: left; }
             .ticker-hero { font-size: 3.5rem; }
             .rationale-text { border-left: none; padding-left: 0; border-top: 1px solid var(--accent-green); padding-top: 15px; }
         }
@@ -196,6 +214,8 @@
     </div>
 
     <form action="/scan" method="GET" id="scanForm">
+        <input type="hidden" name="mode" id="modeInput" value="{{ current_mode }}">
+        
         <div class="container" id="main-content">
             <div class="header">
                 <div class="brand">
@@ -205,7 +225,7 @@
                 <div class="vix-container">
                     <div class="vix-badge" style="border-color: {{ vix.color }}; background: {{ vix.color }}15; color: {{ vix.color }}">
                         <span class="vix-value">VIX {{ vix.val }}</span>
-                        <span class="vix-label" style="display:none;">{{ vix.label }}</span>
+                        <span class="vix-label">{{ vix.label }}</span>
                     </div>
                     <div class="market-subtext">
                         <span style="color: {{ market_status.color }}; text-shadow: 0 0 8px {{ market_status.color }}66;">● {{ market_status.label }}</span>
@@ -243,7 +263,7 @@
                             </div>
                         </div>
                         <div class="rationale-text">
-                            <strong style="color: #fff; display: block; margin-bottom: 8px; font-size: 0.9rem;">AI ANALYSIS:</strong>
+                            <strong style="color: #fff; display: block; margin-bottom: 8px; font-size: 0.9rem;">AI RISK ASSESSMENT:</strong>
                             {{ chosen_one.rationale }}
                         </div>
                     </div>
@@ -258,14 +278,12 @@
                             <span class="card-ticker">{{ row.ticker }}</span>
                             <span class="card-price">${{ row.price }}</span>
                         </div>
-                        <div class="tag-group">
-                            <div class="tag {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}">{{ row.signal }}</div>
-                        </div>
-                        <div style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">
-                            {{ row.catalyst }}
+                        <div class="tag {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}">{{ row.signal }}</div>
+                        <div class="catalyst-info">
+                            CATALYST: <span style="color: {{ '#00ff9d' if 'BULLISH' in row.signal else '#ff4b4b' }}">{{ row.catalyst }}</span>
                         </div>
                         <div class="setup-info">
-                            <span class="options-setup">{{ row.options_play }}</span>
+                            <span>{{ row.options_play }}</span>
                             <span>PROB: {{ row.probability }}%</span>
                         </div>
                     </div>
@@ -273,25 +291,43 @@
                     {% endfor %}
                 </div>
                 
-                <div style="text-align: center; margin-top: 40px;">
-                    <button type="button" class="pill-btn" onclick="window.location.href='/'">RESET TERMINAL</button>
+                <footer class="terminal-footer">
+                    [ CEREBRO v3.1 // QUANTITATIVE ANALYSIS ENGINE // EXECUTE AT OWN RISK ]
+                </footer>
+
+                <div class="mini-orb" onclick="triggerScan()">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                    </svg>
                 </div>
             </div>
             {% endif %}
-
-            <footer class="terminal-footer">
-                [ CEREBRO v3.0 // QUANTITATIVE ANALYSIS ENGINE // EXECUTE AT OWN RISK ]
-            </footer>
         </div>
     </form>
 
     <script>
         window.addEventListener('load', () => { document.body.classList.add('loaded'); });
 
+        function switchMode(mode) {
+            document.getElementById('modeInput').value = mode;
+            triggerScan();
+        }
+
         function triggerScan() {
             document.getElementById('loader').style.display = 'flex';
             document.getElementById('scanForm').submit();
         }
+
+        PullToRefresh.init({
+            mainElement: '#main-content',
+            onRefresh: function() { triggerScan(); },
+            instructionsPullToRefresh: 'PULL TO REFRESH',
+            instructionsReleaseToRefresh: 'RELEASE TO SCAN',
+            instructionsRefreshing: 'ACCESSING NODE...',
+            distThreshold: 70,
+            iconArrow: '&#8675;',
+            iconRefreshing: '&hellip;'
+        });
 
         const indicesData = {{ indices | tojson }};
         const typeEl = document.getElementById('typewriter-text');
