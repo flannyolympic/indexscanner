@@ -5,9 +5,9 @@ import pandas as pd
 import yfinance as yf
 import pytz
 import random
-import traceback # Added for detailed error logging
+import traceback
 from flask import Flask, render_template, request
-from datetime import datetime, time as dt_time
+from datetime import datetime, timedelta, time as dt_time
 import google.generativeai as genai
 
 app = Flask(__name__)
@@ -48,22 +48,38 @@ def get_market_status():
         
     return {"label": "MARKET CLOSED", "color": "#ff4b4b"}
 
+# --- NEW: ECONOMIC CALENDAR ENGINE ---
+def get_economic_events():
+    """Generates realistic upcoming high-impact economic events."""
+    today = datetime.now()
+    events = [
+        {"event": "FOMC Rate Decision", "delta": 2, "impact": "HIGH"},
+        {"event": "CPI Inflation Data", "delta": 4, "impact": "HIGH"},
+        {"event": "Non-Farm Payrolls", "delta": 6, "impact": "MED"},
+        {"event": "GDP Growth Rate", "delta": 9, "impact": "HIGH"}
+    ]
+    
+    formatted_events = []
+    for e in events:
+        date = today + timedelta(days=e['delta'])
+        formatted_events.append({
+            "title": e['event'],
+            "date": date.strftime("%b %d"),
+            "impact": e['impact']
+        })
+    return formatted_events
+
 def get_indices():
     indices = {"^GSPC": "S&P 500", "^IXIC": "NASDAQ", "^DJI": "DOW J"}
     data_list = []
     try:
         tickers = " ".join(indices.keys())
-        # prepost=True ensures we get pre-market moves for indices too
         data = yf.download(tickers, period="1d", group_by='ticker', threads=False, prepost=True)
-        
         for ticker, name in indices.items():
             try:
                 df = data[ticker] if len(indices) > 1 else data
                 if df.empty: continue
-                
-                # Fill gaps for safety
                 df = df.ffill().bfill()
-                
                 current = df['Close'].iloc[-1]
                 open_price = df['Open'].iloc[0]
                 change = ((current - open_price) / open_price) * 100
@@ -76,149 +92,94 @@ def get_indices():
 def get_vix_data():
     try:
         vix = yf.Ticker("^VIX")
-        # Try fast_info first, then history
-        try:
-            price = vix.fast_info.last_price
-        except:
+        try: price = vix.fast_info.last_price
+        except: 
             hist = vix.history(period="1d")
-            if not hist.empty:
-                price = hist['Close'].iloc[-1]
-            else:
-                return {"val": 0, "label": "OFFLINE", "color": "#555", "desc": "No Data"}
-
-        val = round(price, 2)
+            price = hist['Close'].iloc[-1] if not hist.empty else 0
         
-        if val < 12: return {"val": val, "label": "COMPLACENCY", "color": "#00E5FF", "desc": "Overly Chill"}
-        elif val < 15: return {"val": val, "label": "CALM / HEALTHY", "color": "#2ECC71", "desc": "Goldilocks Zone"}
-        elif val < 20: return {"val": val, "label": "MILD CONCERN", "color": "#F1C40F", "desc": "Cautious Vibes"}
-        elif val < 30: return {"val": val, "label": "ELEVATED FEAR", "color": "#E67E22", "desc": "Volatility Spikes"}
-        elif val < 40: return {"val": val, "label": "HIGH ANXIETY", "color": "#D35400", "desc": "Serious Stress"}
-        elif val < 50: return {"val": val, "label": "CRISIS MODE", "color": "#C0392B", "desc": "Full-Blown Panic"}
-        else: return {"val": val, "label": "SYSTEM SHOCK", "color": "#8B0000", "desc": "Total Meltdown"}
-    except Exception as e:
-        print(f"VIX Error: {e}")
-        return {"val": 0, "label": "OFFLINE", "color": "#555", "desc": "No Connection"}
+        val = round(price, 2)
+        if val < 12: return {"val": val, "label": "COMPLACENCY", "color": "#00E5FF"}
+        elif val < 15: return {"val": val, "label": "CALM", "color": "#2ECC71"}
+        elif val < 20: return {"val": val, "label": "MILD CONCERN", "color": "#F1C40F"}
+        elif val < 30: return {"val": val, "label": "ELEVATED FEAR", "color": "#E67E22"}
+        else: return {"val": val, "label": "EXTREME FEAR", "color": "#8B0000"}
+    except: return {"val": 0, "label": "OFFLINE", "color": "#555"}
 
 def analyze_market_data(ticker_list):
     results = []
     try:
-        # Fetching 5 days of 15m data allows for indicator calculation even in pre-market
-        # prepost=True is ESSENTIAL for pre-market data
         data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", group_by='ticker', auto_adjust=True, prepost=True, threads=False)
-    except Exception as e:
-        print(f"Download Error: {e}")
-        return []
+    except: return []
 
     for ticker in ticker_list:
         try:
-            # Handle multi-ticker vs single-ticker DataFrames
-            if len(ticker_list) > 1:
-                df = data.get(ticker)
-            else:
-                df = data
+            if len(ticker_list) > 1: df = data.get(ticker)
+            else: df = data
             
-            # 1. EMPTY CHECK: If no data, skip
-            if df is None or df.empty: 
-                continue
-
-            # 2. DATA SANITIZATION: Forward fill to handle pre-market gaps
+            if df is None or df.empty: continue
             df = df.ffill().bfill()
+            if len(df) < 20: continue
 
-            # 3. SUFFICIENT DATA CHECK: Need at least 20 rows for Vol MA
-            if len(df) < 20:
-                continue
-
-            # Technical Calculations
             df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
             df['VWAP'] = (df['TP'] * df['Volume']).cumsum() / df['Volume'].cumsum()
-            
             delta = df['Close'].diff()
             gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
             loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
             rs = gain / loss
             df['RSI'] = 100 - (100 / (1 + rs))
 
-            # Safe Access to latest values
             current_price = df['Close'].iloc[-1]
             current_rsi = df['RSI'].iloc[-1]
             current_vwap = df['VWAP'].iloc[-1]
             current_vol = df['Volume'].iloc[-1]
             avg_vol = df['Volume'].rolling(window=20).mean().iloc[-1]
             
-            # Handle NaN in indicators (can happen if calc failed)
             if pd.isna(current_rsi): current_rsi = 50
             if pd.isna(current_vwap): current_vwap = current_price
 
-            # --- ENGINE LOGIC ---
-            signal = "NEUTRAL"
-            prob = 50
-            catalyst = "No Clear Trigger"
-            sentiment = "Neutral"
-            options_play = "Iron Condor"
+            signal, prob, catalyst, sentiment, options_play = "NEUTRAL", 50, "None", "Neutral", "Iron Condor"
 
             if current_rsi < 30:
-                signal, prob, catalyst, sentiment, options_play = ("BULLISH (OVERSOLD)", 78, "RSI Exhaustion", "Fear (Buy Dip)", "Sell Puts")
+                signal, prob, catalyst, sentiment, options_play = ("BULLISH (OVERSOLD)", 78, "RSI Exhaustion", "Fear (Buy Dip)", "Bull Call Spread")
             elif current_rsi > 70:
-                signal, prob, catalyst, sentiment, options_play = ("BEARISH (OVERBOUGHT)", 72, "RSI Extension", "Greed (Sell)", "Buy Puts")
+                signal, prob, catalyst, sentiment, options_play = ("BEARISH (OVERBOUGHT)", 72, "RSI Extension", "Greed (Take Profit)", "Bear Put Spread")
             elif current_price > current_vwap * 1.01:
-                signal, prob, catalyst, sentiment, options_play = ("BULLISH (MOMENTUM)", 65, "VWAP Breakout", "Bullish Flow", "Debit Call Spreads")
+                signal, prob, catalyst, sentiment, options_play = ("BULLISH (MOMENTUM)", 65, "VWAP Breakout", "Bullish Flow", "Long Call (ATM)")
             elif current_price < current_vwap * 0.99:
-                signal, prob, catalyst, sentiment, options_play = ("BEARISH (MOMENTUM)", 65, "VWAP Breakdown", "Bearish Flow", "Debit Put Spreads")
+                signal, prob, catalyst, sentiment, options_play = ("BEARISH (MOMENTUM)", 65, "VWAP Breakdown", "Bearish Flow", "Long Put (ATM)")
             
-            if current_vol > avg_vol * 1.5:
-                prob += 5
-                catalyst += " + High Vol"
+            if current_vol > avg_vol * 1.5: prob += 5; catalyst += " + High Vol"
 
             results.append({
-                "ticker": ticker,
-                "price": round(float(current_price), 2),
-                "signal": signal,
-                "probability": prob,
-                "vwap": round(float(current_vwap), 2),
-                "catalyst": catalyst,
-                "sentiment": sentiment,
-                "options_play": options_play
+                "ticker": ticker, "price": round(float(current_price), 2),
+                "signal": signal, "probability": prob, "vwap": round(float(current_vwap), 2),
+                "catalyst": catalyst, "sentiment": sentiment, "options_play": options_play
             })
-        except Exception as e:
-            # Print specific ticker error but don't crash the whole app
-            print(f"Error analyzing {ticker}: {e}")
-            traceback.print_exc() 
-            continue
-    
+        except: continue
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
 def get_ai_rationale(ticker_data):
-    if not GENAI_API_KEY:
-        print("DEBUG: GENAI_API_KEY is missing!")
-        return "AI Offline (Key Missing). Trade based on technicals."
-    
+    if not GENAI_API_KEY: return "AI Offline (Key Missing)."
     models = ['gemini-1.5-flash-001', 'gemini-1.5-flash-002', 'gemini-1.0-pro']
-    
-    prompt = (
-        f"Act as a senior derivatives trader. Analyze {ticker_data['ticker']} currently trading at ${ticker_data['price']}. "
-        f"The technical signal is {ticker_data['signal']} with a {ticker_data['probability']}% probability. "
-        f"Catalyst: {ticker_data['catalyst']}. "
-        f"Suggest a SPECIFIC options trade with exact strike prices relative to the current price. "
-        f"For example, if bullish, suggest a spread like 'Buy {int(ticker_data['price'])} Call / Sell {int(ticker_data['price']*1.05)} Call'. "
-        f"Keep the rationale under 20 words. Format: TRADE: [Exact Strikes] | WHY: [Rationale]."
-    )
-
+    prompt = (f"Analyze {ticker_data['ticker']} (${ticker_data['price']}). Signal: {ticker_data['signal']}. "
+              f"Suggest exact options strike prices. Format: TRADE: [Exact Strikes] | WHY: [Rationale]. Keep under 20 words.")
     for m in models:
         try:
-            print(f"DEBUG: Trying model {m}...")
             model = genai.GenerativeModel(m)
             response = model.generate_content(prompt)
-            if response.text:
-                return response.text
-        except Exception as e:
-            print(f"DEBUG: Model {m} failed: {e}")
-            continue
-            
-    return "AI Limit Reached. Rely on Signal/Probability."
+            if response.text: return response.text
+        except: continue
+    return "AI Limit Reached."
 
 @app.route('/')
 def home():
-    return render_template('index.html', market_status=get_market_status(), vix=get_vix_data(), indices=get_indices())
+    return render_template(
+        'index.html', 
+        market_status=get_market_status(), 
+        vix=get_vix_data(), 
+        indices=get_indices(),
+        econ_events=get_economic_events() # NEW DATA PASSED
+    )
 
 @app.route('/scan')
 def scan():
@@ -227,22 +188,26 @@ def scan():
         chosen_one = None
         if results:
             chosen_one = results[0]
-            # Only run AI on the top result to save time/quota
             chosen_one['rationale'] = get_ai_rationale(chosen_one)
-
-        return render_template(
-            'index.html',
-            market_status=get_market_status(),
-            vix=get_vix_data(),
-            indices=get_indices(),
-            results=results,
-            chosen_one=chosen_one,
-            scanned=True
-        )
+        return render_template('index.html', market_status=get_market_status(), vix=get_vix_data(), 
+                             indices=get_indices(), results=results, chosen_one=chosen_one, scanned=True,
+                             econ_events=get_economic_events())
     except Exception as e:
-        print(f"CRITICAL SCAN ERROR: {e}")
-        traceback.print_exc()
-        return f"System Overload. Please refresh. Error: {str(e)}", 500
+        print(f"Error: {e}")
+        return "System Overload", 500
+
+# API Endpoints
+@app.route('/api/vix')
+def api_vix(): return get_vix_data()
+
+@app.route('/api/scan_data')
+def api_scan_data():
+    results = analyze_market_data(STOCK_TICKERS)
+    chosen_one = None
+    if results:
+        chosen_one = results[0]
+        chosen_one['rationale'] = get_ai_rationale(chosen_one)
+    return {"results": results, "chosen_one": chosen_one}
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))

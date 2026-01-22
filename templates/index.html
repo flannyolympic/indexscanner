@@ -4,17 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    
     <title>The Cerebro Project /// Terminal Access</title>
-    <meta name="description" content="Quantitative Analysis Engine. Open Source Financial Terminal.">
-
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='aexalogo.png') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='aexalogo.png') }}">
     
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Cerebro">
-
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pulltorefreshjs/0.1.22/index.umd.min.js"></script>
 
@@ -23,24 +14,19 @@
             --bg-deep: #000000;
             --glass-surface: rgba(30, 30, 30, 0.5);
             --glass-border: rgba(255, 255, 255, 0.1);
-            --glass-highlight: rgba(255, 255, 255, 0.08);
             --accent-green: #00ff9d;
             --accent-red: #ff4b4b;
             --text-main: #ffffff;
             --text-muted: #888888;
-            --blur-amt: 25px;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html { scroll-behavior: smooth; }
-        
         body {
             background-color: var(--bg-deep); color: var(--text-main); font-family: 'Inter', sans-serif;
             margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden;
             opacity: 0; transition: opacity 0.8s ease-out;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-            position: relative; /* Essential for absolute footer positioning */
+            padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+            position: relative;
         }
         body.loaded { opacity: 1; }
 
@@ -50,186 +36,151 @@
             width: 85vw; max-width: 900px; opacity: 0.12; z-index: -1; pointer-events: none;
             filter: grayscale(100%) contrast(1.2); animation: breathe 8s ease-in-out infinite;
         }
-        @keyframes breathe {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.12; }
-            50% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.18; }
-        }
-        .bg-gradient {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 10% 20%, rgba(0, 255, 157, 0.04), transparent 40%),
-                        radial-gradient(circle at 90% 80%, rgba(50, 50, 255, 0.04), transparent 40%);
-            z-index: -2; pointer-events: none;
-        }
-
-        .container { 
-            max-width: 1400px; margin: 0 auto; padding: 20px; 
-            padding-bottom: 100px; /* Extra padding for footer space */
-            min-height: 100vh;
-            display: flex; flex-direction: column; 
-        }
+        @keyframes breathe { 50% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.18; } }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; padding-bottom: 100px; min-height: 100vh; display: flex; flex-direction: column; }
 
         /* HEADER */
         .header {
             display: flex; justify-content: space-between; align-items: center;
             padding: 15px 20px; margin: -20px -20px 20px -20px; position: sticky; top: 0; z-index: 100;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(var(--blur-amt)) saturate(180%);
-            -webkit-backdrop-filter: blur(var(--blur-amt)) saturate(180%); border-bottom: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(25px); border-bottom: 1px solid var(--glass-border);
         }
-        
-        .brand-link { text-decoration: none; cursor: pointer; display: block; transition: opacity 0.2s; }
-        .brand-link:hover { opacity: 0.8; }
-        
-        .brand {
-            font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.1rem;
-            letter-spacing: -0.5px; color: var(--accent-green); text-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
-            display: flex; flex-direction: column; line-height: 1.2;
-        }
-        #typewriter-text { color: #fff; font-weight: 400; opacity: 0.9; font-size: 0.95rem; display: inline-block; }
-        .cursor { color: var(--accent-green); animation: blink 1s step-end infinite; }
-        
-        .vix-container { text-align: right; }
-        .vix-badge {
-            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
-            border-radius: 6px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
-            display: inline-flex; align-items: center; gap: 8px;
-        }
-        .vix-value { font-weight: 800; }
-        .market-subtext { font-size: 0.6rem; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono'; letter-spacing: 0.5px; }
+        .brand { font-family: 'JetBrains Mono'; font-weight: 700; color: var(--accent-green); text-shadow: 0 0 15px rgba(0, 255, 157, 0.4); }
+        .vix-badge { border: 1px solid var(--glass-border); border-radius: 6px; padding: 4px 10px; font-family: 'JetBrains Mono'; font-size: 0.8rem; }
+        .market-subtext { font-size: 0.6rem; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono'; }
 
-        /* ORBS */
-        .orb-wrapper {
-            flex-grow: 1; /* Pushes content to center/fill space */
-            display: flex; justify-content: center; align-items: center;
-            flex-direction: column;
-        }
+        /* ORBIT SYSTEM */
+        .orb-wrapper { flex-grow: 1; display: flex; justify-content: center; align-items: center; position: relative; height: 60vh; }
         
-        .orb-container {
+        .orbit-system {
+            position: relative; width: 300px; height: 300px;
             display: flex; justify-content: center; align-items: center;
-            flex-direction: column; transition: all 0.5s ease;
         }
+
+        /* The Main Orb */
         .orb-btn {
-            width: 140px; height: 140px; border-radius: 50%;
+            width: 140px; height: 140px; border-radius: 50%; z-index: 10;
             background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), rgba(0,0,0,0.5));
             border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);
             box-shadow: 0 0 30px rgba(0, 255, 157, 0.2), inset 0 0 20px rgba(255,255,255,0.05);
-            cursor: pointer; position: relative; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            animation: float 4s ease-in-out infinite;
-            display: flex; justify-content: center; align-items: center;
-            color: var(--accent-green); font-family: 'JetBrains Mono'; font-weight: 800; font-size: 0.9rem; letter-spacing: 2px;
-            text-shadow: 0 0 10px var(--accent-green); user-select: none;
+            cursor: pointer; display: flex; justify-content: center; align-items: center;
+            color: var(--accent-green); font-family: 'JetBrains Mono'; font-weight: 800; letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--accent-green); animation: float 4s ease-in-out infinite;
         }
         .orb-btn::after {
             content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px;
             border-radius: 50%; border: 1px solid var(--accent-green); opacity: 0.3; animation: pulse-ring 2s infinite;
         }
-        .orb-btn:active { transform: scale(0.95); box-shadow: 0 0 50px var(--accent-green); }
 
-        /* MINI ORB */
-        .mini-orb {
-            position: fixed; bottom: 30px; right: 30px;
-            width: 60px; height: 60px; border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(0, 255, 157, 0.2), rgba(0,0,0,0.8));
-            border: 1px solid rgba(0, 255, 157, 0.4); backdrop-filter: blur(10px);
-            box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
-            cursor: pointer; z-index: 900;
-            display: flex; justify-content: center; align-items: center;
-            animation: float 4s ease-in-out infinite, pulse-ring 3s infinite;
-            transition: transform 0.2s; user-select: none;
+        /* Orbiting Satellites (Economic Events) */
+        .satellite-track {
+            position: absolute; width: 100%; height: 100%;
+            border-radius: 50%; border: 1px solid rgba(255,255,255,0.05);
+            animation: rotate-track 20s linear infinite;
         }
-        .mini-orb:active { transform: scale(0.9); }
-        .mini-orb svg { width: 24px; height: 24px; fill: var(--accent-green); filter: drop-shadow(0 0 5px var(--accent-green)); }
+        
+        .satellite {
+            position: absolute; top: 50%; left: 50%;
+            display: flex; flex-direction: column; align-items: center;
+            width: 80px; text-align: center;
+            transform-origin: -110px center; /* Distance from center orb */
+            animation: counter-rotate 20s linear infinite; /* Keeps text upright */
+        }
+        
+        /* Positioning satellites at different angles */
+        .sat-1 { transform: rotate(0deg) translateX(150px) rotate(0deg); animation: none; position: absolute; top: 50%; left: 50%; margin-left: -40px; margin-top: -20px; animation: orbit-1 20s linear infinite; }
+        .sat-2 { transform: rotate(120deg) translateX(150px) rotate(-120deg); animation: none; position: absolute; top: 50%; left: 50%; margin-left: -40px; margin-top: -20px; animation: orbit-2 20s linear infinite; }
+        .sat-3 { transform: rotate(240deg) translateX(150px) rotate(-240deg); animation: none; position: absolute; top: 50%; left: 50%; margin-left: -40px; margin-top: -20px; animation: orbit-3 20s linear infinite; }
 
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(0, 255, 157, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); } }
+        .sat-content {
+            background: rgba(20, 20, 20, 0.8); border: 1px solid var(--glass-border);
+            padding: 8px 12px; border-radius: 8px; backdrop-filter: blur(5px);
+            transition: all 0.5s ease;
+        }
+        .sat-date { font-family: 'JetBrains Mono'; font-size: 0.6rem; color: var(--accent-green); display: block; margin-bottom: 2px; }
+        .sat-title { font-family: 'Inter'; font-size: 0.65rem; font-weight: 600; color: #fff; white-space: nowrap; }
 
-        /* RESULTS AREA */
+        /* Keyframes for complex orbital motion */
+        @keyframes orbit-1 { from { transform: rotate(0deg) translateX(140px) rotate(0deg); } to { transform: rotate(360deg) translateX(140px) rotate(-360deg); } }
+        @keyframes orbit-2 { from { transform: rotate(120deg) translateX(140px) rotate(-120deg); } to { transform: rotate(480deg) translateX(140px) rotate(-480deg); } }
+        @keyframes orbit-3 { from { transform: rotate(240deg) translateX(140px) rotate(-240deg); } to { transform: rotate(600deg) translateX(140px) rotate(-600deg); } }
+
+        /* Zoom effect when passing in "front" (approx 90deg in rotation) */
+        @keyframes zoom-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; z-index: 1; }
+            50% { transform: scale(1.3); opacity: 1; z-index: 20; border-color: var(--accent-green); }
+        }
+        
+        .sat-content { animation: zoom-check 20s linear infinite; }
+        /* Sync zoom with orbit position - crude approximation but effective visually */
+        .sat-1 .sat-content { animation-delay: -5s; } 
+        .sat-2 .sat-content { animation-delay: -11.6s; }
+        .sat-3 .sat-content { animation-delay: -18.3s; }
+
+        @keyframes zoom-check {
+            0% { transform: scale(0.9); opacity: 0.5; filter: blur(1px); }
+            25% { transform: scale(1.2); opacity: 1; filter: blur(0px); border-color: var(--accent-green); box-shadow: 0 0 15px rgba(0,255,157,0.2); } /* Front */
+            50% { transform: scale(0.9); opacity: 0.5; filter: blur(1px); }
+            75% { transform: scale(0.8); opacity: 0.3; filter: blur(2px); } /* Back */
+            100% { transform: scale(0.9); opacity: 0.5; filter: blur(1px); }
+        }
+
+        /* Mobile Adjustments for Orbit */
+        @media (max-width: 768px) {
+            .orbit-system { width: 260px; height: 260px; }
+            @keyframes orbit-1 { from { transform: rotate(0deg) translateX(110px) rotate(0deg); } to { transform: rotate(360deg) translateX(110px) rotate(-360deg); } }
+            @keyframes orbit-2 { from { transform: rotate(120deg) translateX(110px) rotate(-120deg); } to { transform: rotate(480deg) translateX(110px) rotate(-480deg); } }
+            @keyframes orbit-3 { from { transform: rotate(240deg) translateX(110px) rotate(-240deg); } to { transform: rotate(600deg) translateX(110px) rotate(-600deg); } }
+        }
+
+        /* REST OF UI (Footer, Results, etc.) */
         .results-area { display: none; width: 100%; animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .results-area.visible { display: block; }
         @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* CARDS */
         .oracle-glass {
             background: var(--glass-surface); border: 1px solid var(--glass-border); border-radius: 16px; padding: 30px;
             margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden;
-            backdrop-filter: blur(var(--blur-amt)) saturate(180%);
+            backdrop-filter: blur(25px);
         }
-        .oracle-glass::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, var(--accent-green), transparent); opacity: 0.6;
-        }
+        .oracle-glass::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--accent-green), transparent); opacity: 0.6; }
         .oracle-content { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; align-items: center; }
-        .ticker-hero {
-            font-size: 4.5rem; font-weight: 800; line-height: 1; letter-spacing: -3px;
-            background: linear-gradient(135deg, #ffffff 30%, #777777); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .rationale-text {
-            font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6;
-            color: #d0d0d0; border-left: 2px solid var(--accent-green); padding-left: 20px;
-        }
+        .ticker-hero { font-size: 4.5rem; font-weight: 800; letter-spacing: -3px; background: linear-gradient(135deg, #fff, #777); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .rationale-text { font-family: 'JetBrains Mono'; font-size: 0.85rem; line-height: 1.6; color: #d0d0d0; border-left: 2px solid var(--accent-green); padding-left: 20px; }
 
         .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .card {
-            background: var(--glass-surface); border: 1px solid var(--glass-border); border-radius: 12px; padding: 18px; transition: all 0.2s;
-            cursor: default; backdrop-filter: blur(20px) saturate(180%);
-        }
-        .card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.08); }
+        .card { background: var(--glass-surface); border: 1px solid var(--glass-border); border-radius: 12px; padding: 18px; cursor: default; }
         .card-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
         .card-ticker { font-weight: 700; font-size: 1.1rem; }
         .card-price { font-family: 'JetBrains Mono'; color: #999; font-size: 0.9rem; }
-        
-        .tag-group { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
-        .tag { display: inline-block; padding: 3px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); }
+        .tag { display: inline-block; padding: 3px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; border: 1px solid; }
         .tag.bullish { color: var(--accent-green); border-color: rgba(0, 255, 157, 0.3); }
         .tag.bearish { color: var(--accent-red); border-color: rgba(255, 75, 75, 0.3); }
+        .setup-info { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--glass-border); font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #777; display: flex; justify-content: space-between; }
         
-        .setup-info {
-            margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--glass-border);
-            font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #777; display: flex; justify-content: space-between;
+        .terminal-footer { margin-top: auto; padding-top: 20px; text-align: center; font-family: 'JetBrains Mono'; font-size: 0.65rem; color: #555; letter-spacing: 1px; width: 100%; }
+        
+        /* MINI ORB */
+        .mini-orb {
+            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(0, 255, 157, 0.2), rgba(0,0,0,0.8));
+            border: 1px solid rgba(0, 255, 157, 0.4); backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.3); cursor: pointer; z-index: 900;
+            display: flex; justify-content: center; align-items: center;
+            animation: float 4s ease-in-out infinite, pulse-ring 3s infinite;
         }
-        .catalyst-info { font-family: 'JetBrains Mono'; font-size: 0.65rem; color: #aaa; margin-top: 5px; text-transform: uppercase; }
-        .catalyst-info span { color: var(--text-main); }
-        .options-setup { color: #fff; font-weight: 600; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(0, 255, 157, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); } }
 
-        /* FOOTER: Fixed to bottom on desktop/mobile */
-        .terminal-footer {
-            margin-top: auto; /* Pushes to bottom of flex container */
-            padding-top: 20px; 
-            text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
-            color: #555; text-transform: uppercase; letter-spacing: 1px;
-            width: 100%;
-        }
-
-        /* SPACE INVADERS LOADER */
-        .loader-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(20px);
-            z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column;
-        }
-        .invader-ship {
-            width: 4px; height: 4px; background: transparent; color: var(--accent-green);
-            box-shadow: 0px -12px 0 0 currentColor, -4px -8px 0 0 currentColor, 0px -8px 0 0 currentColor, 4px -8px 0 0 currentColor, -8px -4px 0 0 currentColor, -4px -4px 0 0 currentColor, 0px -4px 0 0 currentColor, 4px -4px 0 0 currentColor, 8px -4px 0 0 currentColor, -12px 0 0 0 currentColor, -8px 0 0 0 currentColor, -4px 0 0 0 currentColor, 0px 0 0 0 currentColor, 4px 0 0 0 currentColor, 8px 0 0 0 currentColor, 12px 0 0 0 currentColor;
-            transform: scale(5); margin-bottom: 50px; position: relative;
-        }
-        .laser {
-            position: absolute; top: -20px; left: 0; width: 4px; height: 15px; background: var(--accent-green); opacity: 0; animation: shoot 0.8s infinite linear;
-        }
-        .laser:nth-child(1) { animation-delay: 0s; left: -10px; }
-        .laser:nth-child(2) { animation-delay: 0.2s; left: 0; }
-        .laser:nth-child(3) { animation-delay: 0.4s; left: 10px; }
+        /* LOADER */
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column; }
+        .invader-ship { width: 4px; height: 4px; background: transparent; color: var(--accent-green); box-shadow: 0px -12px 0 0 currentColor, -4px -8px 0 0 currentColor, 0px -8px 0 0 currentColor, 4px -8px 0 0 currentColor, -8px -4px 0 0 currentColor, -4px -4px 0 0 currentColor, 0px -4px 0 0 currentColor, 4px -4px 0 0 currentColor, 8px -4px 0 0 currentColor, -12px 0 0 0 currentColor, -8px 0 0 0 currentColor, -4px 0 0 0 currentColor, 0px 0 0 0 currentColor, 4px 0 0 0 currentColor, 8px 0 0 0 currentColor, 12px 0 0 0 currentColor; transform: scale(5); margin-bottom: 50px; }
+        .laser { position: absolute; top: -20px; left: 0; width: 4px; height: 15px; background: var(--accent-green); animation: shoot 0.8s infinite linear; }
+        .laser:nth-child(2) { animation-delay: 0.2s; left: 0; } .laser:nth-child(3) { animation-delay: 0.4s; left: 10px; }
         @keyframes shoot { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-150px); opacity: 0; } }
         .loader-text { font-family: 'JetBrains Mono'; font-size: 0.8rem; color: var(--accent-green); letter-spacing: 2px; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0; } }
-
-        @media (max-width: 768px) {
-            .bg-watermark { width: 95vw; }
-            .header { padding: 15px; flex-direction: row; }
-            .brand { font-size: 0.9rem; max-width: 60%; }
-            #typewriter-text { font-size: 0.75rem; display: block; margin-top: 2px; }
-            .vix-container { max-width: 40%; }
-            .oracle-content { grid-template-columns: 1fr; }
-            .ticker-hero { font-size: 3.5rem; }
-            .rationale-text { border-left: none; padding-left: 0; border-top: 1px solid var(--accent-green); padding-top: 15px; }
-        }
     </style>
 </head>
 <body>
@@ -238,9 +189,7 @@
     <img src="/static/aexalogo.png" class="bg-watermark" alt="AEXA">
 
     <div class="loader-overlay" id="loader">
-        <div class="invader-ship">
-            <div class="laser"></div><div class="laser"></div><div class="laser"></div>
-        </div>
+        <div class="invader-ship"><div class="laser"></div><div class="laser"></div><div class="laser"></div></div>
         <div class="loader-text">INITIALIZING UPLINK...</div>
     </div>
 
@@ -256,26 +205,33 @@
                         <span><span id="typewriter-text"></span><span class="cursor">_</span></span>
                     </div>
                 </a>
-                
                 <div class="vix-container">
-                    <div class="vix-badge" style="border-color: {{ vix.color }}; background: {{ vix.color }}15; color: {{ vix.color }}">
-                        <span class="vix-value">VIX {{ vix.val }}</span>
+                    <div class="vix-badge" id="vixBadge" style="border-color: {{ vix.color }}; background: {{ vix.color }}15; color: {{ vix.color }}">
+                        <span class="vix-value" id="vixValue">VIX {{ vix.val }}</span>
                     </div>
-                    <div class="market-subtext">
-                        <span style="color: {{ market_status.color }}; text-shadow: 0 0 8px {{ market_status.color }}66;">● {{ market_status.label }}</span>
-                    </div>
+                    <div class="market-subtext"><span id="marketStatus" style="color: {{ market_status.color }};">● {{ market_status.label }}</span></div>
                 </div>
             </div>
 
             {% if not scanned %}
             <div class="orb-wrapper">
-                <div class="orb-container">
-                    <div class="orb-btn" onclick="triggerScan()">
-                        SCAN
-                    </div>
-                    <div style="margin-top: 20px; font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #666; letter-spacing: 1px;">
-                        INITIATE SEQUENCE
-                    </div>
+                <div class="orbit-system">
+                    <div class="orb-btn" onclick="triggerScan()">SCAN</div>
+                    
+                    {% if econ_events %}
+                        {% for i in range(3) %}
+                        <div class="satellite sat-{{ i+1 }}">
+                            <div class="sat-content">
+                                <span class="sat-date">{{ econ_events[i].date }}</span>
+                                <span class="sat-title">{{ econ_events[i].title }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div style="position: absolute; bottom: 20%; font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #666; letter-spacing: 1px;">
+                    INITIATE SEQUENCE
                 </div>
             </div>
             {% endif %}
@@ -284,9 +240,7 @@
             <div class="results-area visible">
                 {% if chosen_one %}
                 <div class="oracle-glass">
-                    <div style="position: absolute; top: 20px; right: 20px; font-family: 'JetBrains Mono'; font-size: 0.65rem; color: var(--accent-green); opacity: 0.8; letter-spacing: 1px;">
-                        /// ALPHA SIGNAL DETECTED
-                    </div>
+                    <div style="position: absolute; top: 20px; right: 20px; font-family: 'JetBrains Mono'; font-size: 0.65rem; color: var(--accent-green); opacity: 0.8; letter-spacing: 1px;">/// ALPHA SIGNAL DETECTED</div>
                     <div class="oracle-content">
                         <div>
                             <div class="ticker-hero">{{ chosen_one.ticker }}</div>
@@ -294,13 +248,9 @@
                                 <div class="tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}">{{ chosen_one.signal }}</div>
                                 <div class="tag" style="border-color: #888; color: #ddd;">{{ chosen_one.sentiment }}</div>
                             </div>
-                            <div style="margin-top: 10px; font-family: 'JetBrains Mono'; font-size: 0.8rem; color: #fff;">
-                                SETUP: <span style="color: var(--accent-green)">{{ chosen_one.options_play }}</span>
+                            <div style="margin-top: 15px; font-family: 'JetBrains Mono'; font-size: 0.85rem; color: #fff; background: rgba(0, 255, 157, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(0, 255, 157, 0.2);">
+                                {{ chosen_one.rationale | safe }}
                             </div>
-                        </div>
-                        <div class="rationale-text">
-                            <strong style="color: #fff; display: block; margin-bottom: 8px; font-size: 0.9rem;">AI RISK ASSESSMENT:</strong>
-                            {{ chosen_one.rationale }}
                         </div>
                     </div>
                 </div>
@@ -315,9 +265,6 @@
                             <span class="card-price">${{ row.price }}</span>
                         </div>
                         <div class="tag {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}">{{ row.signal }}</div>
-                        <div class="catalyst-info">
-                            CATALYST: <span style="color: {{ '#00ff9d' if 'BULLISH' in row.signal else '#ff4b4b' }}">{{ row.catalyst }}</span>
-                        </div>
                         <div class="setup-info">
                             <span class="options-setup">{{ row.options_play }}</span>
                             <span>PROB: {{ row.probability }}%</span>
@@ -326,111 +273,58 @@
                     {% endif %}
                     {% endfor %}
                 </div>
-
+                
                 <div class="mini-orb" onclick="triggerScan()">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
                 </div>
             </div>
             {% endif %}
             
             <footer class="terminal-footer">
-                [ CEREBRO v4.0 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
+                [ CEREBRO v4.1 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
             </footer>
         </div>
     </form>
 
     <script>
         window.addEventListener('load', () => { document.body.classList.add('loaded'); });
-
-        // Synthesized "Cyber-Mechanical" Sound Effect
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
         function playScanSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            
             const now = audioCtx.currentTime;
-
-            // Oscillator 1: The "Laser" Pew
-            const osc1 = audioCtx.createOscillator();
-            const gain1 = audioCtx.createGain();
-            osc1.type = 'sawtooth';
-            osc1.frequency.setValueAtTime(880, now);
-            osc1.frequency.exponentialRampToValueAtTime(110, now + 0.2);
-            gain1.gain.setValueAtTime(0.1, now);
-            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-            osc1.connect(gain1);
-            gain1.connect(audioCtx.destination);
-            osc1.start(now);
-            osc1.stop(now + 0.2);
-
-            // Oscillator 2: The "Transformer" Growl
-            const osc2 = audioCtx.createOscillator();
-            const gain2 = audioCtx.createGain();
-            osc2.type = 'square';
-            osc2.frequency.setValueAtTime(50, now);
-            osc2.frequency.linearRampToValueAtTime(150, now + 0.1);
-            gain2.gain.setValueAtTime(0.05, now);
-            gain2.gain.linearRampToValueAtTime(0, now + 0.3);
-            osc2.connect(gain2);
-            gain2.connect(audioCtx.destination);
-            osc2.start(now);
-            osc2.stop(now + 0.3);
+            const osc1 = audioCtx.createOscillator(); const gain1 = audioCtx.createGain();
+            osc1.type = 'sawtooth'; osc1.frequency.setValueAtTime(880, now); osc1.frequency.exponentialRampToValueAtTime(110, now + 0.2);
+            gain1.gain.setValueAtTime(0.1, now); gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+            osc1.connect(gain1); gain1.connect(audioCtx.destination); osc1.start(now); osc1.stop(now + 0.2);
         }
-
         function triggerScan() {
-            // CACHE BUSTING: Force new data every click
             document.getElementById('timestampInput').value = Date.now();
-            
             playScanSound(); 
-            
-            // Show Loader
             document.getElementById('loader').style.display = 'flex';
-            
-            // Slight delay for sound to register
-            setTimeout(() => {
-                document.getElementById('scanForm').submit();
-            }, 300);
+            setTimeout(() => { document.getElementById('scanForm').submit(); }, 300);
         }
-
-        PullToRefresh.init({
-            mainElement: '#main-content',
-            onRefresh: function() { triggerScan(); },
-            instructionsPullToRefresh: 'PULL TO REFRESH',
-            instructionsReleaseToRefresh: 'RELEASE TO SCAN',
-            instructionsRefreshing: 'ACCESSING NODE...',
-            distThreshold: 70,
-            iconArrow: '&#8675;',
-            iconRefreshing: '&hellip;'
-        });
-
-        // Typewriter Logic
+        // VIX Poll
+        async function fetchLiveData() {
+            try {
+                const vixRes = await fetch('/api/vix'); const vixData = await vixRes.json();
+                const vixBadge = document.getElementById('vixBadge');
+                document.getElementById('vixValue').innerText = `VIX ${vixData.val}`;
+                vixBadge.style.color = vixData.color; vixBadge.style.borderColor = vixData.color; vixBadge.style.backgroundColor = `${vixData.color}15`;
+            } catch (e) {}
+        }
+        setInterval(fetchLiveData, 10000);
+        
         const indicesData = {{ indices | tojson }};
         const typeEl = document.getElementById('typewriter-text');
-        let msgIndex = 0;
-        let charIndex = 0;
-        let isDeleting = false;
-        let currentText = '';
-        
+        let msgIndex = 0; let charIndex = 0; let isDeleting = false;
         function type() {
-            if (indicesData.length === 0) return;
+            if (!typeEl || indicesData.length === 0) return;
             const fullText = indicesData[msgIndex]; 
-            if (isDeleting) {
-                currentText = fullText.substring(0, charIndex - 1);
-                charIndex--;
-            } else {
-                currentText = fullText.substring(0, charIndex + 1);
-                charIndex++;
-            }
-            typeEl.innerHTML = currentText;
-            let typeSpeed = 40; 
-            if (isDeleting) typeSpeed /= 2;
-            if (!isDeleting && charIndex === fullText.length) {
-                typeSpeed = 3000; isDeleting = true;
-            } else if (isDeleting && charIndex === 0) {
-                isDeleting = false; msgIndex = (msgIndex + 1) % indicesData.length; typeSpeed = 200;
-            }
+            if (isDeleting) { charIndex--; } else { charIndex++; }
+            typeEl.innerHTML = fullText.substring(0, charIndex);
+            let typeSpeed = 40; if (isDeleting) typeSpeed /= 2;
+            if (!isDeleting && charIndex === fullText.length) { typeSpeed = 3000; isDeleting = true; } 
+            else if (isDeleting && charIndex === 0) { isDeleting = false; msgIndex = (msgIndex + 1) % indicesData.length; typeSpeed = 200; }
             setTimeout(type, typeSpeed);
         }
         if(indicesData.length > 0) setTimeout(type, 800);
