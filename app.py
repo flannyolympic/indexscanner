@@ -15,7 +15,7 @@ GENAI_API_KEY = os.environ.get("GENAI_API_KEY")
 if GENAI_API_KEY:
     genai.configure(api_key=GENAI_API_KEY)
 
-# ASSET UNIVERSES (Default Lists)
+# ASSET UNIVERSES
 STOCK_TICKERS = [
     "TSLA", "NVDA", "AMD", "AAPL", "MSFT", "AMZN", "GOOGL", "META", "NFLX",
     "COIN", "MARA", "RIOT", "PLTR", "SOFI", "HOOD", "GME", "AMC", "SPY", "QQQ"
@@ -93,7 +93,6 @@ def analyze_market_data(ticker_list):
     if not ticker_list: return []
     
     try:
-        # Threads=False is critical for stability on free tier
         data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", group_by='ticker', auto_adjust=True, prepost=True, threads=False)
     except: return []
 
@@ -121,22 +120,22 @@ def analyze_market_data(ticker_list):
             catalyst = "No Clear Trigger"
             
             if current_rsi < 30:
-                signal = "BULLISH"
+                signal = "BULLISH (OVERSOLD)"
                 prob = 75
                 setup = "Oversold Bounce"
                 catalyst = "RSI Exhaustion (<30)"
             elif current_rsi > 70:
-                signal = "BEARISH"
+                signal = "BEARISH (OVERBOUGHT)"
                 prob = 70
                 setup = "Overbought Pullback"
                 catalyst = "RSI Extension (>70)"
             elif current_price > current_vwap * 1.01:
-                signal = "BULLISH"
+                signal = "BULLISH (TREND)"
                 prob = 60
                 setup = "Momentum Breakout"
                 catalyst = "Price > VWAP Support"
             elif current_price < current_vwap * 0.99:
-                signal = "BEARISH"
+                signal = "BEARISH (TREND)"
                 prob = 60
                 setup = "Momentum Breakdown"
                 catalyst = "Price < VWAP Resistance"
