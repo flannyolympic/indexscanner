@@ -5,6 +5,7 @@ import pandas as pd
 import yfinance as yf
 import pytz
 import random
+import traceback # Added for detailed error logging
 from flask import Flask, render_template, request
 from datetime import datetime, time as dt_time
 import google.generativeai as genai
@@ -52,11 +53,17 @@ def get_indices():
     data_list = []
     try:
         tickers = " ".join(indices.keys())
-        data = yf.download(tickers, period="1d", group_by='ticker', threads=False)
+        # prepost=True ensures we get pre-market moves for indices too
+        data = yf.download(tickers, period="1d", group_by='ticker', threads=False, prepost=True)
+        
         for ticker, name in indices.items():
             try:
                 df = data[ticker] if len(indices) > 1 else data
                 if df.empty: continue
+                
+                # Fill gaps for safety
+                df = df.ffill().bfill()
+                
                 current = df['Close'].iloc[-1]
                 open_price = df['Open'].iloc[0]
                 change = ((current - open_price) / open_price) * 100
@@ -69,10 +76,16 @@ def get_indices():
 def get_vix_data():
     try:
         vix = yf.Ticker("^VIX")
-        price = vix.fast_info.last_price
-        if not price:
+        # Try fast_info first, then history
+        try:
+            price = vix.fast_info.last_price
+        except:
             hist = vix.history(period="1d")
-            price = hist['Close'].iloc[-1]
+            if not hist.empty:
+                price = hist['Close'].iloc[-1]
+            else:
+                return {"val": 0, "label": "OFFLINE", "color": "#555", "desc": "No Data"}
+
         val = round(price, 2)
         
         if val < 12: return {"val": val, "label": "COMPLACENCY", "color": "#00E5FF", "desc": "Overly Chill"}
@@ -82,34 +95,61 @@ def get_vix_data():
         elif val < 40: return {"val": val, "label": "HIGH ANXIETY", "color": "#D35400", "desc": "Serious Stress"}
         elif val < 50: return {"val": val, "label": "CRISIS MODE", "color": "#C0392B", "desc": "Full-Blown Panic"}
         else: return {"val": val, "label": "SYSTEM SHOCK", "color": "#8B0000", "desc": "Total Meltdown"}
-    except:
+    except Exception as e:
+        print(f"VIX Error: {e}")
         return {"val": 0, "label": "OFFLINE", "color": "#555", "desc": "No Connection"}
 
 def analyze_market_data(ticker_list):
     results = []
     try:
+        # Fetching 5 days of 15m data allows for indicator calculation even in pre-market
+        # prepost=True is ESSENTIAL for pre-market data
         data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", group_by='ticker', auto_adjust=True, prepost=True, threads=False)
-    except: return []
+    except Exception as e:
+        print(f"Download Error: {e}")
+        return []
 
     for ticker in ticker_list:
         try:
-            df = data[ticker] if len(ticker_list) > 1 else data
-            if df.empty: continue
+            # Handle multi-ticker vs single-ticker DataFrames
+            if len(ticker_list) > 1:
+                df = data.get(ticker)
+            else:
+                df = data
+            
+            # 1. EMPTY CHECK: If no data, skip
+            if df is None or df.empty: 
+                continue
 
+            # 2. DATA SANITIZATION: Forward fill to handle pre-market gaps
+            df = df.ffill().bfill()
+
+            # 3. SUFFICIENT DATA CHECK: Need at least 20 rows for Vol MA
+            if len(df) < 20:
+                continue
+
+            # Technical Calculations
             df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
             df['VWAP'] = (df['TP'] * df['Volume']).cumsum() / df['Volume'].cumsum()
+            
             delta = df['Close'].diff()
             gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
             loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
             rs = gain / loss
             df['RSI'] = 100 - (100 / (1 + rs))
 
+            # Safe Access to latest values
             current_price = df['Close'].iloc[-1]
             current_rsi = df['RSI'].iloc[-1]
             current_vwap = df['VWAP'].iloc[-1]
             current_vol = df['Volume'].iloc[-1]
             avg_vol = df['Volume'].rolling(window=20).mean().iloc[-1]
             
+            # Handle NaN in indicators (can happen if calc failed)
+            if pd.isna(current_rsi): current_rsi = 50
+            if pd.isna(current_vwap): current_vwap = current_price
+
+            # --- ENGINE LOGIC ---
             signal = "NEUTRAL"
             prob = 50
             catalyst = "No Clear Trigger"
@@ -139,17 +179,19 @@ def analyze_market_data(ticker_list):
                 "sentiment": sentiment,
                 "options_play": options_play
             })
-        except: continue
+        except Exception as e:
+            # Print specific ticker error but don't crash the whole app
+            print(f"Error analyzing {ticker}: {e}")
+            traceback.print_exc() 
+            continue
     
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
-# --- AI FUNCTION WITH VERSIONED MODELS ---
 def get_ai_rationale(ticker_data):
     if not GENAI_API_KEY:
         print("DEBUG: GENAI_API_KEY is missing!")
         return "AI Offline (Key Missing). Trade based on technicals."
     
-    # EXACT VERSION NAMES to prevent 404 errors
     models = ['gemini-1.5-flash-001', 'gemini-1.5-flash-002', 'gemini-1.0-pro']
     
     prompt = (
@@ -180,21 +222,27 @@ def home():
 
 @app.route('/scan')
 def scan():
-    results = analyze_market_data(STOCK_TICKERS)
-    chosen_one = None
-    if results:
-        chosen_one = results[0]
-        chosen_one['rationale'] = get_ai_rationale(chosen_one)
+    try:
+        results = analyze_market_data(STOCK_TICKERS)
+        chosen_one = None
+        if results:
+            chosen_one = results[0]
+            # Only run AI on the top result to save time/quota
+            chosen_one['rationale'] = get_ai_rationale(chosen_one)
 
-    return render_template(
-        'index.html',
-        market_status=get_market_status(),
-        vix=get_vix_data(),
-        indices=get_indices(),
-        results=results,
-        chosen_one=chosen_one,
-        scanned=True
-    )
+        return render_template(
+            'index.html',
+            market_status=get_market_status(),
+            vix=get_vix_data(),
+            indices=get_indices(),
+            results=results,
+            chosen_one=chosen_one,
+            scanned=True
+        )
+    except Exception as e:
+        print(f"CRITICAL SCAN ERROR: {e}")
+        traceback.print_exc()
+        return f"System Overload. Please refresh. Error: {str(e)}", 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
