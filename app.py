@@ -158,12 +158,12 @@ def analyze_market_data(ticker_list):
         except: continue
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
-# --- AI FUNCTION (Fixed Models) ---
+# --- AI FUNCTION (Fixed Model Names) ---
 def get_ai_rationale(ticker_data):
     if not GENAI_API_KEY: return "AI Offline (Key Missing)."
     
-    # Use exact version strings to avoid 404 errors
-    models = ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-1.0-pro']
+    # Removed '-latest' suffix to ensure stability with library version
+    models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
     
     prompt = (f"Act as a senior derivatives trader. Analyze {ticker_data['ticker']} (${ticker_data['price']}). "
               f"Signal: {ticker_data['signal']}. Suggest exact options strike prices. "

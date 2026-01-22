@@ -51,13 +51,11 @@
         .vix-badge { border: 1px solid var(--glass-border); border-radius: 6px; padding: 4px 10px; font-family: 'JetBrains Mono'; font-size: 0.8rem; }
         .market-subtext { font-size: 0.6rem; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono'; }
 
-        /* ORBIT SYSTEM */
-        .orb-wrapper { flex-grow: 1; display: flex; justify-content: center; align-items: center; position: relative; height: 60vh; }
-        .orbit-system { position: relative; width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; }
-
-        /* The Main Orb */
+        /* ORB CENTER */
+        .orb-wrapper { flex-grow: 1; display: flex; justify-content: center; align-items: center; position: relative; height: 50vh; z-index: 20; }
+        
         .orb-btn {
-            width: 140px; height: 140px; border-radius: 50%; z-index: 10;
+            width: 140px; height: 140px; border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), rgba(0,0,0,0.5));
             border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);
             box-shadow: 0 0 30px rgba(0, 255, 157, 0.2), inset 0 0 20px rgba(255,255,255,0.05);
@@ -67,34 +65,50 @@
         }
         .orb-btn::after { content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border-radius: 50%; border: 1px solid var(--accent-green); opacity: 0.3; animation: pulse-ring 2s infinite; }
 
-        /* SATELLITES */
-        .satellite { position: absolute; top: 50%; left: 50%; display: flex; flex-direction: column; align-items: center; width: 80px; text-align: center; transform-origin: -110px center; animation: counter-rotate 20s linear infinite; }
-        .sat-1 { transform: rotate(0deg) translateX(150px) rotate(0deg); animation: orbit-1 20s linear infinite; margin-left: -40px; margin-top: -20px; }
-        .sat-2 { transform: rotate(120deg) translateX(150px) rotate(-120deg); animation: orbit-2 20s linear infinite; margin-left: -40px; margin-top: -20px; }
-        .sat-3 { transform: rotate(240deg) translateX(150px) rotate(-240deg); animation: orbit-3 20s linear infinite; margin-left: -40px; margin-top: -20px; }
-
-        .sat-content { background: rgba(20, 20, 20, 0.8); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 8px; backdrop-filter: blur(5px); transition: all 0.5s ease; animation: zoom-check 20s linear infinite; }
-        .sat-date { font-family: 'JetBrains Mono'; font-size: 0.6rem; color: var(--accent-green); display: block; margin-bottom: 2px; }
-        .sat-title { font-family: 'Inter'; font-size: 0.65rem; font-weight: 600; color: #fff; white-space: nowrap; }
-
-        @keyframes orbit-1 { from { transform: rotate(0deg) translateX(140px) rotate(0deg); } to { transform: rotate(360deg) translateX(140px) rotate(-360deg); } }
-        @keyframes orbit-2 { from { transform: rotate(120deg) translateX(140px) rotate(-120deg); } to { transform: rotate(480deg) translateX(140px) rotate(-480deg); } }
-        @keyframes orbit-3 { from { transform: rotate(240deg) translateX(140px) rotate(-240deg); } to { transform: rotate(600deg) translateX(140px) rotate(-600deg); } }
-        @keyframes zoom-check {
-            0%, 50%, 100% { transform: scale(0.9); opacity: 0.5; filter: blur(1px); }
-            25% { transform: scale(1.2); opacity: 1; filter: blur(0px); border-color: var(--accent-green); }
-            75% { transform: scale(0.8); opacity: 0.3; filter: blur(2px); }
+        /* PINBALL SATELLITES */
+        /* Container covers the whole "home" area behind the orb */
+        .pinball-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; overflow: hidden; z-index: 1;
         }
-        .sat-1 .sat-content { animation-delay: -5s; } .sat-2 .sat-content { animation-delay: -11.6s; } .sat-3 .sat-content { animation-delay: -18.3s; }
+
+        /* Physics wrapper for bouncing */
+        .bouncer-x {
+            position: absolute;
+            animation: bounceX 15s linear infinite alternate;
+        }
+        .bouncer-y {
+            animation: bounceY 13s linear infinite alternate;
+        }
+        
+        /* Specific timings to create chaos */
+        .p1 .bouncer-x { animation-duration: 23s; }
+        .p1 .bouncer-y { animation-duration: 17s; }
+        
+        .p2 .bouncer-x { animation-duration: 28s; animation-delay: -5s; }
+        .p2 .bouncer-y { animation-duration: 21s; animation-delay: -5s; }
+        
+        .p3 .bouncer-x { animation-duration: 19s; animation-delay: -10s; }
+        .p3 .bouncer-y { animation-duration: 25s; animation-delay: -10s; }
+
+        .sat-content {
+            background: rgba(20, 20, 20, 0.6); border: 1px solid var(--glass-border);
+            padding: 8px 12px; border-radius: 8px; backdrop-filter: blur(3px);
+            white-space: nowrap; transform: scale(0.9);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .sat-date { font-family: 'JetBrains Mono'; font-size: 0.6rem; color: var(--accent-green); display: block; margin-bottom: 2px; }
+        .sat-title { font-family: 'Inter'; font-size: 0.65rem; font-weight: 600; color: #fff; }
+
+        @keyframes bounceX { 0% { transform: translateX(10vw); } 100% { transform: translateX(80vw); } }
+        @keyframes bounceY { 0% { transform: translateY(10vh); } 100% { transform: translateY(60vh); } }
 
         @media (max-width: 768px) {
-            .orbit-system { width: 260px; height: 260px; }
-            @keyframes orbit-1 { from { transform: rotate(0deg) translateX(110px) rotate(0deg); } to { transform: rotate(360deg) translateX(110px) rotate(-360deg); } }
-            @keyframes orbit-2 { from { transform: rotate(120deg) translateX(110px) rotate(-120deg); } to { transform: rotate(480deg) translateX(110px) rotate(-480deg); } }
-            @keyframes orbit-3 { from { transform: rotate(240deg) translateX(110px) rotate(-240deg); } to { transform: rotate(600deg) translateX(110px) rotate(-600deg); } }
+            @keyframes bounceX { 0% { transform: translateX(5vw); } 100% { transform: translateX(65vw); } }
+            @keyframes bounceY { 0% { transform: translateY(5vh); } 100% { transform: translateY(50vh); } }
         }
 
-        /* UI ELEMENTS */
+        /* REST OF UI */
         .results-area { display: none; width: 100%; animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .results-area.visible { display: block; }
         @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -116,12 +130,9 @@
         .setup-info { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--glass-border); font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #777; display: flex; justify-content: space-between; }
         
         .terminal-footer { text-align: center; font-family: 'JetBrains Mono'; font-size: 0.65rem; color: #555; letter-spacing: 1px; width: 100%; padding: 20px; }
-        
-        /* FOOTER POSITIONING */
         .footer-fixed { position: absolute; bottom: 20px; left: 0; right: 0; }
         .footer-relative { margin-top: auto; border-top: 1px solid var(--glass-border); }
 
-        /* MINI ORB */
         .mini-orb { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(0, 255, 157, 0.2), rgba(0,0,0,0.8)); border: 1px solid rgba(0, 255, 157, 0.4); backdrop-filter: blur(10px); box-shadow: 0 0 20px rgba(0, 255, 157, 0.3); cursor: pointer; z-index: 900; display: flex; justify-content: center; align-items: center; animation: float 4s ease-in-out infinite, pulse-ring 3s infinite; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(0, 255, 157, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); } }
@@ -167,27 +178,30 @@
             </div>
 
             {% if not scanned %}
-            <div class="orb-wrapper">
-                <div class="orbit-system">
-                    <div class="orb-btn" onclick="triggerScan()">SCAN</div>
-                    {% if econ_events %}
-                        {% for i in range(3) %}
-                        <div class="satellite sat-{{ i+1 }}">
+            <div class="pinball-container">
+                {% if econ_events %}
+                    {% for i in range(3) %}
+                    <div class="bouncer-x p{{ i+1 }}">
+                        <div class="bouncer-y">
                             <div class="sat-content">
                                 <span class="sat-date">{{ econ_events[i].date }}</span>
                                 <span class="sat-title">{{ econ_events[i].title }}</span>
                             </div>
                         </div>
-                        {% endfor %}
-                    {% endif %}
-                </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="orb-wrapper">
+                <div class="orb-btn" onclick="triggerScan()">SCAN</div>
                 <div style="position: absolute; bottom: 20%; font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #666; letter-spacing: 1px;">
                     INITIATE SEQUENCE
                 </div>
             </div>
             
             <div class="terminal-footer footer-fixed">
-                [ CEREBRO v4.2 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
+                [ CEREBRO v4.3 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
             </div>
             {% endif %}
 
@@ -234,7 +248,7 @@
                 </div>
                 
                 <footer class="terminal-footer footer-relative">
-                    [ CEREBRO v4.2 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
+                    [ CEREBRO v4.3 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
                 </footer>
             </div>
             {% endif %}
