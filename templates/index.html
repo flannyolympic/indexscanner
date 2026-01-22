@@ -2,19 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000">
-    
     <title>The Cerebro Project /// Terminal Access</title>
-    <meta name="description" content="Quantitative Analysis Engine. Open Source Financial Terminal.">
-
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='aexalogo.png') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='aexalogo.png') }}">
     
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Cerebro">
-
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pulltorefreshjs/0.1.22/index.umd.min.js"></script>
 
@@ -38,9 +29,6 @@
             background-color: var(--bg-deep); color: var(--text-main); font-family: 'Inter', sans-serif;
             margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden;
             opacity: 0; transition: opacity 0.8s ease-out;
-            /* Safe area padding for iPhones with notches */
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
         }
         body.loaded { opacity: 1; }
 
@@ -278,13 +266,9 @@
                                 <div class="tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}">{{ chosen_one.signal }}</div>
                                 <div class="tag" style="border-color: #888; color: #ddd;">{{ chosen_one.sentiment }}</div>
                             </div>
-                            <div style="margin-top: 10px; font-family: 'JetBrains Mono'; font-size: 0.8rem; color: #fff;">
-                                SETUP: <span style="color: var(--accent-green)">{{ chosen_one.options_play }}</span>
+                            <div style="margin-top: 15px; font-family: 'JetBrains Mono'; font-size: 0.85rem; color: #fff; background: rgba(0, 255, 157, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(0, 255, 157, 0.2);">
+                                {{ chosen_one.rationale | safe }}
                             </div>
-                        </div>
-                        <div class="rationale-text">
-                            <strong style="color: #fff; display: block; margin-bottom: 8px; font-size: 0.9rem;">AI RISK ASSESSMENT:</strong>
-                            {{ chosen_one.rationale }}
                         </div>
                     </div>
                 </div>
@@ -312,7 +296,7 @@
                 </div>
                 
                 <footer class="terminal-footer">
-                    [ CEREBRO v3.6 // QUANTITATIVE ANALYSIS ENGINE // EXECUTE AT OWN RISK ]
+                    [ CEREBRO v3.7 // QUANTITATIVE ANALYSIS ENGINE // EXECUTE AT OWN RISK ]
                 </footer>
 
                 <div class="mini-orb" onclick="triggerScan()">
