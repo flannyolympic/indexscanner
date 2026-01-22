@@ -15,7 +15,7 @@ GENAI_API_KEY = os.environ.get("GENAI_API_KEY")
 if GENAI_API_KEY:
     genai.configure(api_key=GENAI_API_KEY)
 
-# ASSET UNIVERSES
+# ASSET UNIVERSES (Default Lists)
 STOCK_TICKERS = [
     "TSLA", "NVDA", "AMD", "AAPL", "MSFT", "AMZN", "GOOGL", "META", "NFLX",
     "COIN", "MARA", "RIOT", "PLTR", "SOFI", "HOOD", "GME", "AMC", "SPY", "QQQ"
@@ -25,7 +25,6 @@ CRYPTO_TICKERS = [
     "ADA-USD", "AVAX-USD", "LINK-USD", "LTC-USD", "BCH-USD", "UNI-USD"
 ]
 
-# --- MARKET STATUS & INDICES ---
 def get_market_status():
     tz = pytz.timezone('America/New_York')
     now = datetime.now(tz)
@@ -51,38 +50,23 @@ def get_market_status():
     return {"label": status, "color": color}
 
 def get_indices():
-    """Fetches major index data for the header ticker."""
-    indices = {
-        "^GSPC": "S&P 500",
-        "^IXIC": "NASDAQ",
-        "^DJI": "DOW J"
-    }
+    indices = {"^GSPC": "S&P 500", "^IXIC": "NASDAQ", "^DJI": "DOW J"}
     data_list = []
     try:
-        # Download all indices at once
         tickers = " ".join(indices.keys())
-        data = yf.download(tickers, period="1d", group_by='ticker', threads=False) # Threads=False fixes DB lock
+        data = yf.download(tickers, period="1d", group_by='ticker', threads=False)
         
         for ticker, name in indices.items():
             try:
-                # Handle single vs multi-index data structures
-                if len(indices) > 1:
-                    df = data[ticker]
-                else:
-                    df = data
-                
+                df = data[ticker] if len(indices) > 1 else data
+                if df.empty: continue
                 current = df['Close'].iloc[-1]
                 open_price = df['Open'].iloc[0]
                 change = ((current - open_price) / open_price) * 100
-                
                 sign = "+" if change >= 0 else ""
                 data_list.append(f"{name}: {int(current)} ({sign}{round(change, 2)}%)")
-            except:
-                continue
-    except Exception as e:
-        print(f"Indices Error: {e}")
-        return ["MARKET DATA OFFLINE"]
-        
+            except: continue
+    except: return ["MARKET DATA OFFLINE"]
     return data_list
 
 def get_vix_data():
@@ -106,8 +90,10 @@ def get_vix_data():
 
 def analyze_market_data(ticker_list):
     results = []
+    if not ticker_list: return []
+    
     try:
-        # Threads=False ensures stability on Render free tier
+        # Threads=False is critical for stability on free tier
         data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", group_by='ticker', auto_adjust=True, prepost=True, threads=False)
     except: return []
 
@@ -128,12 +114,32 @@ def analyze_market_data(ticker_list):
             current_rsi = df['RSI'].iloc[-1]
             current_vwap = df['VWAP'].iloc[-1]
             
-            signal, prob, setup = ("NEUTRAL", 50, "Consolidation")
+            # --- CATALYST LOGIC ---
+            signal = "NEUTRAL"
+            prob = 50
+            setup = "Consolidation"
+            catalyst = "No Clear Trigger"
             
-            if current_rsi < 30: signal, prob, setup = ("BULLISH (OVERSOLD)", 75, "Mean Reversion")
-            elif current_rsi > 70: signal, prob, setup = ("BEARISH (OVERBOUGHT)", 70, "Top Reversal")
-            elif current_price > current_vwap * 1.01: signal, prob, setup = ("BULLISH (TREND)", 60, "VWAP Support")
-            elif current_price < current_vwap * 0.99: signal, prob, setup = ("BEARISH (TREND)", 60, "VWAP Resistance")
+            if current_rsi < 30:
+                signal = "BULLISH"
+                prob = 75
+                setup = "Oversold Bounce"
+                catalyst = "RSI Exhaustion (<30)"
+            elif current_rsi > 70:
+                signal = "BEARISH"
+                prob = 70
+                setup = "Overbought Pullback"
+                catalyst = "RSI Extension (>70)"
+            elif current_price > current_vwap * 1.01:
+                signal = "BULLISH"
+                prob = 60
+                setup = "Momentum Breakout"
+                catalyst = "Price > VWAP Support"
+            elif current_price < current_vwap * 0.99:
+                signal = "BEARISH"
+                prob = 60
+                setup = "Momentum Breakdown"
+                catalyst = "Price < VWAP Resistance"
 
             stop = current_price * 0.98 if "BULLISH" in signal else current_price * 1.02
             target = current_price * 1.05 if "BULLISH" in signal else current_price * 0.95
@@ -144,6 +150,7 @@ def analyze_market_data(ticker_list):
                 "signal": signal,
                 "probability": prob,
                 "vwap": round(float(current_vwap), 2),
+                "catalyst": catalyst, # NEW FIELD
                 "setup": {
                     "type": setup,
                     "entry": f"${round(float(current_price), 2)}",
@@ -160,7 +167,7 @@ def get_ai_rationale(ticker_data):
     
     prompt = (
         f"Act as a quantitative analyst. Analyze {ticker_data['ticker']}. "
-        f"Price: {ticker_data['price']}, Signal: {ticker_data['signal']}, Setup: {ticker_data['setup']['type']}. "
+        f"Price: {ticker_data['price']}, Signal: {ticker_data['signal']}, Catalyst: {ticker_data['catalyst']}. "
         f"Provide a 2-sentence institutional rationale. Be concise. No fluff."
     )
 
@@ -174,19 +181,23 @@ def get_ai_rationale(ticker_data):
 
 @app.route('/')
 def home():
-    return render_template(
-        'index.html', 
-        market_status=get_market_status(), 
-        vix=get_vix_data(), 
-        indices=get_indices(), # Pass indices to frontend
-        current_mode="stock"
-    )
+    return render_template('index.html', market_status=get_market_status(), vix=get_vix_data(), indices=get_indices(), current_mode="stock")
 
 @app.route('/scan')
 def scan():
     mode = request.args.get('mode', 'stock')
-    tickers = CRYPTO_TICKERS if mode == 'crypto' else STOCK_TICKERS
+    user_query = request.args.get('ticker', '').upper().strip()
+    
+    # DETERMINE TICKER LIST
+    if user_query:
+        tickers = [user_query] # Search specific
+    elif mode == 'crypto':
+        tickers = CRYPTO_TICKERS
+    else:
+        tickers = STOCK_TICKERS # Default stock list
+    
     results = analyze_market_data(tickers)
+    
     chosen_one = None
     if results:
         chosen_one = results[0]
@@ -196,10 +207,11 @@ def scan():
         'index.html',
         market_status=get_market_status(),
         vix=get_vix_data(),
-        indices=get_indices(), # Pass indices here too
+        indices=get_indices(),
         current_mode=mode,
         results=results,
-        chosen_one=chosen_one
+        chosen_one=chosen_one,
+        search_term=user_query
     )
 
 if __name__ == '__main__':

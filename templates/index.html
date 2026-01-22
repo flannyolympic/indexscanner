@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000">
     <title>The Cerebro Project /// Terminal Access</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pulltorefreshjs/0.1.22/index.umd.min.js"></script>
 
@@ -14,6 +13,7 @@
             --bg-deep: #000000;
             --glass-surface: rgba(30, 30, 30, 0.5);
             --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-highlight: rgba(255, 255, 255, 0.08);
             --accent-green: #00ff9d;
             --accent-red: #ff4b4b;
             --text-main: #ffffff;
@@ -22,152 +22,88 @@
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; }
         
         body {
-            background-color: var(--bg-deep);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            margin: 0; padding: 0;
-            min-height: 100vh;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-            opacity: 0; /* Hidden initially for fade-in */
-            transition: opacity 0.8s ease-out;
+            background-color: var(--bg-deep); color: var(--text-main); font-family: 'Inter', sans-serif;
+            margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased;
+            opacity: 0; transition: opacity 0.8s ease-out;
         }
-
         body.loaded { opacity: 1; }
 
-        /* --- BACKGROUND --- */
         .bg-watermark {
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 85vw; max-width: 900px;
-            opacity: 0.12; z-index: -1; pointer-events: none;
-            filter: grayscale(100%) contrast(1.2);
-            animation: breathe 8s ease-in-out infinite;
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 85vw; max-width: 900px; opacity: 0.12; z-index: -1; pointer-events: none;
+            filter: grayscale(100%) contrast(1.2); animation: breathe 8s ease-in-out infinite;
         }
-
         @keyframes breathe {
             0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.12; }
             50% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.18; }
         }
-
         .bg-gradient {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: 
-                radial-gradient(circle at 10% 20%, rgba(0, 255, 157, 0.04), transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(50, 50, 255, 0.04), transparent 40%);
+            background: radial-gradient(circle at 10% 20%, rgba(0, 255, 157, 0.04), transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(50, 50, 255, 0.04), transparent 40%);
             z-index: -2; pointer-events: none;
         }
 
-        .container {
-            max-width: 1400px; margin: 0 auto; padding: 20px;
-            padding-bottom: 60px;
-        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; padding-bottom: 60px; }
 
-        /* --- SPACE INVADER LOADER (GLASS) --- */
-        .loader-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            /* Glass Effect */
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            z-index: 9999; display: none; justify-content: center;
-            align-items: center; flex-direction: column;
-        }
-
-        /* The Ship (Pixel Art using CSS Box Shadow) */
-        .invader-ship {
-            width: 4px; height: 4px;
-            background: transparent;
-            color: var(--accent-green);
-            box-shadow: 
-                0px -12px 0 0 currentColor,
-                -4px -8px 0 0 currentColor, 0px -8px 0 0 currentColor, 4px -8px 0 0 currentColor,
-                -8px -4px 0 0 currentColor, -4px -4px 0 0 currentColor, 0px -4px 0 0 currentColor, 4px -4px 0 0 currentColor, 8px -4px 0 0 currentColor,
-                -12px 0 0 0 currentColor, -8px 0 0 0 currentColor, -4px 0 0 0 currentColor, 0px 0 0 0 currentColor, 4px 0 0 0 currentColor, 8px 0 0 0 currentColor, 12px 0 0 0 currentColor;
-            transform: scale(4);
-            margin-bottom: 40px;
-            position: relative;
-        }
-
-        /* The Laser Bullets */
-        .laser {
-            position: absolute; top: -20px; left: 0;
-            width: 4px; height: 12px;
-            background: var(--accent-green);
-            opacity: 0;
-            animation: shoot 1.2s infinite linear;
-        }
-        .laser:nth-child(1) { animation-delay: 0s; }
-        .laser:nth-child(2) { animation-delay: 0.4s; }
-        .laser:nth-child(3) { animation-delay: 0.8s; }
-
-        @keyframes shoot {
-            0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(-100px); opacity: 0; }
-        }
-
-        .loader-text {
-            font-family: 'JetBrains Mono'; font-size: 0.8rem;
-            color: var(--accent-green); letter-spacing: 2px;
-            animation: blink 1s infinite;
-        }
-
-        /* --- HEADER & TYPEWRITER --- */
+        /* HEADER */
         .header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 20px; margin: -20px -20px 25px -20px;
-            position: sticky; top: 0; z-index: 100;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(var(--blur-amt)) saturate(180%);
-            -webkit-backdrop-filter: blur(var(--blur-amt)) saturate(180%);
-            border-bottom: 1px solid var(--glass-border);
+            padding: 15px 20px; margin: -20px -20px 20px -20px; position: sticky; top: 0; z-index: 100;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(var(--blur-amt)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--blur-amt)) saturate(180%); border-bottom: 1px solid var(--glass-border);
         }
-
         .brand {
-            font-family: 'JetBrains Mono', monospace; font-weight: 700;
-            font-size: 1.1rem; letter-spacing: -0.5px; color: var(--accent-green);
-            text-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
+            font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.1rem;
+            letter-spacing: -0.5px; color: var(--accent-green); text-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
             display: flex; flex-direction: column; line-height: 1.2;
         }
-
-        #typewriter-text {
-            color: #fff; font-weight: 400; opacity: 0.9;
-            font-size: 0.95rem; display: inline-block;
-        }
-
+        #typewriter-text { color: #fff; font-weight: 400; opacity: 0.9; font-size: 0.95rem; display: inline-block; }
         .cursor { color: var(--accent-green); animation: blink 1s step-end infinite; }
-
+        
         .vix-container { text-align: right; }
         .vix-badge {
             background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
-            border-radius: 6px; padding: 4px 10px;
-            font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+            border-radius: 6px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
             display: inline-flex; align-items: center; gap: 8px;
         }
         .vix-value { font-weight: 800; }
-        .market-subtext { 
-            font-size: 0.6rem; color: var(--text-muted); margin-top: 4px; 
-            font-family: 'JetBrains Mono'; letter-spacing: 0.5px;
-        }
+        .market-subtext { font-size: 0.6rem; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono'; letter-spacing: 0.5px; }
 
-        /* --- UI COMPONENTS --- */
+        /* SEARCH BAR */
+        .search-container {
+            margin-bottom: 20px; display: flex; justify-content: center;
+        }
+        .search-input {
+            width: 100%; max-width: 600px;
+            background: rgba(20, 20, 20, 0.6); border: 1px solid var(--glass-border);
+            border-radius: 12px; padding: 12px 20px;
+            color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
+            backdrop-filter: blur(10px); outline: none; transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        .search-input:focus { border-color: var(--accent-green); box-shadow: 0 0 15px rgba(0, 255, 157, 0.2); }
+        .search-input::placeholder { color: #555; }
+
+        /* CONTROLS */
         .controls {
             display: flex; gap: 10px; margin-bottom: 30px;
             background: rgba(30, 30, 30, 0.6); padding: 5px;
             border-radius: 10px; border: 1px solid var(--glass-border);
             width: fit-content; backdrop-filter: blur(15px);
         }
-
         .pill-btn {
             background: transparent; border: none; color: #aaa;
             padding: 10px 20px; border-radius: 7px; font-size: 0.8rem;
-            font-weight: 600; cursor: pointer; transition: all 0.2s ease;
-            font-family: 'Inter', sans-serif;
+            font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-family: 'Inter', sans-serif;
         }
         .pill-btn.active { background: rgba(255,255,255,0.15); color: #fff; }
         .scan-trigger { background: var(--accent-green) !important; color: #000 !important; font-weight: 800; }
 
+        /* CARDS */
         .oracle-glass {
             background: var(--glass-surface);
             backdrop-filter: blur(var(--blur-amt)) saturate(180%);
@@ -183,8 +119,7 @@
         .oracle-content { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; align-items: center; }
         .ticker-hero {
             font-size: 4.5rem; font-weight: 800; line-height: 1; letter-spacing: -3px;
-            background: linear-gradient(135deg, #ffffff 30%, #777777); -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent; 
+            background: linear-gradient(135deg, #ffffff 30%, #777777); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .rationale-text {
             font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6;
@@ -204,10 +139,16 @@
         .tag { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
         .tag.bullish { color: var(--accent-green); background: rgba(0, 255, 157, 0.12); border: 1px solid rgba(0, 255, 157, 0.2); }
         .tag.bearish { color: var(--accent-red); background: rgba(255, 75, 75, 0.12); border: 1px solid rgba(255, 75, 75, 0.2); }
+        
         .setup-info {
             margin-top: 15px; padding-top: 10px; border-top: 1px solid var(--glass-border);
-            font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #777; display: flex; justify-content: space-between;
+            font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #777; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px;
         }
+        /* New Catalyst Style */
+        .catalyst-info {
+            font-family: 'JetBrains Mono'; font-size: 0.65rem; color: #aaa; margin-top: 5px; text-transform: uppercase;
+        }
+        .catalyst-info span { color: var(--text-main); }
 
         .terminal-footer {
             margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--glass-border);
@@ -215,6 +156,25 @@
             color: #555; text-transform: uppercase; letter-spacing: 1px;
         }
 
+        /* SPACE INVADERS LOADER */
+        .loader-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(20px);
+            z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column;
+        }
+        .invader-ship {
+            width: 4px; height: 4px; background: transparent; color: var(--accent-green);
+            box-shadow: 0px -12px 0 0 currentColor, -4px -8px 0 0 currentColor, 0px -8px 0 0 currentColor, 4px -8px 0 0 currentColor, -8px -4px 0 0 currentColor, -4px -4px 0 0 currentColor, 0px -4px 0 0 currentColor, 4px -4px 0 0 currentColor, 8px -4px 0 0 currentColor, -12px 0 0 0 currentColor, -8px 0 0 0 currentColor, -4px 0 0 0 currentColor, 0px 0 0 0 currentColor, 4px 0 0 0 currentColor, 8px 0 0 0 currentColor, 12px 0 0 0 currentColor;
+            transform: scale(4); margin-bottom: 40px; position: relative;
+        }
+        .laser {
+            position: absolute; top: -20px; left: 0; width: 4px; height: 12px; background: var(--accent-green); opacity: 0; animation: shoot 1.2s infinite linear;
+        }
+        .laser:nth-child(1) { animation-delay: 0s; }
+        .laser:nth-child(2) { animation-delay: 0.4s; }
+        .laser:nth-child(3) { animation-delay: 0.8s; }
+        @keyframes shoot { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-100px); opacity: 0; } }
+        .loader-text { font-family: 'JetBrains Mono'; font-size: 0.8rem; color: var(--accent-green); letter-spacing: 2px; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0; } }
 
         @media (max-width: 768px) {
@@ -240,98 +200,110 @@
 
     <div class="loader-overlay" id="loader">
         <div class="invader-ship">
-            <div class="laser"></div>
-            <div class="laser"></div>
-            <div class="laser"></div>
+            <div class="laser"></div><div class="laser"></div><div class="laser"></div>
         </div>
         <div class="loader-text">INITIALIZING UPLINK...</div>
     </div>
 
     <form action="/scan" method="GET" id="scanForm">
         <input type="hidden" name="mode" id="modeInput" value="{{ current_mode }}">
-    </form>
-
-    <div class="container" id="main-content">
-        <div class="header">
-            <div class="brand">
-                <span>&gt; THE CEREBRO PROJECT</span>
-                <span><span id="typewriter-text"></span><span class="cursor">_</span></span>
-            </div>
-            <div class="vix-container">
-                <div class="vix-badge" style="border-color: {{ vix.color }}; background: {{ vix.color }}15; color: {{ vix.color }}">
-                    <span class="vix-value">VIX {{ vix.val }}</span>
-                    <span class="vix-label">{{ vix.label }}</span>
+        
+        <div class="container" id="main-content">
+            <div class="header">
+                <div class="brand">
+                    <span>&gt; THE CEREBRO PROJECT</span>
+                    <span><span id="typewriter-text"></span><span class="cursor">_</span></span>
                 </div>
-                <div class="market-subtext">
-                    <span style="color: {{ market_status.color }}; text-shadow: 0 0 8px {{ market_status.color }}66;">● {{ market_status.label }}</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="controls">
-            <button class="pill-btn {{ 'active' if current_mode == 'stock' else '' }}" onclick="switchMode('stock')">STOCKS</button>
-            <button class="pill-btn {{ 'active' if current_mode == 'crypto' else '' }}" onclick="switchMode('crypto')">CRYPTO</button>
-            <button class="pill-btn scan-trigger" onclick="triggerScan()">SCAN MARKET</button>
-        </div>
-
-        {% if chosen_one %}
-        <div class="oracle-glass">
-            <div style="position: absolute; top: 20px; right: 20px; font-family: 'JetBrains Mono'; font-size: 0.65rem; color: var(--accent-green); opacity: 0.8; letter-spacing: 1px;">
-                /// ALPHA SIGNAL DETECTED
-            </div>
-            <div class="oracle-content">
-                <div>
-                    <div class="ticker-hero">{{ chosen_one.ticker }}</div>
-                    <div class="tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}" style="margin-top: 10px; font-size: 0.8rem;">
-                        {{ chosen_one.signal }}
+                <div class="vix-container">
+                    <div class="vix-badge" style="border-color: {{ vix.color }}; background: {{ vix.color }}15; color: {{ vix.color }}">
+                        <span class="vix-value">VIX {{ vix.val }}</span>
+                        <span class="vix-label">{{ vix.label }}</span>
+                    </div>
+                    <div class="market-subtext">
+                        <span style="color: {{ market_status.color }}; text-shadow: 0 0 8px {{ market_status.color }}66;">● {{ market_status.label }}</span>
                     </div>
                 </div>
-                <div class="rationale-text">
-                    <strong style="color: #fff; display: block; margin-bottom: 8px; font-size: 0.9rem;">AI RISK ASSESSMENT:</strong>
-                    {{ chosen_one.rationale }}
-                </div>
             </div>
-            <div class="setup-info" style="margin-top: 25px;">
-                <span>PROB: {{ chosen_one.probability }}%</span>
-                <span>ENTRY: {{ chosen_one.setup.entry }}</span>
-                <span>STOP: {{ chosen_one.setup.stop }}</span>
-                <span>TARGET: {{ chosen_one.setup.target }}</span>
-            </div>
-        </div>
-        {% endif %}
 
-        <div class="market-grid">
-            {% for row in results %}
-            {% if not chosen_one or row.ticker != chosen_one.ticker %}
-            <div class="card">
-                <div class="card-top">
-                    <span class="card-ticker">{{ row.ticker }}</span>
-                    <span class="card-price">${{ row.price }}</span>
+            <div class="search-container">
+                <input type="text" name="ticker" class="search-input" placeholder="> SEARCH TICKER (E.G. AAPL, BTC-USD)" value="{{ search_term }}" onkeydown="if(event.key === 'Enter') triggerScan()">
+            </div>
+
+            <div class="controls">
+                <button type="button" class="pill-btn {{ 'active' if current_mode == 'stock' and not search_term else '' }}" onclick="switchMode('stock')">STOCKS</button>
+                <button type="button" class="pill-btn {{ 'active' if current_mode == 'crypto' and not search_term else '' }}" onclick="switchMode('crypto')">CRYPTO</button>
+                <button type="button" class="pill-btn scan-trigger" onclick="triggerScan()">SCAN MARKET</button>
+            </div>
+
+            {% if chosen_one %}
+            <div class="oracle-glass">
+                <div style="position: absolute; top: 20px; right: 20px; font-family: 'JetBrains Mono'; font-size: 0.65rem; color: var(--accent-green); opacity: 0.8; letter-spacing: 1px;">
+                    /// ALPHA SIGNAL DETECTED
                 </div>
-                <div class="tag {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}">
-                    {{ row.signal }}
+                <div class="oracle-content">
+                    <div>
+                        <div class="ticker-hero">{{ chosen_one.ticker }}</div>
+                        <div class="tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}" style="margin-top: 10px; font-size: 0.8rem;">
+                            {{ chosen_one.signal }}
+                        </div>
+                        <div class="catalyst-info" style="margin-top: 10px; font-size: 0.8rem; color: #fff;">
+                            CATALYST: <span style="color: {{ '#00ff9d' if 'BULLISH' in chosen_one.signal else '#ff4b4b' }}">{{ chosen_one.catalyst }}</span>
+                        </div>
+                    </div>
+                    <div class="rationale-text">
+                        <strong style="color: #fff; display: block; margin-bottom: 8px; font-size: 0.9rem;">AI RISK ASSESSMENT:</strong>
+                        {{ chosen_one.rationale }}
+                    </div>
                 </div>
-                <div class="setup-info">
-                    <span>{{ row.setup.type }}</span>
-                    <span>VWAP: ${{ row.vwap }}</span>
+                <div class="setup-info" style="margin-top: 25px;">
+                    <span>PROB: {{ chosen_one.probability }}%</span>
+                    <span>ENTRY: {{ chosen_one.setup.entry }}</span>
+                    <span>STOP: {{ chosen_one.setup.stop }}</span>
+                    <span>TARGET: {{ chosen_one.setup.target }}</span>
                 </div>
             </div>
             {% endif %}
-            {% endfor %}
-        </div>
 
-        <footer class="terminal-footer">
-            [ CEREBRO v2.5 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
-        </footer>
-    </div>
+            <div class="market-grid">
+                {% for row in results %}
+                {% if not chosen_one or row.ticker != chosen_one.ticker %}
+                <div class="card">
+                    <div class="card-top">
+                        <span class="card-ticker">{{ row.ticker }}</span>
+                        <span class="card-price">${{ row.price }}</span>
+                    </div>
+                    <div class="tag {{ 'bullish' if 'BULLISH' in row.signal else 'bearish' }}">
+                        {{ row.signal }}
+                    </div>
+                    <div class="catalyst-info">
+                        CATALYST: <span style="color: {{ '#00ff9d' if 'BULLISH' in row.signal else '#ff4b4b' }}">{{ row.catalyst }}</span>
+                    </div>
+                    <div class="setup-info">
+                        <span>{{ row.setup.type }}</span>
+                        <span>VWAP: ${{ row.vwap }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                
+                {% if results|length == 0 %}
+                <div style="grid-column: 1/-1; text-align: center; color: #555; font-family: 'JetBrains Mono'; margin-top: 50px;">
+                    > NO DATA FOUND FOR THIS TICKER_
+                </div>
+                {% endif %}
+            </div>
+
+            <footer class="terminal-footer">
+                [ CEREBRO v2.6 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
+            </footer>
+        </div>
+    </form>
 
     <script>
-        // Page Transition
-        window.addEventListener('load', () => {
-            document.body.classList.add('loaded');
-        });
+        window.addEventListener('load', () => { document.body.classList.add('loaded'); });
 
         function switchMode(mode) {
+            document.querySelector('.search-input').value = ''; // Clear search on tab switch
             document.getElementById('modeInput').value = mode;
             triggerScan();
         }
