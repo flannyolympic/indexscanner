@@ -14,7 +14,10 @@ app = Flask(__name__)
 # --- CONFIGURATION ---
 GENAI_API_KEY = os.environ.get("GENAI_API_KEY")
 if GENAI_API_KEY:
-    genai.configure(api_key=GENAI_API_KEY)
+    try:
+        genai.configure(api_key=GENAI_API_KEY)
+    except Exception as e:
+        print(f"DEBUG: Failed to configure GenAI: {e}")
 
 # ASSET UNIVERSE: HIGH LIQUIDITY & MOMENTUM ONLY
 STOCK_TICKERS = [
@@ -49,6 +52,7 @@ def get_indices():
     data_list = []
     try:
         tickers = " ".join(indices.keys())
+        # threads=False prevents database lock errors
         data = yf.download(tickers, period="1d", group_by='ticker', threads=False)
         for ticker, name in indices.items():
             try:
@@ -85,7 +89,7 @@ def get_vix_data():
 def analyze_market_data(ticker_list):
     results = []
     try:
-        # Download 5 days of data for calculations
+        # threads=False is critical for stability on free cloud tiers
         data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", group_by='ticker', auto_adjust=True, prepost=True, threads=False)
     except: return []
 
@@ -162,8 +166,13 @@ def analyze_market_data(ticker_list):
     # Sort by probability (Absolute conviction)
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
+# --- AI FUNCTION WITH DEBUG LOGGING ---
 def get_ai_rationale(ticker_data):
-    if not GENAI_API_KEY: return "AI Module Offline."
+    # Debug Check 1: Key Existence
+    if not GENAI_API_KEY:
+        print("DEBUG: GENAI_API_KEY is missing from environment variables!")
+        return "AI Offline (Key Missing). Trade based on technicals."
+    
     models = ['gemini-2.0-flash-lite-preview-02-05', 'gemini-flash-latest', 'gemini-pro']
     
     prompt = (
@@ -175,10 +184,18 @@ def get_ai_rationale(ticker_data):
 
     for m in models:
         try:
+            print(f"DEBUG: Attempting to call model: {m}")
             model = genai.GenerativeModel(m)
             response = model.generate_content(prompt)
-            if response.text: return response.text
-        except: continue
+            
+            if response.text:
+                print(f"DEBUG: Success with model {m}")
+                return response.text
+        except Exception as e:
+            print(f"DEBUG: Model {m} failed. Error: {e}")
+            continue
+            
+    print("DEBUG: All AI models failed.")
     return "AI Unavailable. Trade based on technicals."
 
 @app.route('/')
