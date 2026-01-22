@@ -2,10 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <title>The Cerebro Project /// Terminal Access</title>
     
+    <title>The Cerebro Project /// Terminal Access</title>
+    <meta name="description" content="Quantitative Analysis Engine. Open Source Financial Terminal.">
+
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='aexalogo.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='aexalogo.png') }}">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cerebro">
+
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pulltorefreshjs/0.1.22/index.umd.min.js"></script>
 
@@ -29,6 +38,9 @@
             background-color: var(--bg-deep); color: var(--text-main); font-family: 'Inter', sans-serif;
             margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden;
             opacity: 0; transition: opacity 0.8s ease-out;
+            /* Safe area padding for iPhones with notches */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
         }
         body.loaded { opacity: 1; }
 
@@ -59,7 +71,6 @@
             -webkit-backdrop-filter: blur(var(--blur-amt)) saturate(180%); border-bottom: 1px solid var(--glass-border);
         }
         
-        /* CLICKABLE BRAND */
         .brand-link { text-decoration: none; cursor: pointer; display: block; transition: opacity 0.2s; }
         .brand-link:hover { opacity: 0.8; }
         
@@ -102,19 +113,19 @@
         }
         .orb-btn:active { transform: scale(0.95); box-shadow: 0 0 50px var(--accent-green); }
 
-        /* MINI ORB - FLOATING ACTION BUTTON */
+        /* MINI ORB */
         .mini-orb {
             position: fixed; bottom: 30px; right: 30px;
             width: 60px; height: 60px; border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, rgba(0, 255, 157, 0.2), rgba(0,0,0,0.8));
             border: 1px solid rgba(0, 255, 157, 0.4); backdrop-filter: blur(10px);
             box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
-            cursor: pointer; z-index: 999;
+            cursor: pointer; z-index: 900;
             display: flex; justify-content: center; align-items: center;
             animation: float 4s ease-in-out infinite, pulse-ring 3s infinite;
             transition: transform 0.2s; user-select: none; -webkit-tap-highlight-color: transparent;
         }
-        .mini-orb:active { transform: scale(0.9); background: rgba(0, 255, 157, 0.3); }
+        .mini-orb:active { transform: scale(0.9); }
         .mini-orb svg { width: 24px; height: 24px; fill: var(--accent-green); filter: drop-shadow(0 0 5px var(--accent-green)); }
 
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
@@ -301,7 +312,7 @@
                 </div>
                 
                 <footer class="terminal-footer">
-                    [ CEREBRO v3.5 // QUANTITATIVE ANALYSIS ENGINE // EXECUTE AT OWN RISK ]
+                    [ CEREBRO v3.6 // QUANTITATIVE ANALYSIS ENGINE // EXECUTE AT OWN RISK ]
                 </footer>
 
                 <div class="mini-orb" onclick="triggerScan()">
@@ -317,7 +328,7 @@
     <script>
         window.addEventListener('load', () => { document.body.classList.add('loaded'); });
 
-        // HOLLYWOOD SFX ENGINE (Synthesized in browser)
+        // Synthesized "Cyber-Mechanical" Sound Effect
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playScanSound() {
@@ -325,7 +336,7 @@
             
             const now = audioCtx.currentTime;
 
-            // FX 1: Laser Sweep (Pew!)
+            // Oscillator 1: The "Laser" Pew
             const osc1 = audioCtx.createOscillator();
             const gain1 = audioCtx.createGain();
             osc1.type = 'sawtooth';
@@ -338,12 +349,12 @@
             osc1.start(now);
             osc1.stop(now + 0.2);
 
-            // FX 2: Low Energy Thrum (Transformer feel)
+            // Oscillator 2: The "Transformer" Growl
             const osc2 = audioCtx.createOscillator();
             const gain2 = audioCtx.createGain();
             osc2.type = 'square';
             osc2.frequency.setValueAtTime(50, now);
-            osc2.frequency.linearRampToValueAtTime(100, now + 0.1);
+            osc2.frequency.linearRampToValueAtTime(150, now + 0.1);
             gain2.gain.setValueAtTime(0.05, now);
             gain2.gain.linearRampToValueAtTime(0, now + 0.3);
             osc2.connect(gain2);
@@ -361,7 +372,7 @@
             // Show Loader
             document.getElementById('loader').style.display = 'flex';
             
-            // Submit with slight delay for SFX
+            // Slight delay for sound to register
             setTimeout(() => {
                 document.getElementById('scanForm').submit();
             }, 300);
