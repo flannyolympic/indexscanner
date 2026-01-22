@@ -2,10 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <title>The Cerebro Project /// Terminal Access</title>
     
+    <title>The Cerebro Project /// Terminal Access</title>
+    <meta name="description" content="Quantitative Analysis Engine. Open Source Financial Terminal.">
+
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='aexalogo.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='aexalogo.png') }}">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cerebro">
+
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pulltorefreshjs/0.1.22/index.umd.min.js"></script>
 
@@ -29,6 +38,9 @@
             background-color: var(--bg-deep); color: var(--text-main); font-family: 'Inter', sans-serif;
             margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden;
             opacity: 0; transition: opacity 0.8s ease-out;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            position: relative; /* Essential for absolute footer positioning */
         }
         body.loaded { opacity: 1; }
 
@@ -49,7 +61,12 @@
             z-index: -2; pointer-events: none;
         }
 
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; padding-bottom: 80px; }
+        .container { 
+            max-width: 1400px; margin: 0 auto; padding: 20px; 
+            padding-bottom: 100px; /* Extra padding for footer space */
+            min-height: 100vh;
+            display: flex; flex-direction: column; 
+        }
 
         /* HEADER */
         .header {
@@ -74,15 +91,21 @@
         .vix-badge {
             background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
             border-radius: 6px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
-            display: inline-flex; align-items: center; gap: 8px; transition: all 0.5s ease;
+            display: inline-flex; align-items: center; gap: 8px;
         }
         .vix-value { font-weight: 800; }
         .market-subtext { font-size: 0.6rem; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono'; letter-spacing: 0.5px; }
 
         /* ORBS */
+        .orb-wrapper {
+            flex-grow: 1; /* Pushes content to center/fill space */
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column;
+        }
+        
         .orb-container {
             display: flex; justify-content: center; align-items: center;
-            height: 60vh; flex-direction: column; transition: all 0.5s ease;
+            flex-direction: column; transition: all 0.5s ease;
         }
         .orb-btn {
             width: 140px; height: 140px; border-radius: 50%;
@@ -113,16 +136,14 @@
             animation: float 4s ease-in-out infinite, pulse-ring 3s infinite;
             transition: transform 0.2s; user-select: none;
         }
-        .mini-orb.refreshing { animation: spin-orb 1s infinite linear; }
         .mini-orb:active { transform: scale(0.9); }
         .mini-orb svg { width: 24px; height: 24px; fill: var(--accent-green); filter: drop-shadow(0 0 5px var(--accent-green)); }
 
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(0, 255, 157, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); } }
-        @keyframes spin-orb { 100% { transform: rotate(360deg); } }
 
         /* RESULTS AREA */
-        .results-area { display: none; animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .results-area { display: none; width: 100%; animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .results-area.visible { display: block; }
         @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
@@ -131,7 +152,6 @@
             background: var(--glass-surface); border: 1px solid var(--glass-border); border-radius: 16px; padding: 30px;
             margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden;
             backdrop-filter: blur(var(--blur-amt)) saturate(180%);
-            transition: all 0.5s ease;
         }
         .oracle-glass::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
@@ -149,12 +169,9 @@
 
         .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
         .card {
-            background: var(--glass-surface); border: 1px solid var(--glass-border); border-radius: 12px; padding: 18px; transition: all 0.3s;
+            background: var(--glass-surface); border: 1px solid var(--glass-border); border-radius: 12px; padding: 18px; transition: all 0.2s;
             cursor: default; backdrop-filter: blur(20px) saturate(180%);
         }
-        /* Fade transition for updating data */
-        .card.updating { opacity: 0.5; transform: scale(0.98); }
-        
         .card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.08); }
         .card-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
         .card-ticker { font-weight: 700; font-size: 1.1rem; }
@@ -173,10 +190,13 @@
         .catalyst-info span { color: var(--text-main); }
         .options-setup { color: #fff; font-weight: 600; }
 
+        /* FOOTER: Fixed to bottom on desktop/mobile */
         .terminal-footer {
-            margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--glass-border);
+            margin-top: auto; /* Pushes to bottom of flex container */
+            padding-top: 20px; 
             text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
             color: #555; text-transform: uppercase; letter-spacing: 1px;
+            width: 100%;
         }
 
         /* SPACE INVADERS LOADER */
@@ -238,53 +258,55 @@
                 </a>
                 
                 <div class="vix-container">
-                    <div class="vix-badge" id="vixBadge" style="border-color: {{ vix.color }}; background: {{ vix.color }}15; color: {{ vix.color }}">
-                        <span class="vix-value" id="vixValue">VIX {{ vix.val }}</span>
+                    <div class="vix-badge" style="border-color: {{ vix.color }}; background: {{ vix.color }}15; color: {{ vix.color }}">
+                        <span class="vix-value">VIX {{ vix.val }}</span>
                     </div>
                     <div class="market-subtext">
-                        <span id="marketStatus" style="color: {{ market_status.color }}; text-shadow: 0 0 8px {{ market_status.color }}66;">● {{ market_status.label }}</span>
+                        <span style="color: {{ market_status.color }}; text-shadow: 0 0 8px {{ market_status.color }}66;">● {{ market_status.label }}</span>
                     </div>
                 </div>
             </div>
 
             {% if not scanned %}
-            <div class="orb-container">
-                <div class="orb-btn" onclick="triggerScan()">
-                    SCAN
-                </div>
-                <div style="margin-top: 20px; font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #666; letter-spacing: 1px;">
-                    INITIATE SEQUENCE
+            <div class="orb-wrapper">
+                <div class="orb-container">
+                    <div class="orb-btn" onclick="triggerScan()">
+                        SCAN
+                    </div>
+                    <div style="margin-top: 20px; font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #666; letter-spacing: 1px;">
+                        INITIATE SEQUENCE
+                    </div>
                 </div>
             </div>
             {% endif %}
 
             {% if scanned %}
-            <div class="results-area visible" id="resultsContainer">
+            <div class="results-area visible">
                 {% if chosen_one %}
-                <div class="oracle-glass" id="oracleCard">
+                <div class="oracle-glass">
                     <div style="position: absolute; top: 20px; right: 20px; font-family: 'JetBrains Mono'; font-size: 0.65rem; color: var(--accent-green); opacity: 0.8; letter-spacing: 1px;">
                         /// ALPHA SIGNAL DETECTED
                     </div>
                     <div class="oracle-content">
                         <div>
-                            <div class="ticker-hero" id="oracleTicker">{{ chosen_one.ticker }}</div>
+                            <div class="ticker-hero">{{ chosen_one.ticker }}</div>
                             <div class="tag-group" style="margin-top: 15px;">
-                                <div class="tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}" id="oracleSignal">{{ chosen_one.signal }}</div>
-                                <div class="tag" style="border-color: #888; color: #ddd;" id="oracleSentiment">{{ chosen_one.sentiment }}</div>
+                                <div class="tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}">{{ chosen_one.signal }}</div>
+                                <div class="tag" style="border-color: #888; color: #ddd;">{{ chosen_one.sentiment }}</div>
                             </div>
                             <div style="margin-top: 10px; font-family: 'JetBrains Mono'; font-size: 0.8rem; color: #fff;">
-                                SETUP: <span style="color: var(--accent-green)" id="oracleSetup">{{ chosen_one.options_play }}</span>
+                                SETUP: <span style="color: var(--accent-green)">{{ chosen_one.options_play }}</span>
                             </div>
                         </div>
                         <div class="rationale-text">
                             <strong style="color: #fff; display: block; margin-bottom: 8px; font-size: 0.9rem;">AI RISK ASSESSMENT:</strong>
-                            <span id="oracleRationale">{{ chosen_one.rationale | safe }}</span>
+                            {{ chosen_one.rationale }}
                         </div>
                     </div>
                 </div>
                 {% endif %}
 
-                <div class="market-grid" id="marketGrid">
+                <div class="market-grid">
                     {% for row in results %}
                     {% if not chosen_one or row.ticker != chosen_one.ticker %}
                     <div class="card">
@@ -304,32 +326,33 @@
                     {% endif %}
                     {% endfor %}
                 </div>
-                
-                <footer class="terminal-footer">
-                    [ CEREBRO v3.9 // QUANTITATIVE ANALYSIS ENGINE // EXECUTE AT OWN RISK ]
-                </footer>
 
-                <div class="mini-orb" id="miniOrb" onclick="triggerScan()">
+                <div class="mini-orb" onclick="triggerScan()">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
                     </svg>
                 </div>
             </div>
             {% endif %}
+            
+            <footer class="terminal-footer">
+                [ CEREBRO v4.0 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
+            </footer>
         </div>
     </form>
 
     <script>
         window.addEventListener('load', () => { document.body.classList.add('loaded'); });
 
+        // Synthesized "Cyber-Mechanical" Sound Effect
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playScanSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
             const now = audioCtx.currentTime;
-            
-            // Oscillator 1: High pitch chirp
+
+            // Oscillator 1: The "Laser" Pew
             const osc1 = audioCtx.createOscillator();
             const gain1 = audioCtx.createGain();
             osc1.type = 'sawtooth';
@@ -342,7 +365,7 @@
             osc1.start(now);
             osc1.stop(now + 0.2);
 
-            // Oscillator 2: Low thrum
+            // Oscillator 2: The "Transformer" Growl
             const osc2 = audioCtx.createOscillator();
             const gain2 = audioCtx.createGain();
             osc2.type = 'square';
@@ -356,58 +379,33 @@
             osc2.stop(now + 0.3);
         }
 
-        // --- MANUAL TRIGGER (Full Reload) ---
         function triggerScan() {
+            // CACHE BUSTING: Force new data every click
             document.getElementById('timestampInput').value = Date.now();
-            playScanSound(); 
-            document.getElementById('loader').style.display = 'flex';
-            setTimeout(() => { document.getElementById('scanForm').submit(); }, 300);
-        }
-
-        // --- BACKGROUND LIVE REFRESH LOGIC ---
-        async function fetchLiveData() {
-            if (!document.querySelector('.results-area')) return; // Only run on results page
-
-            try {
-                // 1. Update VIX Gauge
-                const vixRes = await fetch('/api/vix');
-                const vixData = await vixRes.json();
-                
-                const vixBadge = document.getElementById('vixBadge');
-                document.getElementById('vixValue').innerText = `VIX ${vixData.val}`;
-                vixBadge.style.color = vixData.color;
-                vixBadge.style.borderColor = vixData.color;
-                vixBadge.style.backgroundColor = `${vixData.color}15`;
-
-                // 2. Refresh Scan Results (Silent Update)
-                const scanRes = await fetch('/api/scan_data');
-                const scanData = await scanRes.json();
-
-                if (scanData.results) {
-                    updateMarketGrid(scanData.results, scanData.chosen_one);
-                }
-            } catch (e) {
-                console.log("Background Refresh Error:", e);
-            }
-        }
-
-        function updateMarketGrid(results, chosenOne) {
-            // Check if user is actively interacting to avoid jarring jumps
-            // Update Oracle Card if exists
-            if (chosenOne && document.getElementById('oracleCard')) {
-               document.getElementById('oracleTicker').innerText = chosenOne.ticker;
-               // ... (Update other Oracle fields - logic omitted for brevity to keep smooth)
-            }
             
-            // Note: Full grid replacement is complex without a framework like React.
-            // For now, we rely on the manual "Mini-Orb" refresh for major data changes 
-            // to ensure stability, while VIX updates live in the background.
+            playScanSound(); 
+            
+            // Show Loader
+            document.getElementById('loader').style.display = 'flex';
+            
+            // Slight delay for sound to register
+            setTimeout(() => {
+                document.getElementById('scanForm').submit();
+            }, 300);
         }
 
-        // Poll VIX every 10 seconds
-        setInterval(fetchLiveData, 10000);
+        PullToRefresh.init({
+            mainElement: '#main-content',
+            onRefresh: function() { triggerScan(); },
+            instructionsPullToRefresh: 'PULL TO REFRESH',
+            instructionsReleaseToRefresh: 'RELEASE TO SCAN',
+            instructionsRefreshing: 'ACCESSING NODE...',
+            distThreshold: 70,
+            iconArrow: '&#8675;',
+            iconRefreshing: '&hellip;'
+        });
 
-        // --- TYPEWRITER ---
+        // Typewriter Logic
         const indicesData = {{ indices | tojson }};
         const typeEl = document.getElementById('typewriter-text');
         let msgIndex = 0;
