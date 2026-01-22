@@ -143,14 +143,14 @@ def analyze_market_data(ticker_list):
     
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
-# --- AI FUNCTION WITH STABLE MODELS ---
+# --- AI FUNCTION WITH VERSIONED MODELS ---
 def get_ai_rationale(ticker_data):
     if not GENAI_API_KEY:
         print("DEBUG: GENAI_API_KEY is missing!")
         return "AI Offline (Key Missing). Trade based on technicals."
     
-    # Updated Model List: gemini-pro is the most reliable fallback
-    models = ['gemini-pro', 'gemini-1.5-flash']
+    # EXACT VERSION NAMES to prevent 404 errors
+    models = ['gemini-1.5-flash-001', 'gemini-1.5-flash-002', 'gemini-1.0-pro']
     
     prompt = (
         f"Act as a senior derivatives trader. Analyze {ticker_data['ticker']} currently trading at ${ticker_data['price']}. "

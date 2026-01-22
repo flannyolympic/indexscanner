@@ -49,7 +49,7 @@
             z-index: -2; pointer-events: none;
         }
 
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; padding-bottom: 80px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; padding-bottom: 80px; min-height: 100vh; position: relative; }
 
         /* HEADER */
         .header {
@@ -82,7 +82,7 @@
         /* ORBS */
         .orb-container {
             display: flex; justify-content: center; align-items: center;
-            height: 60vh; flex-direction: column; transition: all 0.5s ease;
+            height: 50vh; flex-direction: column; transition: all 0.5s ease;
         }
         .orb-btn {
             width: 140px; height: 140px; border-radius: 50%;
@@ -168,9 +168,14 @@
         .options-setup { color: #fff; font-weight: 600; }
 
         .terminal-footer {
-            margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--glass-border);
             text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
             color: #555; text-transform: uppercase; letter-spacing: 1px;
+            /* Absolute bottom for Home screen, relative for Results */
+            padding: 20px; border-top: 1px solid var(--glass-border);
+        }
+        
+        .home-footer {
+            position: absolute; bottom: 20px; left: 0; right: 0; border: none;
         }
 
         /* SPACE INVADERS LOADER */
@@ -250,6 +255,10 @@
                     INITIATE SEQUENCE
                 </div>
             </div>
+            
+            <div class="terminal-footer home-footer">
+                [ CEREBRO v3.8 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
+            </div>
             {% endif %}
 
             {% if scanned %}
@@ -266,9 +275,13 @@
                                 <div class="tag {{ 'bullish' if 'BULLISH' in chosen_one.signal else 'bearish' }}">{{ chosen_one.signal }}</div>
                                 <div class="tag" style="border-color: #888; color: #ddd;">{{ chosen_one.sentiment }}</div>
                             </div>
-                            <div style="margin-top: 15px; font-family: 'JetBrains Mono'; font-size: 0.85rem; color: #fff; background: rgba(0, 255, 157, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(0, 255, 157, 0.2);">
-                                {{ chosen_one.rationale | safe }}
+                            <div style="margin-top: 10px; font-family: 'JetBrains Mono'; font-size: 0.8rem; color: #fff;">
+                                SETUP: <span style="color: var(--accent-green)">{{ chosen_one.options_play }}</span>
                             </div>
+                        </div>
+                        <div class="rationale-text">
+                            <strong style="color: #fff; display: block; margin-bottom: 8px; font-size: 0.9rem;">AI RISK ASSESSMENT:</strong>
+                            {{ chosen_one.rationale }}
                         </div>
                     </div>
                 </div>
@@ -296,7 +309,7 @@
                 </div>
                 
                 <footer class="terminal-footer">
-                    [ CEREBRO v3.7 // QUANTITATIVE ANALYSIS ENGINE // EXECUTE AT OWN RISK ]
+                    [ CEREBRO v3.8 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
                 </footer>
 
                 <div class="mini-orb" onclick="triggerScan()">
