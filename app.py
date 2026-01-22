@@ -24,7 +24,7 @@ if GENAI_API_KEY:
 STOCK_TICKERS = [
     "TSLA", "NVDA", "AMD", "AAPL", "MSFT", "AMZN", "GOOGL", "META", "NFLX",
     "COIN", "MARA", "PLTR", "SOFI", "HOOD", "GME", "AMC", "SPY", "QQQ", "IWM",
-    "MSTR", "DKNG", "UBER", "ABNB", "ROKU", "PYPL"
+    "MSTR", "DKNG", "UBER", "ABNB", "ROKU", "PYPL", "USAR", "CVNA", "ESRT", "BITF", "TMC", "RIOT"
 ]
 
 def get_market_status():
