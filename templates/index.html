@@ -59,8 +59,7 @@
             -webkit-backdrop-filter: blur(var(--blur-amt)) saturate(180%); border-bottom: 1px solid var(--glass-border);
         }
         
-        /* CLICKABLE BRAND */
-        .brand-link { text-decoration: none; cursor: pointer; }
+        .brand-link { text-decoration: none; cursor: pointer; display: block; }
         .brand {
             font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.1rem;
             letter-spacing: -0.5px; color: var(--accent-green); text-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
@@ -210,10 +209,6 @@
     <div class="bg-gradient"></div>
     <img src="/static/aexalogo.png" class="bg-watermark" alt="AEXA">
 
-    <audio id="scanSound" preload="auto">
-        <source src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU..." type="audio/wav">
-        </audio>
-
     <div class="loader-overlay" id="loader">
         <div class="invader-ship">
             <div class="laser"></div><div class="laser"></div><div class="laser"></div>
@@ -302,7 +297,7 @@
                 </div>
                 
                 <footer class="terminal-footer">
-                    [ CEREBRO v3.2 // QUANTITATIVE ANALYSIS ENGINE // EXECUTE AT OWN RISK ]
+                    [ CEREBRO v3.3 // QUANTITATIVE ANALYSIS ENGINE // EXECUTE AT OWN RISK ]
                 </footer>
 
                 <div class="mini-orb" onclick="triggerScan()">
@@ -318,33 +313,42 @@
     <script>
         window.addEventListener('load', () => { document.body.classList.add('loaded'); });
 
-        // Synth Sound Generator (No external file needed)
+        // Synthesized Mechanical Sound Effect
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playScanSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
-            
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-            
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.15);
+            // Oscillator 1: High pitch chirp
+            const osc1 = audioCtx.createOscillator();
+            const gain1 = audioCtx.createGain();
+            osc1.type = 'sawtooth';
+            osc1.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc1.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gain1.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc1.connect(gain1);
+            gain1.connect(audioCtx.destination);
+            osc1.start();
+            osc1.stop(audioCtx.currentTime + 0.15);
+
+            // Oscillator 2: Low mechanical thrum
+            const osc2 = audioCtx.createOscillator();
+            const gain2 = audioCtx.createGain();
+            osc2.type = 'square';
+            osc2.frequency.setValueAtTime(100, audioCtx.currentTime);
+            osc2.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.2);
+            gain2.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc2.connect(gain2);
+            gain2.connect(audioCtx.destination);
+            osc2.start();
+            osc2.stop(audioCtx.currentTime + 0.2);
         }
 
         function triggerScan() {
-            playScanSound(); // Play sound immediately
+            playScanSound(); 
             document.getElementById('loader').style.display = 'flex';
-            // Slight delay so the sound is heard before the page unloads
             setTimeout(() => {
                 document.getElementById('scanForm').submit();
             }, 300);
