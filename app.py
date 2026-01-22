@@ -19,7 +19,7 @@ if GENAI_API_KEY:
     except Exception as e:
         print(f"DEBUG: Failed to configure GenAI: {e}")
 
-# ASSET UNIVERSE: HIGH LIQUIDITY & MOMENTUM ONLY
+# ASSET UNIVERSE
 STOCK_TICKERS = [
     "TSLA", "NVDA", "AMD", "AAPL", "MSFT", "AMZN", "GOOGL", "META", "NFLX",
     "COIN", "MARA", "PLTR", "SOFI", "HOOD", "GME", "AMC", "SPY", "QQQ", "IWM",
@@ -52,7 +52,6 @@ def get_indices():
     data_list = []
     try:
         tickers = " ".join(indices.keys())
-        # threads=False prevents database lock errors
         data = yf.download(tickers, period="1d", group_by='ticker', threads=False)
         for ticker, name in indices.items():
             try:
@@ -89,7 +88,6 @@ def get_vix_data():
 def analyze_market_data(ticker_list):
     results = []
     try:
-        # threads=False is critical for stability on free cloud tiers
         data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", group_by='ticker', auto_adjust=True, prepost=True, threads=False)
     except: return []
 
@@ -98,55 +96,35 @@ def analyze_market_data(ticker_list):
             df = data[ticker] if len(ticker_list) > 1 else data
             if df.empty: continue
 
-            # Technicals
             df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
             df['VWAP'] = (df['TP'] * df['Volume']).cumsum() / df['Volume'].cumsum()
+            current_price = df['Close'].iloc[-1]
+            
             delta = df['Close'].diff()
             gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
             loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
             rs = gain / loss
             df['RSI'] = 100 - (100 / (1 + rs))
-
-            current_price = df['Close'].iloc[-1]
             current_rsi = df['RSI'].iloc[-1]
             current_vwap = df['VWAP'].iloc[-1]
             current_vol = df['Volume'].iloc[-1]
             avg_vol = df['Volume'].rolling(window=20).mean().iloc[-1]
             
-            # --- ENGINE LOGIC ---
             signal = "NEUTRAL"
             prob = 50
             catalyst = "No Clear Trigger"
             sentiment = "Neutral"
-            options_play = "Iron Condor" # Default chop strategy
+            options_play = "Iron Condor"
 
-            # Logic Stack
             if current_rsi < 30:
-                signal = "BULLISH (OVERSOLD)"
-                prob = 78
-                catalyst = "RSI Exhaustion"
-                sentiment = "Fear (Buy the Dip)"
-                options_play = "Sell Puts / Buy Calls"
+                signal, prob, catalyst, sentiment, options_play = ("BULLISH (OVERSOLD)", 78, "RSI Exhaustion", "Fear (Buy Dip)", "Sell Puts")
             elif current_rsi > 70:
-                signal = "BEARISH (OVERBOUGHT)"
-                prob = 72
-                catalyst = "RSI Extension"
-                sentiment = "Greed (Take Profit)"
-                options_play = "Buy Puts / Sell Calls"
+                signal, prob, catalyst, sentiment, options_play = ("BEARISH (OVERBOUGHT)", 72, "RSI Extension", "Greed (Sell)", "Buy Puts")
             elif current_price > current_vwap * 1.01:
-                signal = "BULLISH (MOMENTUM)"
-                prob = 65
-                catalyst = "VWAP Breakout"
-                sentiment = "Bullish Flow"
-                options_play = "Debit Call Spreads"
+                signal, prob, catalyst, sentiment, options_play = ("BULLISH (MOMENTUM)", 65, "VWAP Breakout", "Bullish Flow", "Debit Call Spreads")
             elif current_price < current_vwap * 0.99:
-                signal = "BEARISH (MOMENTUM)"
-                prob = 65
-                catalyst = "VWAP Breakdown"
-                sentiment = "Bearish Flow"
-                options_play = "Debit Put Spreads"
+                signal, prob, catalyst, sentiment, options_play = ("BEARISH (MOMENTUM)", 65, "VWAP Breakdown", "Bearish Flow", "Debit Put Spreads")
             
-            # Volume Kicker
             if current_vol > avg_vol * 1.5:
                 prob += 5
                 catalyst += " + High Vol"
@@ -163,17 +141,16 @@ def analyze_market_data(ticker_list):
             })
         except: continue
     
-    # Sort by probability (Absolute conviction)
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
-# --- AI FUNCTION WITH DEBUG LOGGING ---
+# --- CORRECTED AI FUNCTION ---
 def get_ai_rationale(ticker_data):
-    # Debug Check 1: Key Existence
     if not GENAI_API_KEY:
-        print("DEBUG: GENAI_API_KEY is missing from environment variables!")
+        print("DEBUG: GENAI_API_KEY is missing!")
         return "AI Offline (Key Missing). Trade based on technicals."
     
-    models = ['gemini-2.0-flash-lite-preview-02-05', 'gemini-flash-latest', 'gemini-pro']
+    # UPDATED MODEL LIST: Using stable models with better limits
+    models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest']
     
     prompt = (
         f"Analyze {ticker_data['ticker']} (${ticker_data['price']}). "
@@ -184,28 +161,20 @@ def get_ai_rationale(ticker_data):
 
     for m in models:
         try:
-            print(f"DEBUG: Attempting to call model: {m}")
+            print(f"DEBUG: Trying model {m}...")
             model = genai.GenerativeModel(m)
             response = model.generate_content(prompt)
-            
             if response.text:
-                print(f"DEBUG: Success with model {m}")
                 return response.text
         except Exception as e:
-            print(f"DEBUG: Model {m} failed. Error: {e}")
+            print(f"DEBUG: Model {m} failed: {e}")
             continue
             
-    print("DEBUG: All AI models failed.")
-    return "AI Unavailable. Trade based on technicals."
+    return "AI Limit Reached (Free Tier). Rely on Signal/Probability."
 
 @app.route('/')
 def home():
-    return render_template(
-        'index.html', 
-        market_status=get_market_status(), 
-        vix=get_vix_data(), 
-        indices=get_indices()
-    )
+    return render_template('index.html', market_status=get_market_status(), vix=get_vix_data(), indices=get_indices())
 
 @app.route('/scan')
 def scan():
