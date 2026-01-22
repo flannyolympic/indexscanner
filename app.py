@@ -48,7 +48,7 @@ def get_market_status():
         
     return {"label": "MARKET CLOSED", "color": "#ff4b4b"}
 
-# --- NEW: ECONOMIC CALENDAR ENGINE ---
+# --- ECONOMIC CALENDAR ENGINE ---
 def get_economic_events():
     """Generates realistic upcoming high-impact economic events."""
     today = datetime.now()
@@ -158,18 +158,27 @@ def analyze_market_data(ticker_list):
         except: continue
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
+# --- AI FUNCTION (Fixed Models) ---
 def get_ai_rationale(ticker_data):
     if not GENAI_API_KEY: return "AI Offline (Key Missing)."
-    models = ['gemini-1.5-flash-001', 'gemini-1.5-flash-002', 'gemini-1.0-pro']
-    prompt = (f"Analyze {ticker_data['ticker']} (${ticker_data['price']}). Signal: {ticker_data['signal']}. "
-              f"Suggest exact options strike prices. Format: TRADE: [Exact Strikes] | WHY: [Rationale]. Keep under 20 words.")
+    
+    # Use exact version strings to avoid 404 errors
+    models = ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-1.0-pro']
+    
+    prompt = (f"Act as a senior derivatives trader. Analyze {ticker_data['ticker']} (${ticker_data['price']}). "
+              f"Signal: {ticker_data['signal']}. Suggest exact options strike prices. "
+              f"Format: TRADE: [Exact Strikes] | WHY: [Rationale]. Keep under 20 words.")
+    
     for m in models:
         try:
+            print(f"DEBUG: Trying model {m}...")
             model = genai.GenerativeModel(m)
             response = model.generate_content(prompt)
             if response.text: return response.text
-        except: continue
-    return "AI Limit Reached."
+        except Exception as e:
+            print(f"DEBUG: Model {m} failed: {e}")
+            continue
+    return "AI Unavailable. Trade based on Technicals."
 
 @app.route('/')
 def home():
@@ -178,7 +187,7 @@ def home():
         market_status=get_market_status(), 
         vix=get_vix_data(), 
         indices=get_indices(),
-        econ_events=get_economic_events() # NEW DATA PASSED
+        econ_events=get_economic_events()
     )
 
 @app.route('/scan')

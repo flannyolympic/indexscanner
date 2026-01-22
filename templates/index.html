@@ -46,17 +46,14 @@
             padding: 15px 20px; margin: -20px -20px 20px -20px; position: sticky; top: 0; z-index: 100;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(25px); border-bottom: 1px solid var(--glass-border);
         }
+        .brand-link { text-decoration: none; cursor: pointer; display: block; }
         .brand { font-family: 'JetBrains Mono'; font-weight: 700; color: var(--accent-green); text-shadow: 0 0 15px rgba(0, 255, 157, 0.4); }
         .vix-badge { border: 1px solid var(--glass-border); border-radius: 6px; padding: 4px 10px; font-family: 'JetBrains Mono'; font-size: 0.8rem; }
         .market-subtext { font-size: 0.6rem; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono'; }
 
         /* ORBIT SYSTEM */
         .orb-wrapper { flex-grow: 1; display: flex; justify-content: center; align-items: center; position: relative; height: 60vh; }
-        
-        .orbit-system {
-            position: relative; width: 300px; height: 300px;
-            display: flex; justify-content: center; align-items: center;
-        }
+        .orbit-system { position: relative; width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; }
 
         /* The Main Orb */
         .orb-btn {
@@ -68,65 +65,28 @@
             color: var(--accent-green); font-family: 'JetBrains Mono'; font-weight: 800; letter-spacing: 2px;
             text-shadow: 0 0 10px var(--accent-green); animation: float 4s ease-in-out infinite;
         }
-        .orb-btn::after {
-            content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px;
-            border-radius: 50%; border: 1px solid var(--accent-green); opacity: 0.3; animation: pulse-ring 2s infinite;
-        }
+        .orb-btn::after { content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border-radius: 50%; border: 1px solid var(--accent-green); opacity: 0.3; animation: pulse-ring 2s infinite; }
 
-        /* Orbiting Satellites (Economic Events) */
-        .satellite-track {
-            position: absolute; width: 100%; height: 100%;
-            border-radius: 50%; border: 1px solid rgba(255,255,255,0.05);
-            animation: rotate-track 20s linear infinite;
-        }
-        
-        .satellite {
-            position: absolute; top: 50%; left: 50%;
-            display: flex; flex-direction: column; align-items: center;
-            width: 80px; text-align: center;
-            transform-origin: -110px center; /* Distance from center orb */
-            animation: counter-rotate 20s linear infinite; /* Keeps text upright */
-        }
-        
-        /* Positioning satellites at different angles */
-        .sat-1 { transform: rotate(0deg) translateX(150px) rotate(0deg); animation: none; position: absolute; top: 50%; left: 50%; margin-left: -40px; margin-top: -20px; animation: orbit-1 20s linear infinite; }
-        .sat-2 { transform: rotate(120deg) translateX(150px) rotate(-120deg); animation: none; position: absolute; top: 50%; left: 50%; margin-left: -40px; margin-top: -20px; animation: orbit-2 20s linear infinite; }
-        .sat-3 { transform: rotate(240deg) translateX(150px) rotate(-240deg); animation: none; position: absolute; top: 50%; left: 50%; margin-left: -40px; margin-top: -20px; animation: orbit-3 20s linear infinite; }
+        /* SATELLITES */
+        .satellite { position: absolute; top: 50%; left: 50%; display: flex; flex-direction: column; align-items: center; width: 80px; text-align: center; transform-origin: -110px center; animation: counter-rotate 20s linear infinite; }
+        .sat-1 { transform: rotate(0deg) translateX(150px) rotate(0deg); animation: orbit-1 20s linear infinite; margin-left: -40px; margin-top: -20px; }
+        .sat-2 { transform: rotate(120deg) translateX(150px) rotate(-120deg); animation: orbit-2 20s linear infinite; margin-left: -40px; margin-top: -20px; }
+        .sat-3 { transform: rotate(240deg) translateX(150px) rotate(-240deg); animation: orbit-3 20s linear infinite; margin-left: -40px; margin-top: -20px; }
 
-        .sat-content {
-            background: rgba(20, 20, 20, 0.8); border: 1px solid var(--glass-border);
-            padding: 8px 12px; border-radius: 8px; backdrop-filter: blur(5px);
-            transition: all 0.5s ease;
-        }
+        .sat-content { background: rgba(20, 20, 20, 0.8); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 8px; backdrop-filter: blur(5px); transition: all 0.5s ease; animation: zoom-check 20s linear infinite; }
         .sat-date { font-family: 'JetBrains Mono'; font-size: 0.6rem; color: var(--accent-green); display: block; margin-bottom: 2px; }
         .sat-title { font-family: 'Inter'; font-size: 0.65rem; font-weight: 600; color: #fff; white-space: nowrap; }
 
-        /* Keyframes for complex orbital motion */
         @keyframes orbit-1 { from { transform: rotate(0deg) translateX(140px) rotate(0deg); } to { transform: rotate(360deg) translateX(140px) rotate(-360deg); } }
         @keyframes orbit-2 { from { transform: rotate(120deg) translateX(140px) rotate(-120deg); } to { transform: rotate(480deg) translateX(140px) rotate(-480deg); } }
         @keyframes orbit-3 { from { transform: rotate(240deg) translateX(140px) rotate(-240deg); } to { transform: rotate(600deg) translateX(140px) rotate(-600deg); } }
-
-        /* Zoom effect when passing in "front" (approx 90deg in rotation) */
-        @keyframes zoom-pulse {
-            0%, 100% { transform: scale(1); opacity: 0.6; z-index: 1; }
-            50% { transform: scale(1.3); opacity: 1; z-index: 20; border-color: var(--accent-green); }
-        }
-        
-        .sat-content { animation: zoom-check 20s linear infinite; }
-        /* Sync zoom with orbit position - crude approximation but effective visually */
-        .sat-1 .sat-content { animation-delay: -5s; } 
-        .sat-2 .sat-content { animation-delay: -11.6s; }
-        .sat-3 .sat-content { animation-delay: -18.3s; }
-
         @keyframes zoom-check {
-            0% { transform: scale(0.9); opacity: 0.5; filter: blur(1px); }
-            25% { transform: scale(1.2); opacity: 1; filter: blur(0px); border-color: var(--accent-green); box-shadow: 0 0 15px rgba(0,255,157,0.2); } /* Front */
-            50% { transform: scale(0.9); opacity: 0.5; filter: blur(1px); }
-            75% { transform: scale(0.8); opacity: 0.3; filter: blur(2px); } /* Back */
-            100% { transform: scale(0.9); opacity: 0.5; filter: blur(1px); }
+            0%, 50%, 100% { transform: scale(0.9); opacity: 0.5; filter: blur(1px); }
+            25% { transform: scale(1.2); opacity: 1; filter: blur(0px); border-color: var(--accent-green); }
+            75% { transform: scale(0.8); opacity: 0.3; filter: blur(2px); }
         }
+        .sat-1 .sat-content { animation-delay: -5s; } .sat-2 .sat-content { animation-delay: -11.6s; } .sat-3 .sat-content { animation-delay: -18.3s; }
 
-        /* Mobile Adjustments for Orbit */
         @media (max-width: 768px) {
             .orbit-system { width: 260px; height: 260px; }
             @keyframes orbit-1 { from { transform: rotate(0deg) translateX(110px) rotate(0deg); } to { transform: rotate(360deg) translateX(110px) rotate(-360deg); } }
@@ -134,16 +94,12 @@
             @keyframes orbit-3 { from { transform: rotate(240deg) translateX(110px) rotate(-240deg); } to { transform: rotate(600deg) translateX(110px) rotate(-600deg); } }
         }
 
-        /* REST OF UI (Footer, Results, etc.) */
+        /* UI ELEMENTS */
         .results-area { display: none; width: 100%; animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
         .results-area.visible { display: block; }
         @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        .oracle-glass {
-            background: var(--glass-surface); border: 1px solid var(--glass-border); border-radius: 16px; padding: 30px;
-            margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); position: relative; overflow: hidden;
-            backdrop-filter: blur(25px);
-        }
+        .oracle-glass { background: var(--glass-surface); border: 1px solid var(--glass-border); border-radius: 16px; padding: 30px; margin-bottom: 30px; position: relative; overflow: hidden; backdrop-filter: blur(25px); }
         .oracle-glass::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--accent-green), transparent); opacity: 0.6; }
         .oracle-content { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; align-items: center; }
         .ticker-hero { font-size: 4.5rem; font-weight: 800; letter-spacing: -3px; background: linear-gradient(135deg, #fff, #777); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -159,17 +115,14 @@
         .tag.bearish { color: var(--accent-red); border-color: rgba(255, 75, 75, 0.3); }
         .setup-info { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--glass-border); font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #777; display: flex; justify-content: space-between; }
         
-        .terminal-footer { margin-top: auto; padding-top: 20px; text-align: center; font-family: 'JetBrains Mono'; font-size: 0.65rem; color: #555; letter-spacing: 1px; width: 100%; }
+        .terminal-footer { text-align: center; font-family: 'JetBrains Mono'; font-size: 0.65rem; color: #555; letter-spacing: 1px; width: 100%; padding: 20px; }
         
+        /* FOOTER POSITIONING */
+        .footer-fixed { position: absolute; bottom: 20px; left: 0; right: 0; }
+        .footer-relative { margin-top: auto; border-top: 1px solid var(--glass-border); }
+
         /* MINI ORB */
-        .mini-orb {
-            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(0, 255, 157, 0.2), rgba(0,0,0,0.8));
-            border: 1px solid rgba(0, 255, 157, 0.4); backdrop-filter: blur(10px);
-            box-shadow: 0 0 20px rgba(0, 255, 157, 0.3); cursor: pointer; z-index: 900;
-            display: flex; justify-content: center; align-items: center;
-            animation: float 4s ease-in-out infinite, pulse-ring 3s infinite;
-        }
+        .mini-orb { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(0, 255, 157, 0.2), rgba(0,0,0,0.8)); border: 1px solid rgba(0, 255, 157, 0.4); backdrop-filter: blur(10px); box-shadow: 0 0 20px rgba(0, 255, 157, 0.3); cursor: pointer; z-index: 900; display: flex; justify-content: center; align-items: center; animation: float 4s ease-in-out infinite, pulse-ring 3s infinite; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(0, 255, 157, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); } }
 
@@ -217,7 +170,6 @@
             <div class="orb-wrapper">
                 <div class="orbit-system">
                     <div class="orb-btn" onclick="triggerScan()">SCAN</div>
-                    
                     {% if econ_events %}
                         {% for i in range(3) %}
                         <div class="satellite sat-{{ i+1 }}">
@@ -229,10 +181,13 @@
                         {% endfor %}
                     {% endif %}
                 </div>
-                
                 <div style="position: absolute; bottom: 20%; font-family: 'JetBrains Mono'; font-size: 0.7rem; color: #666; letter-spacing: 1px;">
                     INITIATE SEQUENCE
                 </div>
+            </div>
+            
+            <div class="terminal-footer footer-fixed">
+                [ CEREBRO v4.2 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
             </div>
             {% endif %}
 
@@ -277,12 +232,12 @@
                 <div class="mini-orb" onclick="triggerScan()">
                     <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
                 </div>
+                
+                <footer class="terminal-footer footer-relative">
+                    [ CEREBRO v4.2 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
+                </footer>
             </div>
             {% endif %}
-            
-            <footer class="terminal-footer">
-                [ CEREBRO v4.1 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
-            </footer>
         </div>
     </form>
 
@@ -303,7 +258,6 @@
             document.getElementById('loader').style.display = 'flex';
             setTimeout(() => { document.getElementById('scanForm').submit(); }, 300);
         }
-        // VIX Poll
         async function fetchLiveData() {
             try {
                 const vixRes = await fetch('/api/vix'); const vixData = await vixRes.json();
