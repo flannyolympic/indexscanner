@@ -98,13 +98,13 @@ def analyze_market_data(ticker_list):
 
             df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
             df['VWAP'] = (df['TP'] * df['Volume']).cumsum() / df['Volume'].cumsum()
-            current_price = df['Close'].iloc[-1]
-            
             delta = df['Close'].diff()
             gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
             loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
             rs = gain / loss
             df['RSI'] = 100 - (100 / (1 + rs))
+
+            current_price = df['Close'].iloc[-1]
             current_rsi = df['RSI'].iloc[-1]
             current_vwap = df['VWAP'].iloc[-1]
             current_vol = df['Volume'].iloc[-1]
@@ -143,20 +143,22 @@ def analyze_market_data(ticker_list):
     
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
-# --- CORRECTED AI FUNCTION ---
+# --- AI FUNCTION WITH STABLE MODELS ---
 def get_ai_rationale(ticker_data):
     if not GENAI_API_KEY:
         print("DEBUG: GENAI_API_KEY is missing!")
         return "AI Offline (Key Missing). Trade based on technicals."
     
-    # UPDATED MODEL LIST: Using stable models with better limits
-    models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest']
+    # Updated Model List: gemini-pro is the most reliable fallback
+    models = ['gemini-pro', 'gemini-1.5-flash']
     
     prompt = (
-        f"Analyze {ticker_data['ticker']} (${ticker_data['price']}). "
-        f"Signal: {ticker_data['signal']}. Catalyst: {ticker_data['catalyst']}. "
-        f"Sentiment: {ticker_data['sentiment']}. "
-        f"Suggest a concise options trade setup and explain why in one sentence."
+        f"Act as a senior derivatives trader. Analyze {ticker_data['ticker']} currently trading at ${ticker_data['price']}. "
+        f"The technical signal is {ticker_data['signal']} with a {ticker_data['probability']}% probability. "
+        f"Catalyst: {ticker_data['catalyst']}. "
+        f"Suggest a SPECIFIC options trade with exact strike prices relative to the current price. "
+        f"For example, if bullish, suggest a spread like 'Buy {int(ticker_data['price'])} Call / Sell {int(ticker_data['price']*1.05)} Call'. "
+        f"Keep the rationale under 20 words. Format: TRADE: [Exact Strikes] | WHY: [Rationale]."
     )
 
     for m in models:
@@ -170,7 +172,7 @@ def get_ai_rationale(ticker_data):
             print(f"DEBUG: Model {m} failed: {e}")
             continue
             
-    return "AI Limit Reached (Free Tier). Rely on Signal/Probability."
+    return "AI Limit Reached. Rely on Signal/Probability."
 
 @app.route('/')
 def home():
