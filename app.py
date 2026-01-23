@@ -6,7 +6,7 @@ import yfinance as yf
 import pytz
 import random
 import traceback
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_from_directory
 from datetime import datetime, timedelta, time as dt_time
 import google.generativeai as genai
 from google.api_core import exceptions
@@ -26,6 +26,15 @@ STOCK_TICKERS = [
     "QQQ", "SPY", "MARA", "USAR", "NFLX", "TMC", "RIOT", "GME", "LMND", "NVDA", "AMC",
     "TSLA", "AAPL", "AMZN", "DAL"
 ]
+
+# --- STATIC FILE ROUTES (The Missing Piece!) ---
+@app.route('/apple-touch-icon.png')
+def serve_icon():
+    return send_from_directory('static', 'apple-touch-icon.png')
+
+@app.route('/favicon.ico')
+def serve_favicon():
+    return send_from_directory('static', 'apple-touch-icon.png')
 
 # --- HELPER FUNCTIONS ---
 
