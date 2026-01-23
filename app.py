@@ -23,7 +23,8 @@ if GENAI_API_KEY:
 
 # ASSET UNIVERSE (Updated List)
 STOCK_TICKERS = [
-    "QQQ", "SPY", "MARA", "USAR", "NFLX", "TMC", "RIOT", "GME", "LMND", "NVDA", "AMC"
+    "QQQ", "SPY", "MARA", "USAR", "NFLX", "TMC", "RIOT", "GME", "LMND", "NVDA", "AMC",
+    "TSLA", "AAPL", "AMZN", "DAL"
 ]
 
 # --- HELPER FUNCTIONS ---
