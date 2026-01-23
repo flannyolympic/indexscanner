@@ -9,6 +9,7 @@ import traceback
 from flask import Flask, render_template, request
 from datetime import datetime, timedelta, time as dt_time
 import google.generativeai as genai
+from google.api_core import exceptions
 
 app = Flask(__name__)
 
@@ -24,8 +25,29 @@ if GENAI_API_KEY:
 STOCK_TICKERS = [
     "TSLA", "NVDA", "AMD", "AAPL", "MSFT", "AMZN", "GOOGL", "META", "NFLX",
     "COIN", "MARA", "PLTR", "INTC", "HOOD", "GME", "AMC", "SPY", "QQQ", "LYFT",
-    "MSTR", "DKNG", "UBER", "LMND", "ROKU", "PYPL", "USAR", "CVNA", "ESRT", "BITF", "TMC", "RIOT"
+    "MSTR", "DKNG", "UBER", "LMND", "ROKU", "PYPL", "USAR", "CVNA", "ESRT", 
+    "BITF", "TMC", "RIOT"
 ]
+
+# --- HELPER FUNCTIONS ---
+
+def is_valid_data(data):
+    """
+    Checks if the ticker data is safe to send to the AI.
+    Returns True if valid, False if it will cause a crash.
+    """
+    if not data: return False
+    
+    # 1. Check for required keys
+    required = ['ticker', 'price', 'signal']
+    if not all(key in data for key in required):
+        return False
+            
+    # 2. Check for "Ghost Data" (Zero price or empty ticker)
+    if data['price'] == 0 or not data['ticker']:
+        return False
+        
+    return True
 
 def get_market_status():
     tz = pytz.timezone('America/New_York')
@@ -48,7 +70,6 @@ def get_market_status():
         
     return {"label": "MARKET CLOSED", "color": "#ff4b4b"}
 
-# --- ECONOMIC CALENDAR ENGINE ---
 def get_economic_events():
     """Generates realistic upcoming high-impact economic events."""
     today = datetime.now()
@@ -74,7 +95,9 @@ def get_indices():
     data_list = []
     try:
         tickers = " ".join(indices.keys())
+        # Updated to ensure stability
         data = yf.download(tickers, period="1d", group_by='ticker', threads=False, prepost=True)
+        
         for ticker, name in indices.items():
             try:
                 df = data[ticker] if len(indices) > 1 else data
@@ -105,10 +128,13 @@ def get_vix_data():
         else: return {"val": val, "label": "EXTREME FEAR", "color": "#8B0000"}
     except: return {"val": 0, "label": "OFFLINE", "color": "#555"}
 
+# --- CORE ANALYSIS ENGINE ---
 def analyze_market_data(ticker_list):
     results = []
     try:
-        data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", group_by='ticker', auto_adjust=True, prepost=True, threads=False)
+        # Batch download for speed and to avoid Yahoo rate limits
+        data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", 
+                           group_by='ticker', auto_adjust=True, prepost=True, threads=False)
     except: return []
 
     for ticker in ticker_list:
@@ -158,27 +184,45 @@ def analyze_market_data(ticker_list):
         except: continue
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
-# --- AI FUNCTION (Fixed Model Names) ---
+# --- AI NEURAL ENGINE ---
 def get_ai_rationale(ticker_data):
     if not GENAI_API_KEY: return "AI Offline (Key Missing)."
     
-    # Removed '-latest' suffix to ensure stability with library version
-    models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+    # 1. Strategy: Try Fast (Flash), then try Smart (Pro)
+    models = ['gemini-1.5-flash', 'gemini-1.5-pro']
     
     prompt = (f"Act as a senior derivatives trader. Analyze {ticker_data['ticker']} (${ticker_data['price']}). "
               f"Signal: {ticker_data['signal']}. Suggest exact options strike prices. "
               f"Format: TRADE: [Exact Strikes] | WHY: [Rationale]. Keep under 20 words.")
     
+    # 2. Safety Settings to allow financial output
+    safety_settings = [
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"}
+    ]
+
     for m in models:
         try:
-            print(f"DEBUG: Trying model {m}...")
             model = genai.GenerativeModel(m)
-            response = model.generate_content(prompt)
-            if response.text: return response.text
-        except Exception as e:
-            print(f"DEBUG: Model {m} failed: {e}")
+            response = model.generate_content(prompt, safety_settings=safety_settings)
+            
+            if response.text: 
+                return response.text.strip()
+                
+        except exceptions.ResourceExhausted:
+            print(f"⚠️ Rate Limit on {m}. Switching to backup...")
+            time.sleep(2) # Backoff
             continue
+
+        except Exception as e:
+            # print(f"❌ Model {m} failed: {e}")
+            continue
+            
     return "AI Unavailable. Trade based on Technicals."
+
+# --- FLASK ROUTES ---
 
 @app.route('/')
 def home():
@@ -194,15 +238,22 @@ def home():
 def scan():
     try:
         results = analyze_market_data(STOCK_TICKERS)
+        
         chosen_one = None
         if results:
             chosen_one = results[0]
-            chosen_one['rationale'] = get_ai_rationale(chosen_one)
+            
+            # The Gatekeeper Check
+            if is_valid_data(chosen_one):
+                chosen_one['rationale'] = get_ai_rationale(chosen_one)
+            else:
+                chosen_one['rationale'] = "Data Unsafe for AI Analysis."
+                
         return render_template('index.html', market_status=get_market_status(), vix=get_vix_data(), 
                              indices=get_indices(), results=results, chosen_one=chosen_one, scanned=True,
                              econ_events=get_economic_events())
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error in scan route: {e}")
         return "System Overload", 500
 
 # API Endpoints
@@ -212,10 +263,16 @@ def api_vix(): return get_vix_data()
 @app.route('/api/scan_data')
 def api_scan_data():
     results = analyze_market_data(STOCK_TICKERS)
+    
     chosen_one = None
     if results:
         chosen_one = results[0]
-        chosen_one['rationale'] = get_ai_rationale(chosen_one)
+        
+        if is_valid_data(chosen_one):
+            chosen_one['rationale'] = get_ai_rationale(chosen_one)
+        else:
+            chosen_one['rationale'] = "Skipped - Invalid Data"
+            
     return {"results": results, "chosen_one": chosen_one}
 
 if __name__ == '__main__':
