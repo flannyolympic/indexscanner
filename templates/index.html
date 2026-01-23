@@ -72,16 +72,11 @@
             pointer-events: none; overflow: hidden; z-index: 1;
         }
 
-        /* Physics wrapper for bouncing */
-        .bouncer-x {
-            position: absolute;
-            animation: bounceX 15s linear infinite alternate;
-        }
-        .bouncer-y {
-            animation: bounceY 13s linear infinite alternate;
-        }
+        /* Physics wrapper for bouncing - Using different durations creates chaos */
+        .bouncer-x { position: absolute; animation: bounceX 20s linear infinite alternate; }
+        .bouncer-y { animation: bounceY 15s linear infinite alternate; }
         
-        /* Specific timings to create chaos */
+        /* Randomized Timings */
         .p1 .bouncer-x { animation-duration: 23s; }
         .p1 .bouncer-y { animation-duration: 17s; }
         
@@ -100,13 +95,8 @@
         .sat-date { font-family: 'JetBrains Mono'; font-size: 0.6rem; color: var(--accent-green); display: block; margin-bottom: 2px; }
         .sat-title { font-family: 'Inter'; font-size: 0.65rem; font-weight: 600; color: #fff; }
 
-        @keyframes bounceX { 0% { transform: translateX(10vw); } 100% { transform: translateX(80vw); } }
+        @keyframes bounceX { 0% { transform: translateX(5vw); } 100% { transform: translateX(80vw); } }
         @keyframes bounceY { 0% { transform: translateY(10vh); } 100% { transform: translateY(60vh); } }
-
-        @media (max-width: 768px) {
-            @keyframes bounceX { 0% { transform: translateX(5vw); } 100% { transform: translateX(65vw); } }
-            @keyframes bounceY { 0% { transform: translateY(5vh); } 100% { transform: translateY(50vh); } }
-        }
 
         /* REST OF UI */
         .results-area { display: none; width: 100%; animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -201,7 +191,7 @@
             </div>
             
             <div class="terminal-footer footer-fixed">
-                [ CEREBRO v4.3 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
+                [ CEREBRO v4.4 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
             </div>
             {% endif %}
 
@@ -248,7 +238,7 @@
                 </div>
                 
                 <footer class="terminal-footer footer-relative">
-                    [ CEREBRO v4.3 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
+                    [ CEREBRO v4.4 // OPEN-SOURCE EDUCATIONAL INITIATIVE // EXECUTE AT OWN RISK ]
                 </footer>
             </div>
             {% endif %}

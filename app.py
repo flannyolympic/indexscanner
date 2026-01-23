@@ -21,15 +21,15 @@ if GENAI_API_KEY:
     except Exception as e:
         print(f"DEBUG: Failed to configure GenAI: {e}")
 
-# ASSET UNIVERSE (High Volatility & Liquidity Focus)
+# ASSET UNIVERSE (Updated List)
 STOCK_TICKERS = [
-    "QQQ", "SPY", "MARA", "COIN", "NFLX", "TSLA", "RIOT", "GME", "NVDA", "AMC", "AMD", "PLTR", "SOFI"
+    "QQQ", "SPY", "MARA", "USAR", "NFLX", "TMC", "RIOT", "GME", "LMND", "NVDA", "AMC"
 ]
 
 # --- HELPER FUNCTIONS ---
 
 def is_valid_data(data):
-    """Checks if data is safe for the AI to process."""
+    """Checks if the ticker data is safe to send to the AI."""
     if not data: return False
     required = ['ticker', 'price', 'signal']
     if not all(key in data for key in required): return False
@@ -116,7 +116,6 @@ def get_vix_data():
 def analyze_market_data(ticker_list):
     results = []
     try:
-        # Fetching 5 days of 15m data for robust indicator calculation
         data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", 
                            group_by='ticker', auto_adjust=True, prepost=True, threads=False)
     except: return []
@@ -127,12 +126,9 @@ def analyze_market_data(ticker_list):
             else: df = data
             
             if df is None or df.empty: continue
-            
-            # Data Sanitization
             df = df.ffill().bfill()
             if len(df) < 20: continue
 
-            # Technical Indicators
             df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
             df['VWAP'] = (df['TP'] * df['Volume']).cumsum() / df['Volume'].cumsum()
             delta = df['Close'].diff()
@@ -150,7 +146,6 @@ def analyze_market_data(ticker_list):
             if pd.isna(current_rsi): current_rsi = 50
             if pd.isna(current_vwap): current_vwap = current_price
 
-            # Decision Logic
             signal, prob, catalyst, sentiment, options_play = "NEUTRAL", 50, "None", "Neutral", "Iron Condor"
 
             if current_rsi < 30:
@@ -170,26 +165,23 @@ def analyze_market_data(ticker_list):
                 "catalyst": catalyst, "sentiment": sentiment, "options_play": options_play
             })
         except: continue
-    
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
-# --- AI NEURAL ENGINE (OPTIMIZED FOR CATALYSTS) ---
+# --- AI NEURAL ENGINE (Fixed Model Names) ---
 def get_ai_rationale(ticker_data):
     if not GENAI_API_KEY: return "AI Offline (Key Missing)."
     
-    # Using stable model names
+    # Updated to stable model names (removed '-latest' which caused 404s)
     models = ['gemini-1.5-flash', 'gemini-1.5-pro']
     
-    # 1. OPTIMIZED PROMPT: Explicitly requests Catalyst AND Strike Prices
     prompt = (
         f"Act as a senior derivatives trader. Analyze {ticker_data['ticker']} currently trading at ${ticker_data['price']}. "
         f"Technical Signal: {ticker_data['signal']}. "
         f"Task 1: Identify the likely CATALYST (e.g., Earnings, Sector rotation, Macro data). "
-        f"Task 2: Suggest a specific Options Trade. "
+        f"Task 2: Suggest a specific Options Trade with Strike Prices. "
         f"Format strictly as: CATALYST: [Short Reason] | TRADE: [Buy/Sell specific Strikes] | WHY: [1 sentence rationale]."
     )
     
-    # 2. SAFETY SETTINGS: Permissive for financial data
     safety_settings = [
         {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
         {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
@@ -202,10 +194,7 @@ def get_ai_rationale(ticker_data):
             print(f"DEBUG: querying {m}...")
             model = genai.GenerativeModel(m)
             response = model.generate_content(prompt, safety_settings=safety_settings)
-            
-            if response.text: 
-                return response.text.strip()
-                
+            if response.text: return response.text.strip()
         except exceptions.ResourceExhausted:
             print(f"⚠️ Rate Limit on {m}. Switching...")
             time.sleep(1)
@@ -232,12 +221,9 @@ def home():
 def scan():
     try:
         results = analyze_market_data(STOCK_TICKERS)
-        
         chosen_one = None
         if results:
             chosen_one = results[0]
-            
-            # The Gatekeeper Check
             if is_valid_data(chosen_one):
                 chosen_one['rationale'] = get_ai_rationale(chosen_one)
             else:
@@ -250,14 +236,12 @@ def scan():
         print(f"Error in scan route: {e}")
         return "System Overload", 500
 
-# API Endpoints
 @app.route('/api/vix')
 def api_vix(): return get_vix_data()
 
 @app.route('/api/scan_data')
 def api_scan_data():
     results = analyze_market_data(STOCK_TICKERS)
-    
     chosen_one = None
     if results:
         chosen_one = results[0]
@@ -265,7 +249,6 @@ def api_scan_data():
             chosen_one['rationale'] = get_ai_rationale(chosen_one)
         else:
             chosen_one['rationale'] = "Skipped - Invalid Data"
-            
     return {"results": results, "chosen_one": chosen_one}
 
 if __name__ == '__main__':
