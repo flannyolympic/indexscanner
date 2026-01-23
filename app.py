@@ -21,29 +21,19 @@ if GENAI_API_KEY:
     except Exception as e:
         print(f"DEBUG: Failed to configure GenAI: {e}")
 
-# ASSET UNIVERSE
+# ASSET UNIVERSE (High Volatility & Liquidity Focus)
 STOCK_TICKERS = [
-    "QQQ", "SPY", "MARA", "USAR", "NFLX", "TMC", "RIOT", "GME", "LMND", "NVDA", "AMC"
+    "QQQ", "SPY", "MARA", "COIN", "NFLX", "TSLA", "RIOT", "GME", "NVDA", "AMC", "AMD", "PLTR", "SOFI"
 ]
 
 # --- HELPER FUNCTIONS ---
 
 def is_valid_data(data):
-    """
-    Checks if the ticker data is safe to send to the AI.
-    Returns True if valid, False if it will cause a crash.
-    """
+    """Checks if data is safe for the AI to process."""
     if not data: return False
-    
-    # 1. Check for required keys
     required = ['ticker', 'price', 'signal']
-    if not all(key in data for key in required):
-        return False
-            
-    # 2. Check for "Ghost Data" (Zero price or empty ticker)
-    if data['price'] == 0 or not data['ticker']:
-        return False
-        
+    if not all(key in data for key in required): return False
+    if data['price'] == 0 or not data['ticker']: return False
     return True
 
 def get_market_status():
@@ -76,7 +66,6 @@ def get_economic_events():
         {"event": "Non-Farm Payrolls", "delta": 6, "impact": "MED"},
         {"event": "GDP Growth Rate", "delta": 9, "impact": "HIGH"}
     ]
-    
     formatted_events = []
     for e in events:
         date = today + timedelta(days=e['delta'])
@@ -92,9 +81,7 @@ def get_indices():
     data_list = []
     try:
         tickers = " ".join(indices.keys())
-        # Updated to ensure stability
         data = yf.download(tickers, period="1d", group_by='ticker', threads=False, prepost=True)
-        
         for ticker, name in indices.items():
             try:
                 df = data[ticker] if len(indices) > 1 else data
@@ -129,7 +116,7 @@ def get_vix_data():
 def analyze_market_data(ticker_list):
     results = []
     try:
-        # Batch download for speed and to avoid Yahoo rate limits
+        # Fetching 5 days of 15m data for robust indicator calculation
         data = yf.download(tickers=" ".join(ticker_list), period="5d", interval="15m", 
                            group_by='ticker', auto_adjust=True, prepost=True, threads=False)
     except: return []
@@ -140,9 +127,12 @@ def analyze_market_data(ticker_list):
             else: df = data
             
             if df is None or df.empty: continue
+            
+            # Data Sanitization
             df = df.ffill().bfill()
             if len(df) < 20: continue
 
+            # Technical Indicators
             df['TP'] = (df['High'] + df['Low'] + df['Close']) / 3
             df['VWAP'] = (df['TP'] * df['Volume']).cumsum() / df['Volume'].cumsum()
             delta = df['Close'].diff()
@@ -160,6 +150,7 @@ def analyze_market_data(ticker_list):
             if pd.isna(current_rsi): current_rsi = 50
             if pd.isna(current_vwap): current_vwap = current_price
 
+            # Decision Logic
             signal, prob, catalyst, sentiment, options_play = "NEUTRAL", 50, "None", "Neutral", "Iron Condor"
 
             if current_rsi < 30:
@@ -179,20 +170,26 @@ def analyze_market_data(ticker_list):
                 "catalyst": catalyst, "sentiment": sentiment, "options_play": options_play
             })
         except: continue
+    
     return sorted(results, key=lambda x: x['probability'], reverse=True)
 
-# --- AI NEURAL ENGINE ---
+# --- AI NEURAL ENGINE (OPTIMIZED FOR CATALYSTS) ---
 def get_ai_rationale(ticker_data):
     if not GENAI_API_KEY: return "AI Offline (Key Missing)."
     
-    # 1. Strategy: Try Fast (Flash), then try Smart (Pro)
+    # Using stable model names
     models = ['gemini-1.5-flash', 'gemini-1.5-pro']
     
-    prompt = (f"Act as a senior derivatives trader. Analyze {ticker_data['ticker']} (${ticker_data['price']}). "
-              f"Signal: {ticker_data['signal']}. Suggest exact options strike prices. "
-              f"Format: TRADE: [Exact Strikes] | WHY: [Rationale]. Keep under 20 words.")
+    # 1. OPTIMIZED PROMPT: Explicitly requests Catalyst AND Strike Prices
+    prompt = (
+        f"Act as a senior derivatives trader. Analyze {ticker_data['ticker']} currently trading at ${ticker_data['price']}. "
+        f"Technical Signal: {ticker_data['signal']}. "
+        f"Task 1: Identify the likely CATALYST (e.g., Earnings, Sector rotation, Macro data). "
+        f"Task 2: Suggest a specific Options Trade. "
+        f"Format strictly as: CATALYST: [Short Reason] | TRADE: [Buy/Sell specific Strikes] | WHY: [1 sentence rationale]."
+    )
     
-    # 2. Safety Settings to allow financial output
+    # 2. SAFETY SETTINGS: Permissive for financial data
     safety_settings = [
         {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
         {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
@@ -202,6 +199,7 @@ def get_ai_rationale(ticker_data):
 
     for m in models:
         try:
+            print(f"DEBUG: querying {m}...")
             model = genai.GenerativeModel(m)
             response = model.generate_content(prompt, safety_settings=safety_settings)
             
@@ -209,12 +207,11 @@ def get_ai_rationale(ticker_data):
                 return response.text.strip()
                 
         except exceptions.ResourceExhausted:
-            print(f"⚠️ Rate Limit on {m}. Switching to backup...")
-            time.sleep(2) # Backoff
+            print(f"⚠️ Rate Limit on {m}. Switching...")
+            time.sleep(1)
             continue
-
         except Exception as e:
-            # print(f"❌ Model {m} failed: {e}")
+            print(f"❌ Model {m} failed: {e}")
             continue
             
     return "AI Unavailable. Trade based on Technicals."
@@ -264,7 +261,6 @@ def api_scan_data():
     chosen_one = None
     if results:
         chosen_one = results[0]
-        
         if is_valid_data(chosen_one):
             chosen_one['rationale'] = get_ai_rationale(chosen_one)
         else:
